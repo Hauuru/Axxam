@@ -245,7 +245,8 @@ footer {
     text-align: center;
     padding: 15px 0;
     margin-top: 40px;
-    position: fixed;
+    position: relative;
     bottom: 0;
     width: 100%;
 }
+
