@@ -1,284 +1,1609 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>Générateur de gobelet paramétrique</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-:root {
-  --primary: #3498db;
-  --bg: #f5f5f5;
-  --panel: #fff;
-  --text: #333;
-  --border: #ddd;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: system-ui, -apple-system, sans-serif;
-  background: var(--bg);
-  height: 100vh;
-  overflow: hidden;
-}
-
-.container {
-  display: flex;
-  height: 100vh;
-}
-
-.controls {
-  width: 300px;
-  background: var(--panel);
-  padding: 15px;
-  overflow-y: auto;
-  border-right: 1px solid var(--border);
-}
-
-.tabs {
-  display: flex;
-  margin-bottom: 20px;
-  border-bottom: 2px solid var(--border);
-}
-
-.tab {
-  flex: 1;
-  padding: 10px;
-  text-align: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-  color: #666;
-}
-
-.tab.active {
-  color: var(--primary);
-  border-bottom: 2px solid var(--primary);
-  margin-bottom: -2px;
-}
-
-.param-group { display: none; }
-.param-group.active { display: block; }
-.param { margin-bottom: 15px; }
-.param label { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: var(--text); }
-.param label span { color: #666; font-size: 13px; }
-.slider-container { display: flex; gap: 10px; align-items: center; }
-input[type=range] { flex: 1; height: 6px; background: #ddd; border-radius: 3px; -webkit-appearance: none; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); cursor: pointer; }
-input[type=number] { width: 70px; padding: 6px; border: 1px solid var(--border); border-radius: 4px; text-align: center; }
-.stats { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); font-size: 14px; }
-.stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-.stat-value { font-weight: 600; }
-.viewer { flex: 1; background: #f0f0f0; position: relative; }
-#scene-container { width: 100%; height: 100%; }
-.help { position: absolute; bottom: 10px; left: 10px; background: rgba(255, 255, 255, 0.9); padding: 8px 12px; border-radius: 4px; font-size: 12px; color: #666; }
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Gobelets Paramétrique - Version 5.0 Compacte</title>
+    
+    <style>
+        /* ============ VARIABLES CSS ============ */
+        :root { 
+            --primary: #3498db; --bg: #f5f5f5; --panel: #fff; --text: #333; --border: #ddd; 
+            --cru: #3498db; --sec: #d35400; --cuit: #c0392b; --success: #2ecc71; --warning: #f39c12; 
+            --danger: #e74c3c; --ring: #FF8C00; --grid: #888; --grid-light: #ccc;
+        }
+        
+        /* ============ RESET ET BASE ============ */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; }
+        
+        /* ============ LAYOUT PRINCIPAL ============ */
+        .container { display: flex; height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; overflow: hidden; }
+        
+        /* ============ PANEL DE CONTRÔLE ============ */
+        .controls { width: 350px; background: var(--panel); display: flex; flex-direction: column; border-right: 1px solid var(--border); height: 100vh; flex-shrink: 0; }
+        .controls-header { padding: 15px; border-bottom: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
+        .controls-title { color: #2c3e50; margin-bottom: 15px; font-size: 1.5em; }
+        
+        /* ============ ONGLETS ============ */
+        .tabs { display: flex; margin-top: 10px; border-bottom: 2px solid var(--border); position: sticky; top: 0; background: var(--panel); z-index: 100; padding-top: 5px; }
+        .tab { flex: 1; padding: 10px; text-align: center; background: none; border: none; cursor: pointer; font-weight: 500; color: #666; transition: all 0.3s; }
+        .tab:hover { color: var(--primary); background-color: #f8f9fa; }
+        .tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: -2px; }
+        
+        /* ============ CONTENU DES PARAMÈTRES ============ */
+        .controls-content { flex: 1; overflow-y: auto; padding: 0 15px 15px 15px; }
+        .param-group { display: none; padding: 10px 0; }
+        .param-group.active { display: block; }
+        
+        /* ============ STYLES DES PARAMÈTRES ============ */
+        .param { margin-bottom: 15px; }
+        .param label { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: var(--text); font-weight: 600; }
+        .param label span { color: #666; font-size: 13px; font-weight: normal; }
+        .slider-container { display: flex; gap: 10px; align-items: center; }
+        input[type=range] { flex: 1; height: 6px; background: #ddd; border-radius: 3px; outline: none; -webkit-appearance: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); cursor: pointer; transition: background 0.2s; }
+        input[type=range]::-webkit-slider-thumb:hover { background: #2980b9; }
+        .info-box { background: #f8f9fa; border-radius: 6px; padding: 10px; margin: 10px 0; font-size: 12px; text-align: center; border-left: 4px solid var(--primary); }
+        
+        /* ============ SECTIONS SPÉCIALES ============ */
+        .section-title { margin: 20px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--border); font-size: 15px; font-weight: 600; color: var(--text); }
+        .button-group { display: flex; gap: 8px; margin-top: 10px; }
+        .mode-btn { flex: 1; padding: 10px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .mode-btn.active { color: white; }
+        .mode-btn[data-etat="cru"].active { background: var(--cru); border-color: var(--cru); }
+        .mode-btn[data-etat="sec"].active { background: var(--sec); border-color: var(--sec); }
+        .mode-btn[data-etat="cuit"].active { background: var(--cuit); border-color: var(--cuit); }
+        .mode-btn:hover:not(.active) { background: #f8f9fa; }
+        
+        /* ============ TABLEAU DES ANNEAUX ============ */
+        .ring-table { width: 100%; margin: 15px 0; border-collapse: collapse; font-size: 13px; }
+        .ring-table th { background: #f8f9fa; padding: 8px; text-align: center; border: 1px solid var(--border); font-weight: 600; color: var(--text); }
+        .ring-table td { padding: 8px; border: 1px solid var(--border); text-align: center; }
+        .ring-disabled { opacity: 0.5; background-color: #f9f9f9; }
+        
+        /* ============ SECTION EXPORT ============ */
+        .export-section { margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border); position: sticky; bottom: 0; background: var(--panel); z-index: 99; padding-bottom: 15px; flex-shrink: 0; }
+        .export-btn { background: var(--success); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-size: 1em; font-weight: 600; cursor: pointer; width: 100%; margin-top: 20px; transition: background 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .export-btn:hover { background: #27ae60; }
+        .export-btn:disabled { background: #95a5a6; cursor: not-allowed; }
+        .export-btn.processing { background: var(--warning); cursor: wait; }
+        
+        /* ============ MODALS D'EXPORT ============ */
+        .export-modal { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 15px; margin: 10px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; max-height: 60vh; overflow-y: auto; }
+        .export-modal.active { display: block; }
+        .option-group { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
+        .option-group label { display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer; }
+        .export-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .export-action-btn { flex: 1; background: var(--success); color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .export-cancel-btn { flex: 1; background: #95a5a6; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; }
+        .export-progress { height: 4px; background: var(--primary); width: 0%; transition: width 0.3s; margin: 10px 0; border-radius: 2px; }
+        .export-status { padding: 10px; margin: 10px 0; border-radius: 4px; font-size: 14px; text-align: center; display: none; }
+        .export-status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .export-status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .export-status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        
+        /* ============ STATISTIQUES ============ */
+        .stats { margin-top: 20px; padding: 15px; border-top: 1px solid var(--border); font-size: 14px; background: var(--panel); flex-shrink: 0; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .stat-value { font-weight: 600; }
+        
+        /* ============ ZONE DE VISUALISATION 3D ============ */
+        .viewer { flex: 1; background: #f0f0f0; position: relative; height: 100vh; overflow: hidden; }
+        #scene-container { width: 100%; height: 100%; }
+        
+        /* ============ CONTROLES DE COUPE ============ */
+        .cutaway-controls { position: absolute; top: 10px; left: 10px; background: rgba(255,255,255,0.95); padding: 10px 15px; border-radius: 8px; font-size: 13px; z-index: 1000; display: none; flex-direction: column; gap: 10px; min-width: 200px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); backdrop-filter: blur(5px); }
+        .cutaway-controls button { padding: 6px 12px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: background 0.2s; }
+        .cutaway-controls button:hover { background: #2980b9; }
+        .cutaway-controls button.active { background: #2c3e50; }
+        
+        /* ============ BARRE D'AIDE ============ */
+        .help-bar { position: absolute; bottom: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.95); padding: 10px 15px; border-radius: 6px; font-size: 12px; color: #666; backdrop-filter: blur(5px); display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
+        .help-text { flex: 1; }
+        .control-buttons { display: flex; gap: 10px; }
+        .control-btn { padding: 6px 12px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; }
+        .control-btn:hover { background: #2980b9; }
+        .control-btn.active { background: #2c3e50; }
+        
+        /* ============ INDICATEURS ============ */
+        #etat-indicator, #cutaway-indicator { 
+            position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.95); 
+            padding: 10px 15px; border-radius: 8px; font-size: 13px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            z-index: 1000; max-width: 200px; display: none;
+        }
+        #cutaway-indicator { right: 220px; border: 2px solid var(--primary); }
+        
+        /* ============ NOTIFICATIONS ============ */
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 6px; background: var(--success); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; display: none; align-items: center; gap: 10px; max-width: 300px; }
+        .notification.show { display: flex; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 1200px) { 
+            .container { flex-direction: column; position: relative; height: auto; min-height: 100vh; overflow-y: auto; }
+            .controls { width: 100%; height: auto; max-height: 60vh; position: relative; }
+            .viewer { height: 40vh; position: relative; }
+            .tabs { position: relative; top: auto; }
+            .export-section { position: relative; bottom: auto; }
+            .cutaway-controls { top: 50px; left: 10px; right: 10px; min-width: auto; }
+        }
+        
+        /* ============ ANIMATIONS ============ */
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .pulse { animation: pulse 2s infinite; }
+    </style>
+    
+    <!-- Bibliothèques Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
 </head>
+
 <body>
-<div class="container">
-  <div class="controls">
-    <div class="tabs">
-      <button class="tab active" onclick="showTab(event,'dimensions')">Dimensions</button>
-      <button class="tab" onclick="showTab(event,'anneaux')">Anneaux</button>
-      <button class="tab" onclick="showTab(event,'materiau')">Matériau</button>
+    <!-- Conteneur principal -->
+    <div class="container">
+        <!-- Panneau de contrôle -->
+        <div class="controls">
+            <div class="controls-header">
+                <h1 class="controls-title">🏺 Générateur de Gobelets 5.0</h1>
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab('dimensions', this)">Dimensions</button>
+                    <button class="tab" onclick="showTab('anneaux', this)">Anneaux</button>
+                    <button class="tab" onclick="showTab('materiau', this)">Matériau</button>
+                    <button class="tab" onclick="showTab('tournage', this)">Tournage</button>
+                </div>
+            </div>
+            
+            <div class="controls-content" id="controls-content">
+                <!-- Onglet Dimensions -->
+                <div id="dimensions" class="param-group active">
+                    <div class="info-box">Dimensions définies pour l'état <strong>CUITE</strong> (pièce finale)</div>
+                    
+                    <!-- Paramètres dimensions générés dynamiquement -->
+                    <div id="dimensions-content"></div>
+                </div>
+                
+                <!-- Onglet Anneaux -->
+                <div id="anneaux" class="param-group">
+                    <div class="info-box">Les dimensions des anneaux correspondent à l'état <strong>CUITE</strong></div>
+                    
+                    <div class="param">
+                        <label>Nombre d'anneaux <span>0-4</span></label>
+                        <div class="slider-container">
+                            <input id="n_r" type="range" min="0" max="4" step="1" value="4" oninput="updateParam('n', this.value)">
+                            <input id="n_n" type="number" min="0" max="4" step="1" value="4" oninput="updateParam('n', this.value)">
+                        </div>
+                    </div>
+                    
+                    <div class="param">
+                        <label>Hauteur 1er anneau <span>mm (cuit)</span></label>
+                        <div class="slider-container">
+                            <input id="Hd_r" type="range" min="0" max="400" value="20" step="1" oninput="updateParam('Hd', this.value)">
+                            <input id="Hd_n" type="number" min="0" max="400" value="20" step="1" oninput="updateParam('Hd', this.value)">
+                        </div>
+                    </div>
+                    
+                    <!-- Espacements des anneaux -->
+                    <div id="espacements-content"></div>
+                    
+                    <div class="section-title">Paramètres individuels des anneaux</div>
+                    <table class="ring-table">
+                        <thead>
+                            <tr>
+                                <th>Anneau</th>
+                                <th>Largeur (mm)</th>
+                                <th>Saillie (mm)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="anneaux-body"></tbody>
+                    </table>
+                </div>
+                
+                <!-- Onglet Matériau -->
+                <div id="materiau" class="param-group">
+                    <div class="info-box">Les densités et retraits définissent les transformations entre états</div>
+                    
+                    <!-- Paramètres matériau générés dynamiquement -->
+                    <div id="materiau-content"></div>
+                </div>
+                
+                <!-- Onglet Tournage -->
+                <div id="tournage" class="param-group">
+                    <div class="info-box">Les marges sont appliquées à l'état <strong>CRU</strong> (dimensions de tournage)</div>
+                    
+                    <!-- Paramètres tournage générés dynamiquement -->
+                    <div id="tournage-content"></div>
+                    
+                    <div class="section-title">État de visualisation</div>
+                    <div class="button-group">
+                        <button class="mode-btn" data-etat="cru" onclick="setEtatVisualisation('cru')">Cru</button>
+                        <button class="mode-btn" data-etat="sec" onclick="setEtatVisualisation('sec')">Sec</button>
+                        <button class="mode-btn active" data-etat="cuit" onclick="setEtatVisualisation('cuit')">Cuit</button>
+                    </div>
+                    <div id="info-conversion" style="margin-top:10px; font-size:12px; text-align:center; color:#666;"></div>
+                    
+                    <div class="section-title">Mode de visualisation</div>
+                    <div class="button-group">
+                        <button class="mode-btn" onclick="setVisualisationMode('gobelet')">Gobelet seul</button>
+                        <button class="mode-btn" onclick="setVisualisationMode('ebauche')">Ébauche seule</button>
+                        <button class="mode-btn active" onclick="setVisualisationMode('comparaison')">Comparaison</button>
+                    </div>
+                </div>
+                
+                <!-- Section Export -->
+                <div class="export-section">
+                    <div class="section-title">Export</div>
+                    
+                    <button id="btn-export-jpg" class="export-btn" onclick="openExportModal('jpg')">
+                        <span>📸</span> Exporter JPG (600 DPI)
+                    </button>
+                    <button id="btn-export-stl" class="export-btn" onclick="openExportModal('stl')">
+                        <span>🖨️</span> Exporter STL
+                    </button>
+                    
+                    <!-- Modal JPG -->
+                    <div id="modal-jpg" class="export-modal">
+                        <div class="section-title">Options d'export JPG</div>
+                        
+                        <div class="param">
+                            <label>Contenu à exporter</label>
+                            <div class="option-group">
+                                <label><input type="radio" name="jpg-content" value="gobelet" checked> Gobelet seul</label>
+                                <label><input type="radio" name="jpg-content" value="gobelet-with-rings"> Gobelet avec anneaux</label>
+                                <label><input type="radio" name="jpg-content" value="ebauche"> Ébauche seule</label>
+                                <label><input type="radio" name="jpg-content" value="comparaison"> Comparaison</label>
+                            </div>
+                        </div>
+                        
+                        <div class="param">
+                            <label>Grille millimétrée</label>
+                            <div class="option-group">
+                                <label><input type="radio" name="jpg-grid" value="5mm" checked> Grille 5mm</label>
+                                <label><input type="radio" name="jpg-grid" value="1mm"> Grille 1mm</label>
+                                <label><input type="radio" name="jpg-grid" value="10mm"> Grille 10mm</label>
+                                <label><input type="radio" name="jpg-grid" value="none"> Aucune</label>
+                            </div>
+                        </div>
+                        
+                        <div class="param">
+                            <label>Annotations</label>
+                            <div class="option-group">
+                                <label><input type="checkbox" name="jpg-annotation" value="dimensions" checked> Dimensions et paramètres</label>
+                                <label><input type="checkbox" name="jpg-annotation" value="echelle" checked> Échelle graphique</label>
+                                <label><input type="checkbox" name="jpg-annotation" value="date" checked> Date & version</label>
+                            </div>
+                        </div>
+                        
+                        <div class="param">
+                            <label>Vue en coupe</label>
+                            <div class="slider-container">
+                                <input id="cutaway-slider" type="range" min="0" max="100" value="50" oninput="updateCutawayPreview(this.value)">
+                                <span id="cutaway-value">50%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="export-actions">
+                            <button onclick="captureJPG()" class="export-action-btn">📸 Capturer JPG</button>
+                            <button onclick="closeExportModal()" class="export-cancel-btn">Annuler</button>
+                        </div>
+                        
+                        <div class="export-progress" id="jpg-progress"></div>
+                        <div id="jpg-status" class="export-status"></div>
+                    </div>
+                    
+                    <!-- Modal STL -->
+                    <div id="modal-stl" class="export-modal">
+                        <div class="section-title">Options d'export STL</div>
+                        
+                        <div class="param">
+                            <label>Type d'export</label>
+                            <div class="option-group">
+                                <label><input type="radio" name="stl-content" value="gobelet-only" checked> Gobelet seul (sans anneaux)</label>
+                                <label><input type="radio" name="stl-content" value="gobelet-with-rings"> Gobelet avec anneaux</label>
+                                <label><input type="radio" name="stl-content" value="ebauche"> Ébauche seule</label>
+                                <label><input type="radio" name="stl-content" value="comparison"> Comparaison (ébauche)</label>
+                            </div>
+                        </div>
+                        
+                        <div class="param">
+                            <label>Format STL</label>
+                            <div class="option-group">
+                                <label><input type="radio" name="stl-format" value="binary" checked> Binaire (recommandé)</label>
+                                <label><input type="radio" name="stl-format" value="ascii"> ASCII (lisible)</label>
+                            </div>
+                        </div>
+                        
+                        <div class="param">
+                            <label>Résolution</label>
+                            <div class="option-group">
+                                <label><input type="radio" name="stl-resolution" value="high" checked> Haute (64 segments)</label>
+                                <label><input type="radio" name="stl-resolution" value="medium"> Moyenne (32 segments)</label>
+                                <label><input type="radio" name="stl-resolution" value="low"> Basse (16 segments)</label>
+                            </div>
+                        </div>
+                        
+                        <div class="export-actions">
+                            <button onclick="exportSTL()" class="export-action-btn">💾 Exporter STL</button>
+                            <button onclick="closeExportModal()" class="export-cancel-btn">Annuler</button>
+                        </div>
+                        
+                        <div class="export-progress" id="stl-progress"></div>
+                        <div id="stl-status" class="export-status"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Statistiques -->
+            <div class="stats">
+                <div class="stat-row"><span>État visualisé:</span><span class="stat-value" id="etat-affiche">Cuit</span></div>
+                <div class="stat-row"><span>Facteur d'agrandissement:</span><span class="stat-value" id="facteur-agrandissement">100%</span></div>
+                <div class="stat-row"><span>Densité actuelle:</span><span class="stat-value" id="densite-actuelle">2.5</span> g/cm³</div>
+                <div class="stat-row"><span>Volume contenu:</span><span class="stat-value" id="volume-contenu">320</span> ml</div>
+                <div class="stat-row"><span>Volume argile:</span><span class="stat-value" id="volume-argile">245</span> cm³</div>
+                <div class="stat-row"><span>Poids argile:</span><span class="stat-value" id="poids-argile">392</span> g</div>
+                <div class="stat-row"><span>Volume ébauche:</span><span class="stat-value" id="volume-ebauche">450</span> cm³</div>
+                <div class="stat-row"><span>Argile à enlever:</span><span class="stat-value" id="argile-a-enlever">205</span> cm³</div>
+                <div class="stat-row"><span>Taux d'enlèvement:</span><span class="stat-value" id="taux-enlevement">45.6%</span></div>
+            </div>
+        </div>
+        
+        <!-- Zone de visualisation 3D -->
+        <div class="viewer">
+            <div id="scene-container"></div>
+            
+            <!-- Indicateurs -->
+            <div id="etat-indicator"></div>
+            <div id="cutaway-indicator"></div>
+            
+            <!-- Contrôles de coupe -->
+            <div id="cutaway-controls" class="cutaway-controls">
+                <div style="font-weight:bold; color:#2c3e50; margin-bottom:5px;">✂️ Vue en Coupe</div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button id="cutaway-toggle" class="control-btn" onclick="toggleCutaway()">Coupe OFF</button>
+                    <label style="font-size:12px; color:#666;">
+                        <input type="checkbox" id="show-cut-section" checked onchange="updateCutSectionVisibility()">
+                        Afficher section
+                    </label>
+                </div>
+                <div style="font-size:12px; color:#666; margin-top:5px;">
+                    Position: <span id="cutaway-position-display">50%</span>
+                    <input id="cutaway-slider-main" type="range" min="0" max="100" value="50" style="width:100%; margin-top:5px;" oninput="updateCutawayPosition(this.value)">
+                </div>
+            </div>
+            
+            <!-- Barre d'aide -->
+            <div class="help-bar">
+                <div class="help-text">Rotation: clic gauche • Zoom: molette • Pan: clic droit</div>
+                <div class="control-buttons">
+                    <button class="control-btn" id="grid-toggle" onclick="toggleGrid()">Grille OFF</button>
+                    <button class="control-btn" onclick="toggleCutawayControls()">Coupe</button>
+                    <button class="control-btn" onclick="recenterView()">Centrer vue</button>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div id="dimensions" class="param-group active"></div>
-    <div id="anneaux" class="param-group"></div>
-    <div id="materiau" class="param-group"></div>
-
-    <div class="stats">
-      <div class="stat-row"><span>Volume contenu:</span> <span class="stat-value" id="volume-contenu">320</span> ml</div>
-      <div class="stat-row"><span>Volume argile:</span> <span class="stat-value" id="volume-argile">245</span> cm³</div>
-      <div class="stat-row"><span>Poids cru:</span> <span class="stat-value" id="poids-cru">392</span> g</div>
+    
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <span id="notification-icon">✅</span>
+        <span id="notification-text">Export terminé avec succès !</span>
     </div>
-  </div>
+    
+    <!-- Script principal -->
+    <script>
+        // ============ CONFIGURATION ============
+        const CONFIG = {
+            segments: 64,
+            ringSegments: 24,
+            profileSegments: 32,
+            jpg: { dpi: 600, quality: 0.95, a4Width: 3508, a4Height: 2480 },
+            stl: { defaultColor: 0x808080 }
+        };
 
-  <div class="viewer">
-    <div id="scene-container"></div>
-    <div class="help">Rotation: clic gauche • Zoom: molette</div>
-  </div>
-</div>
+        // ============ ÉTAT GLOBAL ============
+        const state = {
+            // Dimensions CUITES
+            H: 90, DO: 70, DB: 50, Ep: 5, Cv: 1, Rbord: 3,
+            
+            // Densités
+            densiteCru: 1.76,
+            densiteSec: 1.55,
+            densiteCuit: 2.5,
+            
+            // Retraits
+            retraitSec: 4.8,
+            retraitCuit: 7,
+            
+            // Anneaux
+            n: 4, Hd: 20,
+            Es1: 20, Es2: 20, Es3: 20,
+            La: [10, 10, 10, 10],
+            Sa: [5, 5, 5, 5],
+            
+            // Tournage
+            MargeLat: 5,
+            MargeSup: 1,
+            MargeFond: 10,
+            
+            // Visualisation
+            visualisation: 'comparaison',
+            etatVisualisation: 'cuit',
+            
+            // Vue en coupe
+            clippingEnabled: false,
+            clippingPosition: 0.5,
+            showCutSection: true,
+            
+            // Calculs dérivés
+            get facteurVersSec() { return 1 / (1 - this.retraitCuit / 100); },
+            get facteurVersCru() { 
+                const facteurSansSec = 1 - this.retraitSec / 100;
+                const facteurSansCuit = 1 - this.retraitCuit / 100;
+                return 1 / (facteurSansSec * facteurSansCuit);
+            },
+            get facteurCourant() {
+                switch(this.etatVisualisation) {
+                    case 'cru': return this.facteurVersCru;
+                    case 'sec': return this.facteurVersSec;
+                    default: return 1.0;
+                }
+            },
+            get densiteCourante() {
+                switch(this.etatVisualisation) {
+                    case 'cru': return this.densiteCru;
+                    case 'sec': return this.densiteSec;
+                    default: return this.densiteCuit;
+                }
+            },
+            
+            // Méthodes utilitaires
+            getDimensionAvecFacteur(dimension) { return dimension * this.facteurCourant; },
+            getMargeAjustee(marge) {
+                switch(this.etatVisualisation) {
+                    case 'cru': return marge;
+                    case 'sec': return marge / this.facteurVersCru * this.facteurVersSec;
+                    default: return marge / this.facteurVersCru;
+                }
+            }
+        };
 
-<script>
-// =================== CONFIG ===================
-const config = { segments: 48, wallSegments: 16, ringSegments: 12 };
+        // ============ SYSTÈME D'EXPORT ============
+        const ExportSystem = {
+            isExporting: false,
+            currentModal: null,
+            clippingPlane: null,
+            
+            showNotification(message, type = 'success') {
+                const notification = document.getElementById('notification');
+                const icon = document.getElementById('notification-icon');
+                const text = document.getElementById('notification-text');
+                
+                icon.textContent = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+                notification.style.background = type === 'success' ? '#2ecc71' : type === 'error' ? '#e74c3c' : '#3498db';
+                text.textContent = message;
+                notification.classList.add('show');
+                
+                setTimeout(() => notification.classList.remove('show'), 3000);
+            },
+            
+            updateProgress(elementId, percent, message = '') {
+                const progressBar = document.getElementById(elementId);
+                const statusDiv = document.getElementById(elementId.replace('progress', 'status'));
+                
+                if (progressBar) progressBar.style.width = percent + '%';
+                if (statusDiv && message) {
+                    statusDiv.textContent = message;
+                    statusDiv.style.display = 'block';
+                    statusDiv.className = 'export-status ' + 
+                        (percent >= 100 ? 'success' : percent < 0 ? 'error' : 'info');
+                }
+            }
+        };
 
-const params = {
-  H:120, DO:80, DB:60, Ep:5, Cv:5, Rbord:3,
-  Dens:1.6, n:4, Hd:30, Es:[20,25,30], Sa:6, La:10
-};
+        // ============ THREE.JS VARIABLES ============
+        let scene, camera, renderer, controls;
+        let gobeletMesh, ebaucheMesh, ringsGroup;
+        let updateTimer, isGridVisible = false, gridHelper = null;
 
-const paramDefs = {
-  dimensions: [
-    {id:'H', min:60,max:200,step:1,unit:'mm'},
-    {id:'DO', min:40,max:140,step:1,unit:'mm'},
-    {id:'DB', min:30,max:120,step:1,unit:'mm'},
-    {id:'Ep', min:2,max:12,step:0.5,unit:'mm'},
-    {id:'Cv', min:-30,max:30,step:5,unit:'%'},
-    {id:'Rbord', min:0,max:15,step:0.5,unit:'mm'}
-  ],
-  anneaux: [
-    {id:'n', min:1,max:4,step:1,unit:''},
-    {id:'Hd', min:10,max:100,step:1,unit:'mm'},
-    {id:'Es1', min:5,max:50,step:1,unit:'mm', arrIndex:0},
-    {id:'Es2', min:5,max:50,step:1,unit:'mm', arrIndex:1},
-    {id:'Es3', min:5,max:50,step:1,unit:'mm', arrIndex:2},
-    {id:'Sa', min:2,max:15,step:0.5,unit:'mm'},
-    {id:'La', min:4,max:25,step:1,unit:'mm'}
-  ],
-  materiau: [
-    {id:'Dens', min:1.2,max:2.4,step:0.1,unit:'g/cm³'}
-  ]
-};
+        // ============ DÉFINITIONS DES PARAMÈTRES ============
+        const paramDefinitions = {
+            dimensions: [
+                { id: 'H', label: 'Hauteur totale', unit: 'mm (cuit)', min: 20, max: 400, value: 90, step: 1 },
+                { id: 'DO', label: 'Diamètre ouverture', unit: 'mm (cuit)', min: 20, max: 140, value: 70, step: 1 },
+                { id: 'DB', label: 'Diamètre base', unit: 'mm (cuit)', min: 20, max: 400, value: 50, step: 1 },
+                { id: 'Ep', label: 'Épaisseur paroi finale', unit: 'mm (cuit)', min: 1, max: 30, value: 5, step: 0.5 },
+                { id: 'Cv', label: 'Courbure paroi', unit: '%', min: -30, max: 30, value: 1, step: 5 },
+                { id: 'Rbord', label: 'Arrondi bord', unit: 'mm (cuit)', min: 0, max: 15, value: 3, step: 0.5 }
+            ],
+            espacements: [
+                { id: 'Es1', label: 'Espacement 1→2', unit: 'mm (cuit)', min: 0, max: 400, value: 20, step: 1 },
+                { id: 'Es2', label: 'Espacement 2→3', unit: 'mm (cuit)', min: 0, max: 400, value: 20, step: 1 },
+                { id: 'Es3', label: 'Espacement 3→4', unit: 'mm (cuit)', min: 0, max: 400, value: 20, step: 1 }
+            ],
+            materiau: [
+                { id: 'densiteCru', label: 'Densité argile crue', unit: 'g/cm³', min: 1, max: 3, value: 1.76, step: 0.1 },
+                { id: 'densiteSec', label: 'Densité argile sèche', unit: 'g/cm³', min: 1, max: 3, value: 1.55, step: 0.1 },
+                { id: 'densiteCuit', label: 'Densité argile cuite', unit: 'g/cm³', min: 1, max: 3, value: 2.5, step: 0.1 },
+                { id: 'retraitSec', label: 'Retrait séchage', unit: '%', min: 0, max: 30, value: 4.8, step: 0.5 },
+                { id: 'retraitCuit', label: 'Retrait cuisson', unit: '%', min: 0, max: 30, value: 7, step: 0.5 }
+            ],
+            tournage: [
+                { id: 'MargeLat', label: 'Marge latérale', unit: 'mm (cru)', min: 0, max: 30, value: 5, step: 1 },
+                { id: 'MargeSup', label: 'Marge supérieure', unit: 'mm (cru)', min: 0, max: 20, value: 1, step: 1 },
+                { id: 'MargeFond', label: 'Épaisseur fond ébauche', unit: 'mm (cru)', min: 0, max: 20, value: 10, step: 1 }
+            ]
+        };
 
-// =================== THREE.JS ===================
-let scene,camera,renderer,controls,cupMesh,ringsGroup;
+        // ============ INITIALISATION DE L'INTERFACE ============
+        function initializeInterface() {
+            // Générer les paramètres dimensions
+            generateParamSection('dimensions-content', paramDefinitions.dimensions);
+            
+            // Générer les espacements d'anneaux
+            generateParamSection('espacements-content', paramDefinitions.espacements);
+            
+            // Générer les paramètres matériau
+            generateParamSection('materiau-content', paramDefinitions.materiau);
+            
+            // Générer les paramètres tournage
+            generateParamSection('tournage-content', paramDefinitions.tournage);
+            
+            // Générer le tableau des anneaux
+            generateAnneauxTable();
+            
+            // Mettre à jour les informations de conversion
+            updateInfoConversion();
+        }
 
-function initThree(){
-  const container = document.getElementById('scene-container');
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xf0f0f0);
-  camera = new THREE.PerspectiveCamera(45, container.clientWidth/container.clientHeight,0.1,1000);
-  camera.position.set(2,1.5,2.5);
-  camera.lookAt(0,0.5,0);
-  renderer = new THREE.WebGLRenderer({antialias:window.devicePixelRatio<=1});
-  renderer.setSize(container.clientWidth,container.clientHeight);
-  container.appendChild(renderer.domElement);
-  controls = new THREE.OrbitControls(camera,renderer.domElement);
-  controls.enableDamping = true; controls.dampingFactor=0.05;
-  scene.add(new THREE.AmbientLight(0xffffff,0.8));
-  const dirLight = new THREE.DirectionalLight(0xffffff,0.5); dirLight.position.set(2,3,1); scene.add(dirLight);
-  ringsGroup = new THREE.Group(); scene.add(ringsGroup);
-}
+        function generateParamSection(containerId, params) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            let html = '';
+            params.forEach(param => {
+                html += `
+                    <div class="param">
+                        <label>${param.label} <span>${param.unit}</span></label>
+                        <div class="slider-container">
+                            <input id="${param.id}_r" type="range" min="${param.min}" max="${param.max}" step="${param.step}" value="${param.value}" oninput="updateParam('${param.id}', this.value)">
+                            <input id="${param.id}_n" type="number" min="${param.min}" max="${param.max}" step="${param.step}" value="${param.value}" oninput="updateParam('${param.id}', this.value)">
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
 
-// =================== UTILITAIRES ===================
-function clearGroup(group){while(group.children.length>0){group.remove(group.children[0]);}}
-function round(v){return Math.round(v);}
+        function generateAnneauxTable() {
+            const tbody = document.getElementById('anneaux-body');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            for (let i = 1; i <= 4; i++) {
+                const disabled = i > state.n ? 'disabled' : '';
+                const disabledClass = i > state.n ? 'ring-disabled' : '';
+                
+                tbody.innerHTML += `
+                    <tr id="anneau-row-${i}" class="${disabledClass}">
+                        <td>${i}</td>
+                        <td>
+                            <div class="slider-container">
+                                <input id="La${i}_r" type="range" min="0" max="50" value="${state.La[i-1]}" ${disabled} oninput="updateArrayParam('La', ${i-1}, this.value)">
+                                <input id="La${i}_n" type="number" min="0" max="50" value="${state.La[i-1]}" ${disabled} oninput="updateArrayParam('La', ${i-1}, this.value)">
+                            </div>
+                        </td>
+                        <td>
+                            <div class="slider-container">
+                                <input id="Sa${i}_r" type="range" min="0" max="50" step="0.5" value="${state.Sa[i-1]}" ${disabled} oninput="updateArrayParam('Sa', ${i-1}, this.value)">
+                                <input id="Sa${i}_n" type="number" min="0" max="50" step="0.5" value="${state.Sa[i-1]}" ${disabled} oninput="updateArrayParam('Sa', ${i-1}, this.value)">
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
 
-function getRadiusAtHeight(height,isInner=false){
-  const rB=params.DB/2,rH=params.DO/2,H=params.H,e=params.Ep,cv=params.Cv/100,Rbord=params.Rbord;
-  const hMin=e,hMax=H-Rbord;
-  const t=Math.max(0,Math.min(1,(height-hMin)/(hMax-hMin)));
-  const curveFactor=cv*Math.sin(t*Math.PI);
-  if(isInner){
-    const outer=rB+(rH-rB)*t+(rH-rB)*curveFactor;
-    const slope=(rH-rB)/(H-e-Rbord);
-    const corr=e*Math.sqrt(1+slope*slope);
-    return Math.max(outer-corr,0);
-  } else {return rB+(rH-rB)*t+(rH-rB)*curveFactor;}
-}
+        // ============ FONCTIONS DE L'INTERFACE ============
+        function showTab(tabId, element) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.param-group').forEach(g => g.classList.remove('active'));
+            
+            element.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            closeExportModal();
+        }
 
-function generateOpenProfile(){
-  const pts=[];
-  const rB=params.DB/2,rH=params.DO/2,e=params.Ep,H=params.H,Rbord=params.Rbord;
-  pts.push(new THREE.Vector2(rB,0),new THREE.Vector2(rB,e));
-  for(let i=0;i<=config.wallSegments;i++){
-    const t=i/config.wallSegments;
-    const h=e+(H-e-Rbord)*t; pts.push(new THREE.Vector2(getRadiusAtHeight(h,false),h));
-  }
-  if(Rbord>0){for(let i=1;i<=3;i++){const t=i/3;const ang=t*Math.PI/2; pts.push(new THREE.Vector2(rH-Rbord+Rbord*Math.cos(ang),H-Rbord+Rbord*Math.sin(ang)));}}
-  else pts.push(new THREE.Vector2(rH,H));
-  if(Rbord>e){const Rint=Rbord-e; for(let i=3;i>=1;i--){const t=i/3; const ang=t*Math.PI/2; pts.push(new THREE.Vector2(rH-e-Rint+Rint*Math.cos(ang),H-Rint+Rint*Math.sin(ang)));}}
-  else pts.push(new THREE.Vector2(rH-e,H));
-  for(let i=config.wallSegments;i>=0;i--){const t=i/config.wallSegments; const h=e+(H-e-Rbord)*t; pts.push(new THREE.Vector2(getRadiusAtHeight(h,true),h));}
-  pts.push(new THREE.Vector2(Math.max(rB-e,e),e),new THREE.Vector2(Math.max(rB-e,e),0),new THREE.Vector2(rB,0));
-  return pts;
-}
+        function updateParam(paramId, value) {
+            const numValue = parseFloat(value);
+            state[paramId] = numValue;
+            
+            const range = document.getElementById(paramId + '_r');
+            const number = document.getElementById(paramId + '_n');
+            if (range) range.value = value;
+            if (number) number.value = value;
+            
+            if (paramId === 'n') updateAnneauxUI();
+            if (paramId.includes('retrait') || paramId.includes('densite')) updateInfoConversion();
+            
+            scheduleUpdate();
+        }
 
-function buildRings(){
-  clearGroup(ringsGroup);
-  const positions=[params.Hd];
-  for(let i=0;i<Math.min(params.Es.length,params.n-1);i++) positions.push(positions[positions.length-1]+params.Es[i]);
-  positions.forEach(h=>{
-    if(h<params.Ep||h>params.H-params.La)return;
-    const r=getRadiusAtHeight(h,false);
-    const profile=[new THREE.Vector2(r,h-params.La/2), new THREE.Vector2(r+params.Sa,h), new THREE.Vector2(r,h+params.La/2)];
-    const ring=new THREE.Mesh(new THREE.LatheGeometry(profile,config.ringSegments), new THREE.MeshLambertMaterial({color:0xe67e22}));
-    ringsGroup.add(ring);
-  });
-}
+        function updateArrayParam(arrayName, index, value) {
+            const numValue = parseFloat(value);
+            state[arrayName][index] = numValue;
+            
+            const range = document.getElementById(arrayName + (index+1) + '_r');
+            const number = document.getElementById(arrayName + (index+1) + '_n');
+            if (range) range.value = value;
+            if (number) number.value = value;
+            
+            scheduleUpdate();
+        }
 
-function calculateVolumes(){
-  const profile=generateOpenProfile();
-  let volumeTotal=0;
-  for(let i=0;i<profile.length-1;i++){
-    const r1=profile[i].x,r2=profile[i+1].x,h=Math.abs(profile[i+1].y-profile[i].y);
-    if(h>0) volumeTotal+=(Math.PI*h/3)*(r1*r1+r1*r2+r2*r2);
-  }
-  const innerRB=Math.max(params.DB/2-params.Ep,0),innerRH=Math.max(params.DO/2-params.Ep,0),innerH=params.H-params.Ep;
-  const volumeContenu=(Math.PI*innerH/3)*(innerRB*innerRB+innerRB*innerRH+innerRH*innerRH);
-  return {clayVolume:Math.max(volumeTotal-volumeContenu,0), contentVolume:volumeContenu};
-}
+        function updateAnneauxUI() {
+            for (let i = 1; i <= 4; i++) {
+                const row = document.getElementById(`anneau-row-${i}`);
+                if (!row) continue;
+                
+                const inputs = row.querySelectorAll('input');
+                if (i <= state.n) {
+                    row.classList.remove('ring-disabled');
+                    inputs.forEach(input => input.disabled = false);
+                } else {
+                    row.classList.add('ring-disabled');
+                    inputs.forEach(input => input.disabled = true);
+                }
+            }
+        }
 
-function buildCup(){
-  if(cupMesh){scene.remove(cupMesh); cupMesh.geometry.dispose(); cupMesh.material.dispose();}
-  clearGroup(ringsGroup);
-  cupMesh=new THREE.Mesh(new THREE.LatheGeometry(generateOpenProfile(),config.segments), new THREE.MeshLambertMaterial({color:0x3498db,side:THREE.DoubleSide}));
-  scene.add(cupMesh); buildRings(); updateStats();
-}
+        function setEtatVisualisation(etat) {
+            state.etatVisualisation = etat;
+            
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.etat === etat) btn.classList.add('active');
+            });
+            
+            updateInfoConversion();
+            updateStats();
+            scheduleUpdate();
+        }
 
-function updateStats(){
-  const vols=calculateVolumes();
-  document.getElementById('volume-contenu').textContent=round(vols.contentVolume/1000);
-  document.getElementById('volume-argile').textContent=round(vols.clayVolume/1000);
-  document.getElementById('poids-cru').textContent=round((vols.clayVolume/1000)*params.Dens);
-}
+        function setVisualisationMode(mode) {
+            state.visualisation = mode;
+            
+            const buttons = document.querySelectorAll('.mode-btn');
+            buttons.forEach((btn, index) => {
+                btn.classList.toggle('active', 
+                    (mode === 'gobelet' && index === 0) ||
+                    (mode === 'ebauche' && index === 1) ||
+                    (mode === 'comparaison' && index === 2)
+                );
+            });
+            
+            applyVisualisation();
+            updateStats();
+        }
 
-function onResize(){
-  const container=document.getElementById('scene-container');
-  camera.aspect=container.clientWidth/container.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth,container.clientHeight);
-}
+        function updateInfoConversion() {
+            const info = document.getElementById('info-conversion');
+            if (!info) return;
+            
+            const facteur = state.facteurCourant;
+            const pourcentage = Math.round((facteur - 1) * 100);
+            const signe = pourcentage >= 0 ? '+' : '';
+            
+            let texte = '';
+            switch(state.etatVisualisation) {
+                case 'cru': texte = `Cru: ${signe}${pourcentage}% par rapport au cuit (${Math.round(facteur * 100)}%)`; break;
+                case 'sec': texte = `Sec: ${signe}${pourcentage}% par rapport au cuit (${Math.round(facteur * 100)}%)`; break;
+                default: texte = `Cuit: dimensions définies (100%)`;
+            }
+            info.textContent = texte;
+        }
 
-function animate(){requestAnimationFrame(animate); controls.update(); renderer.render(scene,camera);}
+        function scheduleUpdate() {
+            clearTimeout(updateTimer);
+            updateTimer = setTimeout(buildAll, 200);
+        }
 
-// =================== UI ===================
-function showTab(event,tabId){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.param-group').forEach(g=>g.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-  document.getElementById(tabId).classList.add('active');
-}
+        // ============ FONCTIONS GÉOMÉTRIQUES ============
+        function getRayonExterieurGobelet(h) {
+            const f = state.facteurCourant;
+            const rB = (state.DB / 2) * f;
+            const rH = (state.DO / 2) * f;
+            const e = state.Ep * f;
+            const H = state.H * f;
+            const Rbord = state.Rbord * f;
+            const cv = state.Cv / 100;
+            
+            const hMin = e;
+            const hMax = H - Rbord;
+            
+            if (h <= hMin) return rB;
+            if (h >= hMax) return rH;
+            
+            const t = (h - hMin) / (hMax - hMin);
+            return rB + (rH - rB) * t + (rH - rB) * cv * Math.sin(t * Math.PI);
+        }
 
-function bindParam(el, key){
-  const range=document.getElementById(el.id+'_r'), num=document.getElementById(el.id+'_n');
-  const update=(v)=>{params[key]=parseFloat(v); range.value=num.value=v; clearTimeout(update.timeout); update.timeout=setTimeout(buildCup,200);};
-  range.oninput=e=>update(e.target.value); num.oninput=e=>update(e.target.value);
-}
+        function getRayonInterieurGobelet(h) {
+            return Math.max(getRayonExterieurGobelet(h) - (state.Ep * state.facteurCourant), state.Ep * state.facteurCourant);
+        }
 
-function bindArrayParam(el,key,index){
-  const range=document.getElementById(el.id+'_r'), num=document.getElementById(el.id+'_n');
-  const update=v=>{params[key][index]=parseFloat(v); range.value=num.value=v; buildCup();};
-  range.oninput=e=>update(e.target.value); num.oninput=e=>update(e.target.value);
-}
+        function getRayonExterieurEbauche(h) {
+            const margeFond = state.getMargeAjustee(state.MargeFond);
+            const margeLat = state.getMargeAjustee(state.MargeLat);
+            const H_cuit = state.H * state.facteurCourant;
+            const hTotal = H_cuit + state.getMargeAjustee(state.MargeSup) + margeFond;
+            
+            if (h <= margeFond) return (state.DB * state.facteurCourant / 2) + margeLat;
+            if (h <= margeFond + H_cuit) return getRayonExterieurGobelet(h - margeFond) + margeLat;
+            return (state.DO * state.facteurCourant / 2) + margeLat;
+        }
 
-function setDensite(value){params.Dens=value; document.getElementById('Dens_r').value=value; document.getElementById('Dens_n').value=value; updateStats();}
+        function genererProfilGobelet() {
+            const points = [];
+            const f = state.facteurCourant;
+            const rB = (state.DB / 2) * f;
+            const rH = (state.DO / 2) * f;
+            const e = state.Ep * f;
+            const H = state.H * f;
+            const Rbord = state.Rbord * f;
+            
+            points.push(new THREE.Vector2(0, 0), new THREE.Vector2(rB, 0), new THREE.Vector2(rB, e));
+            
+            for (let i = 0; i <= CONFIG.profileSegments; i++) {
+                const h = e + (H - e - Rbord) * (i / CONFIG.profileSegments);
+                points.push(new THREE.Vector2(getRayonExterieurGobelet(h), h));
+            }
+            
+            if (Rbord > 0) {
+                for (let i = 1; i <= 3; i++) {
+                    const angle = (i / 3) * Math.PI / 2;
+                    points.push(new THREE.Vector2(
+                        rH - Rbord + Rbord * Math.cos(angle),
+                        H - Rbord + Rbord * Math.sin(angle)
+                    ));
+                }
+            } else {
+                points.push(new THREE.Vector2(rH, H));
+            }
+            
+            points.push(new THREE.Vector2(rH - e, H));
+            
+            for (let i = CONFIG.profileSegments; i >= 0; i--) {
+                const h = e + (H - e - Rbord) * (i / CONFIG.profileSegments);
+                points.push(new THREE.Vector2(getRayonInterieurGobelet(h), h));
+            }
+            
+            points.push(new THREE.Vector2(Math.max(rB - e, e), e));
+            points.push(new THREE.Vector2(Math.max(rB - e, e), 0));
+            points.push(new THREE.Vector2(0, 0));
+            
+            return points;
+        }
 
-function generateUI(){
-  for(const tab in paramDefs){
-    const container=document.getElementById(tab);
-    paramDefs[tab].forEach(p=>{
-      const div=document.createElement('div'); div.className='param';
-      div.innerHTML=`<label>${p.id} <span>${p.unit}</span></label>
-        <div class="slider-container">
-          <input id="${p.id}_r" type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${params[p.id] || (p.arrIndex!==undefined?params[p.id.replace(/[0-9]/,'')][p.arrIndex]:0)}">
-          <input id="${p.id}_n" type="number" min="${p.min}" max="${p.max}" step="${p.step}" value="${params[p.id] || (p.arrIndex!==undefined?params[p.id.replace(/[0-9]/,'')][p.arrIndex]:0)}">
-        </div>`;
-      container.appendChild(div);
-      if(p.arrIndex!==undefined) bindArrayParam(p,p.id.replace(/[0-9]/,''),p.arrIndex);
-      else bindParam(p,p.id);
-    });
-  }
-}
+        function genererProfilEbauche() {
+            const points = [];
+            const f = state.facteurCourant;
+            const H_cuit = state.H * f;
+            const margeFond = state.getMargeAjustee(state.MargeFond);
+            const margeSup = state.getMargeAjustee(state.MargeSup);
+            const hTotal = H_cuit + margeSup + margeFond;
+            
+            points.push(new THREE.Vector2(0, 0), new THREE.Vector2(getRayonExterieurEbauche(0), 0));
+            
+            for (let i = 1; i <= CONFIG.profileSegments; i++) {
+                const h = (i / CONFIG.profileSegments) * hTotal;
+                points.push(new THREE.Vector2(getRayonExterieurEbauche(h), h));
+            }
+            
+            points.push(new THREE.Vector2(getRayonExterieurEbauche(hTotal), hTotal));
+            
+            const hIntHaut = margeFond + H_cuit;
+            points.push(new THREE.Vector2(getRayonInterieurGobelet(H_cuit), hIntHaut));
+            
+            for (let i = CONFIG.profileSegments - 1; i >= 0; i--) {
+                const h = margeFond + (i / CONFIG.profileSegments) * H_cuit;
+                if (h >= margeFond + state.Ep * f) {
+                    points.push(new THREE.Vector2(getRayonInterieurGobelet(h - margeFond), h));
+                }
+            }
+            
+            const rB_int = Math.max((state.DB/2) * f - state.Ep * f, state.Ep * f);
+            points.push(new THREE.Vector2(rB_int, margeFond + state.Ep * f));
+            points.push(new THREE.Vector2(0, margeFond + state.Ep * f));
+            points.push(new THREE.Vector2(0, 0));
+            
+            return points;
+        }
 
-// =================== INIT ===================
-window.addEventListener('load',()=>{
-  initThree(); generateUI(); buildCup(); animate();
-  window.addEventListener('resize',onResize);
-});
-</script>
+        // ============ CONSTRUCTION 3D ============
+        function buildAll() {
+            // Nettoyer les anciens meshes
+            if (gobeletMesh) {
+                scene.remove(gobeletMesh);
+                gobeletMesh.geometry.dispose();
+                gobeletMesh.material.dispose();
+            }
+            
+            if (ebaucheMesh) {
+                scene.remove(ebaucheMesh);
+                ebaucheMesh.geometry.dispose();
+                ebaucheMesh.material.dispose();
+            }
+            
+            // Créer le gobelet
+            try {
+                const gobeletGeometry = new THREE.LatheGeometry(genererProfilGobelet(), CONFIG.segments);
+                let couleur = state.etatVisualisation === 'cru' ? 0x3498db : 
+                             state.etatVisualisation === 'sec' ? 0xd35400 : 0xc0392b;
+                
+                const gobeletMaterial = new THREE.MeshLambertMaterial({ 
+                    color: couleur, transparent: true, opacity: 0.9, side: THREE.DoubleSide 
+                });
+                
+                gobeletMesh = new THREE.Mesh(gobeletGeometry, gobeletMaterial);
+                gobeletMesh.position.y = state.getMargeAjustee(state.MargeFond);
+                scene.add(gobeletMesh);
+            } catch (e) {
+                console.error("Erreur création gobelet:", e);
+            }
+            
+            // Créer l'ébauche
+            try {
+                const ebaucheGeometry = new THREE.LatheGeometry(genererProfilEbauche(), CONFIG.segments);
+                const ebaucheMaterial = new THREE.MeshLambertMaterial({ 
+                    color: 0x95a5a6, transparent: true, opacity: 0.3, side: THREE.DoubleSide 
+                });
+                ebaucheMesh = new THREE.Mesh(ebaucheGeometry, ebaucheMaterial);
+                scene.add(ebaucheMesh);
+            } catch (e) {
+                console.error("Erreur création ébauche:", e);
+            }
+            
+            // Construire les anneaux
+            buildRings();
+            
+            // Appliquer les visualisations
+            applyVisualisation();
+            
+            // Appliquer le clipping si activé
+            applyClippingToMaterials();
+            
+            // Mettre à jour les statistiques
+            updateStats();
+            
+            // Mettre à jour les indicateurs
+            updateEtatInfo();
+            updateInfoConversion();
+        }
+
+        function buildRings() {
+            // Nettoyer les anciens anneaux
+            while (ringsGroup.children.length > 0) {
+                const child = ringsGroup.children[0];
+                child.geometry.dispose();
+                child.material.dispose();
+                ringsGroup.remove(child);
+            }
+            
+            // Calculer les positions des anneaux
+            const es = [];
+            if (state.n > 1) es.push(state.Es1 || 20);
+            if (state.n > 2) es.push(state.Es2 || 20);
+            if (state.n > 3) es.push(state.Es3 || 20);
+            
+            const positions = [state.Hd * state.facteurCourant];
+            for (let i = 0; i < Math.min(es.length, state.n - 1); i++) {
+                positions.push(positions[positions.length - 1] + es[i] * state.facteurCourant);
+            }
+            
+            // Créer chaque anneau
+            positions.forEach((h, i) => {
+                if (i >= state.n || h < state.Ep * state.facteurCourant || h > state.H * state.facteurCourant) return;
+                
+                const la = state.La[i] * state.facteurCourant;
+                const sa = state.Sa[i] * state.facteurCourant;
+                const rayonExterieur = getRayonExterieurGobelet(h);
+                
+                // Profil triangulaire de l'anneau
+                const profile = [
+                    new THREE.Vector2(rayonExterieur, h - la/2),
+                    new THREE.Vector2(rayonExterieur + sa, h),
+                    new THREE.Vector2(rayonExterieur, h + la/2)
+                ];
+                
+                try {
+                    const ringGeometry = new THREE.LatheGeometry(profile, CONFIG.ringSegments);
+                    const ringMaterial = new THREE.MeshLambertMaterial({ 
+                        color: 0xFF8C00, side: THREE.DoubleSide, transparent: true, opacity: 0.95 
+                    });
+                    
+                    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                    ring.position.y = state.getMargeAjustee(state.MargeFond);
+                    ringsGroup.add(ring);
+                } catch (e) {
+                    console.error("Erreur création anneau", i, ":", e);
+                }
+            });
+        }
+
+        function applyVisualisation() {
+            const mode = state.visualisation;
+            
+            if (gobeletMesh) gobeletMesh.visible = (mode === 'gobelet' || mode === 'comparaison');
+            if (ebaucheMesh) ebaucheMesh.visible = (mode === 'ebauche' || mode === 'comparaison');
+            if (ringsGroup) ringsGroup.visible = (mode === 'gobelet' || mode === 'comparaison');
+        }
+
+        // ============ VUE EN COUPE ============
+        function initializeClipping() {
+            ExportSystem.clippingPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0);
+            updateClippingPlane();
+        }
+
+        function updateClippingPlane() {
+            if (!ExportSystem.clippingPlane) return;
+            
+            const maxRadius = Math.max(
+                state.getDimensionAvecFacteur(state.DO) / 2,
+                state.getDimensionAvecFacteur(state.DB) / 2
+            ) + state.getMargeAjustee(state.MargeLat) + 10;
+            
+            const planePosition = -maxRadius + (state.clippingPosition * 2 * maxRadius);
+            ExportSystem.clippingPlane.constant = -planePosition;
+            
+            applyClippingToMaterials();
+            updateCutawayIndicator();
+        }
+
+        function applyClippingToMaterials() {
+            const clippingPlanes = state.clippingEnabled && ExportSystem.clippingPlane 
+                ? [ExportSystem.clippingPlane] 
+                : [];
+            
+            if (gobeletMesh && gobeletMesh.material) {
+                gobeletMesh.material.clippingPlanes = clippingPlanes;
+                gobeletMesh.material.needsUpdate = true;
+            }
+            
+            if (ebaucheMesh && ebaucheMesh.material) {
+                ebaucheMesh.material.clippingPlanes = clippingPlanes;
+                ebaucheMesh.material.needsUpdate = true;
+            }
+            
+            if (ringsGroup) {
+                ringsGroup.children.forEach(child => {
+                    if (child.material) {
+                        child.material.clippingPlanes = clippingPlanes;
+                        child.material.needsUpdate = true;
+                    }
+                });
+            }
+        }
+
+        function toggleCutaway() {
+            state.clippingEnabled = !state.clippingEnabled;
+            
+            const btn = document.getElementById('cutaway-toggle');
+            if (btn) {
+                btn.textContent = state.clippingEnabled ? 'Coupe ON' : 'Coupe OFF';
+                btn.classList.toggle('active', state.clippingEnabled);
+            }
+            
+            applyClippingToMaterials();
+            updateCutawayIndicator();
+        }
+
+        function updateCutawayPosition(value) {
+            state.clippingPosition = value / 100;
+            document.getElementById('cutaway-position-display').textContent = value + '%';
+            document.getElementById('cutaway-slider-main').value = value;
+            updateClippingPlane();
+        }
+
+        function updateCutawayPreview(value) {
+            updateCutawayPosition(value);
+        }
+
+        function updateCutSectionVisibility() {
+            const checkbox = document.getElementById('show-cut-section');
+            if (checkbox) {
+                state.showCutSection = checkbox.checked;
+                updateCutawayIndicator();
+            }
+        }
+
+        function updateCutawayIndicator() {
+            const indicator = document.getElementById('cutaway-indicator');
+            if (!indicator) return;
+            
+            if (state.clippingEnabled) {
+                indicator.style.display = 'block';
+                indicator.innerHTML = `
+                    <div style="font-weight:bold; margin-bottom:3px;">✂️ Vue en Coupe</div>
+                    <div style="font-size:11px;">Position: ${Math.round(state.clippingPosition * 100)}%</div>
+                    <div style="font-size:11px;">Section visible: ${state.showCutSection ? 'Oui' : 'Non'}</div>
+                `;
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+
+        function toggleCutawayControls() {
+            const controls = document.getElementById('cutaway-controls');
+            if (controls) {
+                const isVisible = controls.style.display !== 'none';
+                controls.style.display = isVisible ? 'none' : 'block';
+            }
+        }
+
+        // ============ CALCULS DE VOLUMES ============
+        function calculerVolumes() {
+            // Volume de l'ébauche
+            function volumeEbauche() {
+                const margeFond = state.getMargeAjustee(state.MargeFond);
+                const margeSup = state.getMargeAjustee(state.MargeSup);
+                const hTotal = state.H * state.facteurCourant + margeSup + margeFond;
+                let volumeMatiere = 0;
+                const steps = 200;
+                const dh = hTotal / steps;
+                
+                for (let i = 0; i < steps; i++) {
+                    const h = i * dh;
+                    const rExt = getRayonExterieurEbauche(h);
+                    const rInt = h >= margeFond ? getRayonInterieurGobelet(h - margeFond) : 0;
+                    const aire = Math.PI * (rExt * rExt - rInt * rInt);
+                    volumeMatiere += aire * dh;
+                }
+                return volumeMatiere / 1000;
+            }
+            
+            // Volume du gobelet final
+            function volumeGobeletFinal() {
+                const H = state.H * state.facteurCourant;
+                let volumeMatiere = 0;
+                const steps = 200;
+                const dh = H / steps;
+                
+                for (let i = 0; i < steps; i++) {
+                    const h = i * dh;
+                    const rExt = getRayonExterieurGobelet(h);
+                    const rInt = getRayonInterieurGobelet(h);
+                    const aire = Math.PI * (rExt * rExt - rInt * rInt);
+                    volumeMatiere += aire * dh;
+                }
+                return volumeMatiere / 1000;
+            }
+            
+            // Volume du contenu
+            function volumeContenu() {
+                const f = state.facteurCourant;
+                const rB = Math.max((state.DB/2) * f - state.Ep * f, 0);
+                const rH = Math.max((state.DO/2) * f - state.Ep * f, 0);
+                const H = state.H * f - state.Ep * f - state.Rbord * f;
+                
+                if (H <= 0) return 0;
+                return (Math.PI * H / 3) * (rB*rB + rB*rH + rH*rH) / 1000;
+            }
+            
+            const volEbauche = Math.max(volumeEbauche(), 0);
+            const volGobelet = Math.max(volumeGobeletFinal(), 0);
+            const volEnlever = Math.max(volEbauche - volGobelet, 0);
+            const tauxEnlever = volEbauche > 0 ? (volEnlever / volEbauche) * 100 : 0;
+            
+            return {
+                contenu: Math.round(volumeContenu()),
+                gobelet: Math.round(volGobelet),
+                ebauche: Math.round(volEbauche),
+                enlever: Math.round(volEnlever),
+                taux: Math.round(tauxEnlever * 10) / 10
+            };
+        }
+
+        function updateStats() {
+            const vols = calculerVolumes();
+            const poidsArgile = Math.round(vols.gobelet * state.densiteCourante);
+            const facteurPourcentage = Math.round(state.facteurCourant * 100);
+            const agrandissementPourcentage = Math.round((state.facteurCourant - 1) * 100);
+            
+            // Mettre à jour l'état affiché
+            const etatsNoms = { 'cru': 'Cru', 'sec': 'Sec', 'cuit': 'Cuit' };
+            document.getElementById('etat-affiche').textContent = etatsNoms[state.etatVisualisation];
+            
+            // Mettre à jour les statistiques
+            document.getElementById('facteur-agrandissement').textContent = 
+                `${facteurPourcentage}% (${agrandissementPourcentage >= 0 ? '+' : ''}${agrandissementPourcentage}%)`;
+            document.getElementById('densite-actuelle').textContent = state.densiteCourante.toFixed(1);
+            document.getElementById('volume-contenu').textContent = vols.contenu;
+            document.getElementById('volume-argile').textContent = vols.gobelet;
+            document.getElementById('poids-argile').textContent = poidsArgile;
+            document.getElementById('volume-ebauche').textContent = vols.ebauche;
+            document.getElementById('argile-a-enlever').textContent = vols.enlever;
+            document.getElementById('taux-enlevement').textContent = vols.taux + '%';
+            
+            // Colorer le taux d'enlèvement selon sa valeur
+            const tauxElem = document.getElementById('taux-enlevement');
+            if (tauxElem) {
+                if (vols.taux > 50) tauxElem.style.color = '#e74c3c';
+                else if (vols.taux > 30) tauxElem.style.color = '#f39c12';
+                else tauxElem.style.color = '#2ecc71';
+            }
+        }
+
+        function updateEtatInfo() {
+            const indicator = document.getElementById('etat-indicator');
+            if (!indicator) return;
+            
+            const etats = {
+                'cru': { nom: 'État Cru', color: '#3498db' },
+                'sec': { nom: 'État Sec', color: '#d35400' },
+                'cuit': { nom: 'État Cuit', color: '#c0392b' }
+            };
+            
+            const etat = etats[state.etatVisualisation];
+            const facteurPourcentage = Math.round(state.facteurCourant * 100);
+            const agrandissement = Math.round((state.facteurCourant - 1) * 100);
+            
+            indicator.innerHTML = `
+                <div style="font-weight:bold; margin-bottom:3px;">${etat.nom}</div>
+                <div style="font-size:11px;">Facteur: ${facteurPourcentage}% (${agrandissement >= 0 ? '+' : ''}${agrandissement}%)</div>
+                <div style="font-size:11px;">Densité: ${state.densiteCourante.toFixed(1)} g/cm³</div>
+            `;
+            
+            indicator.style.cssText = `
+                position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.95);
+                padding: 10px 15px; border-radius: 8px; font-size: 13px; font-weight: normal;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; border: 2px solid ${etat.color};
+                color: ${etat.color}; display: block; max-width: 200px;
+            `;
+        }
+
+        // ============ FONCTIONS D'EXPORT ============
+        function openExportModal(type) {
+            closeExportModal();
+            
+            const modal = document.getElementById(`modal-${type}`);
+            if (modal) {
+                modal.classList.add('active');
+                ExportSystem.currentModal = type;
+                
+                // Ajuster la hauteur si nécessaire
+                const modalRect = modal.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                if (modalRect.bottom > viewportHeight - 50) {
+                    modal.style.maxHeight = (viewportHeight - 100) + 'px';
+                    modal.style.overflowY = 'auto';
+                }
+            }
+            
+            // Animation des boutons
+            const jpgBtn = document.getElementById('btn-export-jpg');
+            const stlBtn = document.getElementById('btn-export-stl');
+            if (jpgBtn) jpgBtn.classList.remove('pulse');
+            if (stlBtn) stlBtn.classList.remove('pulse');
+            
+            if (type === 'jpg' && jpgBtn) jpgBtn.classList.add('pulse');
+            if (type === 'stl' && stlBtn) stlBtn.classList.add('pulse');
+        }
+
+        function closeExportModal() {
+            document.getElementById('modal-jpg').classList.remove('active');
+            document.getElementById('modal-stl').classList.remove('active');
+            ExportSystem.currentModal = null;
+            
+            document.getElementById('btn-export-jpg').classList.remove('pulse');
+            document.getElementById('btn-export-stl').classList.remove('pulse');
+        }
+
+        async function captureJPG() {
+            if (ExportSystem.isExporting) {
+                ExportSystem.showNotification('Un export est déjà en cours', 'error');
+                return;
+            }
+            
+            try {
+                ExportSystem.isExporting = true;
+                ExportSystem.updateProgress('jpg-progress', 10, 'Préparation de la capture...');
+                
+                const content = document.querySelector('input[name="jpg-content"]:checked').value;
+                const annotations = Array.from(document.querySelectorAll('input[name="jpg-annotation"]:checked'))
+                                        .map(cb => cb.value);
+                
+                ExportSystem.updateProgress('jpg-progress', 30, 'Configuration de la scène...');
+                
+                const originalMode = state.visualisation;
+                
+                // Configurer la visualisation selon le contenu
+                if (content === 'gobelet-with-rings' || content === 'gobelet') {
+                    setVisualisationMode('gobelet');
+                } else if (content === 'ebauche') {
+                    setVisualisationMode('ebauche');
+                }
+                
+                ExportSystem.updateProgress('jpg-progress', 50, 'Rendu haute résolution...');
+                
+                const canvas = renderer.domElement;
+                const originalSize = { width: canvas.width, height: canvas.height };
+                const targetWidth = CONFIG.jpg.a4Width;
+                const targetHeight = CONFIG.jpg.a4Height;
+                
+                renderer.setSize(targetWidth, targetHeight, false);
+                camera.aspect = targetWidth / targetHeight;
+                camera.updateProjectionMatrix();
+                renderer.render(scene, camera);
+                
+                ExportSystem.updateProgress('jpg-progress', 70, 'Traitement de l\'image...');
+                
+                // Créer un canvas pour les annotations
+                const finalCanvas = document.createElement('canvas');
+                finalCanvas.width = targetWidth;
+                finalCanvas.height = targetHeight;
+                const ctx = finalCanvas.getContext('2d');
+                
+                // Dessiner le rendu 3D
+                ctx.drawImage(renderer.domElement, 0, 0);
+                
+                // Ajouter les annotations si demandé
+                if (annotations.length > 0) {
+                    addAnnotationsToCanvas(ctx, targetWidth, targetHeight);
+                }
+                
+                // Convertir en image
+                const imageData = finalCanvas.toDataURL('image/jpeg', CONFIG.jpg.quality);
+                
+                // Restaurer la taille originale
+                renderer.setSize(originalSize.width, originalSize.height, false);
+                camera.aspect = originalSize.width / originalSize.height;
+                camera.updateProjectionMatrix();
+                renderer.render(scene, camera);
+                
+                if (originalMode !== state.visualisation) {
+                    setVisualisationMode(originalMode);
+                }
+                
+                ExportSystem.updateProgress('jpg-progress', 90, 'Préparation du téléchargement...');
+                
+                // Télécharger l'image
+                const link = document.createElement('a');
+                const date = new Date().toISOString().split('T')[0];
+                const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
+                const annotationText = annotations.length > 0 ? '_annoté' : '';
+                const cutawayText = state.clippingEnabled ? '_coupe' : '';
+                link.download = `gobelet_${content}${cutawayText}${annotationText}_${date}_${time}.jpg`;
+                link.href = imageData;
+                link.click();
+                
+                ExportSystem.updateProgress('jpg-progress', 100, 'Capture terminée !');
+                ExportSystem.showNotification('Capture JPG avec annotations terminée !');
+                
+                setTimeout(() => {
+                    ExportSystem.updateProgress('jpg-progress', 0);
+                    document.getElementById('jpg-status').style.display = 'none';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Erreur capture JPG:', error);
+                ExportSystem.updateProgress('jpg-progress', -100, `Erreur: ${error.message}`);
+                ExportSystem.showNotification(`Erreur JPG: ${error.message}`, 'error');
+            } finally {
+                ExportSystem.isExporting = false;
+            }
+        }
+
+        function exportSTL() {
+            if (ExportSystem.isExporting) {
+                ExportSystem.showNotification('Un export est déjà en cours', 'error');
+                return;
+            }
+            
+            ExportSystem.isExporting = true;
+            
+            try {
+                ExportSystem.updateProgress('stl-progress', 10, 'Préparation de l\'export...');
+                
+                const content = document.querySelector('input[name="stl-content"]:checked').value;
+                const format = document.querySelector('input[name="stl-format"]:checked').value;
+                const resolution = document.querySelector('input[name="stl-resolution"]:checked').value;
+                
+                // Déterminer le nombre de segments selon la résolution
+                let segments = CONFIG.segments;
+                switch(resolution) {
+                    case 'medium': segments = 32; break;
+                    case 'low': segments = 16; break;
+                }
+                
+                ExportSystem.updateProgress('stl-progress', 30, 'Fusion des géométries...');
+                
+                let meshToExport;
+                
+                if (content === 'gobelet-only') {
+                    meshToExport = gobeletMesh ? gobeletMesh.clone() : null;
+                } else if (content === 'gobelet-with-rings') {
+                    const exportGroup = new THREE.Group();
+                    if (gobeletMesh) exportGroup.add(gobeletMesh.clone());
+                    if (ringsGroup) ringsGroup.children.forEach(ring => exportGroup.add(ring.clone()));
+                    meshToExport = exportGroup;
+                } else if (content === 'ebauche') {
+                    meshToExport = ebaucheMesh ? ebaucheMesh.clone() : null;
+                } else if (content === 'comparison') {
+                    meshToExport = ebaucheMesh ? ebaucheMesh.clone() : null;
+                }
+                
+                if (!meshToExport) throw new Error('Aucune géométrie à exporter');
+                
+                ExportSystem.updateProgress('stl-progress', 60, 'Conversion en STL...');
+                
+                if (typeof THREE.STLExporter === 'undefined') {
+                    throw new Error('STLExporter n\'est pas disponible');
+                }
+                
+                const exporter = new THREE.STLExporter();
+                const result = exporter.parse(meshToExport, { binary: format === 'binary' });
+                
+                ExportSystem.updateProgress('stl-progress', 80, 'Création du fichier...');
+                
+                const blob = format === 'binary' 
+                    ? new Blob([result], { type: 'application/octet-stream' })
+                    : new Blob([result], { type: 'text/plain' });
+                
+                const link = document.createElement('a');
+                const date = new Date().toISOString().split('T')[0];
+                const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
+                const extension = 'stl';
+                
+                let fileName = '';
+                switch(content) {
+                    case 'gobelet-only': fileName = `gobelet_seul_${date}_${time}.${extension}`; break;
+                    case 'gobelet-with-rings': fileName = `gobelet_complet_${date}_${time}.${extension}`; break;
+                    case 'ebauche': fileName = `ebauche_${date}_${time}.${extension}`; break;
+                    case 'comparison': fileName = `comparaison_ebauche_${date}_${time}.${extension}`; break;
+                }
+                
+                link.download = fileName;
+                link.href = URL.createObjectURL(blob);
+                link.click();
+                
+                ExportSystem.updateProgress('stl-progress', 100, 'Export STL terminé !');
+                ExportSystem.showNotification('Export STL avec anneaux terminé !');
+                
+                setTimeout(() => {
+                    URL.revokeObjectURL(link.href);
+                    ExportSystem.updateProgress('stl-progress', 0);
+                    document.getElementById('stl-status').style.display = 'none';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Erreur export STL:', error);
+                ExportSystem.updateProgress('stl-progress', -100, `Erreur: ${error.message}`);
+                ExportSystem.showNotification(`Erreur STL: ${error.message}`, 'error');
+            } finally {
+                ExportSystem.isExporting = false;
+            }
+        }
+
+        function addAnnotationsToCanvas(ctx, width, height) {
+            const FACTEUR_AGRANDISSEMENT = 2.5;
+            const baseWidth = 3508;
+            const scale = (width / baseWidth) * FACTEUR_AGRANDISSEMENT;
+            
+            const padding = 40 * scale;
+            const lineHeight = 28 * scale;
+            const fontSize = 20 * scale;
+            const titleFontSize = 26 * scale;
+            
+            const blockWidth = 420 * scale;
+            const blockHeight = 300 * scale;
+            
+            // Fond blanc opaque
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(padding, padding, blockWidth, blockHeight);
+            
+            // Bordure visible
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 3 * scale;
+            ctx.strokeRect(padding, padding, blockWidth, blockHeight);
+            
+            // Titre principal
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = `bold ${titleFontSize}px Arial`;
+            ctx.fillText('GOBELET PARAMÉTRÉ', padding + 20 * scale, padding + 40 * scale);
+            
+            // Ligne de séparation
+            ctx.beginPath();
+            ctx.moveTo(padding + 20 * scale, padding + 50 * scale);
+            ctx.lineTo(padding + blockWidth - 20 * scale, padding + 50 * scale);
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 2 * scale;
+            ctx.stroke();
+            
+            // Paramètres
+            ctx.font = `bold ${fontSize * 0.9}px Arial`;
+            let y = padding + 80 * scale;
+            
+            ctx.fillText(`Hauteur: ${state.H} mm`, padding + 25 * scale, y);
+            y += lineHeight;
+            ctx.fillText(`Ø Ouverture: ${state.DO} mm`, padding + 25 * scale, y);
+            y += lineHeight;
+            ctx.fillText(`Ø Base: ${state.DB} mm`, padding + 25 * scale, y);
+            y += lineHeight;
+            ctx.fillText(`Épaisseur: ${state.Ep} mm`, padding + 25 * scale, y);
+            y += lineHeight;
+            ctx.fillText(`Anneaux: ${state.n}`, padding + 25 * scale, y);
+            y += lineHeight;
+            
+            // État
+            const etatNoms = { 'cru': 'CRU', 'sec': 'SEC', 'cuit': 'CUITE' };
+            ctx.fillText(`État: ${etatNoms[state.etatVisualisation]}`, padding + 25 * scale, y);
+            y += lineHeight * 1.2;
+            
+            // Informations de date
+            ctx.font = `${fontSize * 0.8}px Arial`;
+            ctx.fillStyle = '#666666';
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('fr-FR');
+            const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            
+            ctx.fillText(`${dateStr} ${timeStr}`, padding + 25 * scale, y);
+            y += lineHeight * 0.9;
+            ctx.fillText('Version 5.0', padding + 25 * scale, y);
+            
+            // Échelle graphique
+            const scaleLength = 60 * scale;
+            const scaleY = height - 60 * scale;
+            const scaleX = width - scaleLength - 40 * scale;
+            
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(scaleX, scaleY, scaleLength, 6 * scale);
+            
+            // Graduations
+            ctx.fillRect(scaleX, scaleY - 10 * scale, 4 * scale, 20 * scale);
+            ctx.fillRect(scaleX + scaleLength/2, scaleY - 6 * scale, 4 * scale, 12 * scale);
+            ctx.fillRect(scaleX + scaleLength, scaleY - 10 * scale, 4 * scale, 20 * scale);
+            
+            // Texte d'échelle
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.fillText('60 mm', scaleX + scaleLength/2 - 25 * scale, scaleY - 20 * scale);
+            ctx.font = `${fontSize * 0.9}px Arial`;
+            ctx.fillText('Échelle 1:1', scaleX, scaleY + 30 * scale);
+            
+            // Indication de coupe si active
+            if (state.clippingEnabled) {
+                ctx.fillStyle = 'rgba(52, 152, 219, 0.95)';
+                const cutWidth = 280 * scale;
+                const cutHeight = 65 * scale;
+                ctx.fillRect(40 * scale, 40 * scale, cutWidth, cutHeight);
+                
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = `bold ${titleFontSize * 0.85}px Arial`;
+                ctx.fillText('VUE EN COUPE', 60 * scale, 40 * scale + 30 * scale);
+                ctx.font = `bold ${fontSize}px Arial`;
+                ctx.fillText(`Position: ${Math.round(state.clippingPosition * 100)}%`, 60 * scale, 40 * scale + 55 * scale);
+            }
+        }
+
+        // ============ CONTROLES THREE.JS ============
+        function toggleGrid() {
+            isGridVisible = !isGridVisible;
+            
+            if (!gridHelper) {
+                const size = 200;
+                gridHelper = new THREE.GridHelper(size, 20, 0x888888, 0xcccccc);
+                gridHelper.name = 'gridHelper';
+                gridHelper.position.y = -1;
+                scene.add(gridHelper);
+            }
+            
+            gridHelper.visible = isGridVisible;
+            
+            const btn = document.getElementById('grid-toggle');
+            if (btn) {
+                btn.textContent = isGridVisible ? 'Grille ON' : 'Grille OFF';
+                btn.classList.toggle('active', isGridVisible);
+            }
+        }
+
+        function recenterView() {
+            if (controls) controls.reset();
+        }
+
+        function onResize() {
+            const container = document.getElementById('scene-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (controls) controls.update();
+            if (renderer && scene && camera) renderer.render(scene, camera);
+        }
+
+        function init() {
+            const container = document.getElementById('scene-container');
+            if (!container) {
+                console.error("Conteneur #scene-container non trouvé!");
+                return;
+            }
+            
+            try {
+                // Initialiser la scène Three.js
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0xf0f0f0);
+                
+                // Configurer la caméra
+                camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 2000);
+                camera.position.set(200, 150, 200);
+                camera.lookAt(0, 60, 0);
+                
+                // Configurer le rendu
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.localClippingEnabled = true;
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                container.appendChild(renderer.domElement);
+                
+                // Configurer les contrôles
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+                
+                // Ajouter les lumières
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+                scene.add(ambientLight);
+                
+                const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.6);
+                dirLight1.position.set(5, 10, 5);
+                scene.add(dirLight1);
+                
+                const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+                dirLight2.position.set(-5, 5, -5);
+                scene.add(dirLight2);
+                
+                // Créer le groupe pour les anneaux
+                ringsGroup = new THREE.Group();
+                scene.add(ringsGroup);
+                
+                // Initialiser l'interface
+                initializeInterface();
+                initializeClipping();
+                updateEtatInfo();
+                
+                // Configurer les événements
+                window.addEventListener('resize', onResize);
+                
+                // Ajuster la hauteur du contenu
+                function adjustScrollableHeight() {
+                    const controlsContent = document.querySelector('.controls-content');
+                    const controlsHeader = document.querySelector('.controls-header');
+                    const stats = document.querySelector('.stats');
+                    
+                    if (controlsContent && controlsHeader && stats) {
+                        const headerHeight = controlsHeader.offsetHeight;
+                        const statsHeight = stats.offsetHeight;
+                        const windowHeight = window.innerHeight;
+                        const availableHeight = windowHeight - headerHeight - statsHeight - 30;
+                        controlsContent.style.maxHeight = Math.max(availableHeight, 300) + 'px';
+                    }
+                }
+                
+                window.addEventListener('resize', adjustScrollableHeight);
+                setTimeout(adjustScrollableHeight, 100);
+                
+                // Construire la scène et démarrer l'animation
+                buildAll();
+                animate();
+                
+            } catch (error) {
+                console.error("Erreur lors de l'initialisation:", error);
+            }
+        }
+
+        // Démarrer l'application
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
