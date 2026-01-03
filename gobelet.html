@@ -62,21 +62,58 @@
         .ring-table td { padding: 8px; border: 1px solid var(--border); text-align: center; }
         .ring-disabled { opacity: 0.5; background-color: #f9f9f9; }
         
-        /* ============ SECTION EXPORT ============ */
-        .export-section { margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border); position: sticky; bottom: 0; background: var(--panel); z-index: 99; padding-bottom: 15px; flex-shrink: 0; }
+        /* ============ STYLES POUR L'ONGLET EXPORT ============ */
+        #export .option-group.compact {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 5px;
+        }
+        
+        #export .option-group.compact label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            padding: 6px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: #f8f9fa;
+            transition: all 0.2s;
+            cursor: pointer;
+            justify-content: center;
+        }
+        
+        #export .option-group.compact label:hover {
+            background: #e9ecef;
+            border-color: var(--primary);
+        }
+        
+        #export .option-group.compact input[type="radio"],
+        #export .option-group.compact input[type="checkbox"] {
+            margin: 0;
+        }
+        
+        #export .export-btn.compact {
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 6px;
+            flex: 1;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+        }
+        
+        /* ============ BOUTONS D'EXPORT ============ */
         .export-btn { background: var(--success); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-size: 1em; font-weight: 600; cursor: pointer; width: 100%; margin-top: 20px; transition: background 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .export-btn:hover { background: #27ae60; }
         .export-btn:disabled { background: #95a5a6; cursor: not-allowed; }
         .export-btn.processing { background: var(--warning); cursor: wait; }
         
-        /* ============ MODALS D'EXPORT ============ */
-        .export-modal { background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 15px; margin: 10px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; max-height: 60vh; overflow-y: auto; }
-        .export-modal.active { display: block; }
-        .option-group { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
-        .option-group label { display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer; }
-        .export-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .export-action-btn { flex: 1; background: var(--success); color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .export-cancel-btn { flex: 1; background: #95a5a6; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; }
+        /* ============ ÉTATS D'EXPORT ============ */
         .export-progress { height: 4px; background: var(--primary); width: 0%; transition: width 0.3s; margin: 10px 0; border-radius: 2px; }
         .export-status { padding: 10px; margin: 10px 0; border-radius: 4px; font-size: 14px; text-align: center; display: none; }
         .export-status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
@@ -84,7 +121,7 @@
         .export-status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
         
         /* ============ STATISTIQUES ============ */
-        .stats { margin-top: 20px; padding: 15px; border-top: 1px solid var(--border); font-size: 14px; background: var(--panel); flex-shrink: 0; }
+        .stats { margin-top: 0; border-top: 1px solid var(--border); padding: 15px; background: var(--panel); flex-shrink: 0; max-height: 300px; overflow-y: auto; font-size: 13px; }
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .stat-value { font-weight: 600; }
         
@@ -125,7 +162,7 @@
             .controls { width: 100%; height: auto; max-height: 60vh; position: relative; }
             .viewer { height: 40vh; position: relative; }
             .tabs { position: relative; top: auto; }
-            .export-section { position: relative; bottom: auto; }
+            .stats { position: relative; bottom: auto; }
             .cutaway-controls { top: 50px; left: 10px; right: 10px; min-width: auto; }
         }
         
@@ -152,6 +189,7 @@
                     <button class="tab" onclick="showTab('anneaux', this)">Anneaux</button>
                     <button class="tab" onclick="showTab('materiau', this)">Matériau</button>
                     <button class="tab" onclick="showTab('tournage', this)">Tournage</button>
+                    <button class="tab" onclick="showTab('export', this)">Export</button>
                 </div>
             </div>
             
@@ -231,106 +269,89 @@
                     </div>
                 </div>
                 
-                <!-- Section Export -->
-                <div class="export-section">
-                    <div class="section-title">Export</div>
+                <!-- Onglet Export -->
+                <div id="export" class="param-group">
+                    <div class="info-box">Exportez votre modèle en JPG haute résolution ou en STL</div>
                     
-                    <button id="btn-export-jpg" class="export-btn" onclick="openExportModal('jpg')">
-                        <span>📸</span> Exporter JPG (600 DPI)
-                    </button>
-                    <button id="btn-export-stl" class="export-btn" onclick="openExportModal('stl')">
-                        <span>🖨️</span> Exporter STL
-                    </button>
+                    <!-- Section JPG -->
+                    <div class="section-title">Export JPG (600 DPI)</div>
                     
-                    <!-- Modal JPG -->
-                    <div id="modal-jpg" class="export-modal">
-                        <div class="section-title">Options d'export JPG</div>
-                        
-                        <div class="param">
-                            <label>Contenu à exporter</label>
-                            <div class="option-group">
-                                <label><input type="radio" name="jpg-content" value="gobelet" checked> Gobelet seul</label>
-                                <label><input type="radio" name="jpg-content" value="gobelet-with-rings"> Gobelet avec anneaux</label>
-                                <label><input type="radio" name="jpg-content" value="ebauche"> Ébauche seule</label>
-                                <label><input type="radio" name="jpg-content" value="comparaison"> Comparaison</label>
-                            </div>
+                    <div class="param">
+                        <label>Contenu</label>
+                        <div class="option-group compact">
+                            <label><input type="radio" name="jpg-content" value="gobelet" checked> Gobelet</label>
+                            <label><input type="radio" name="jpg-content" value="gobelet-with-rings"> Avec anneaux</label>
+                            <label><input type="radio" name="jpg-content" value="ebauche"> Ébauche</label>
+                            <label><input type="radio" name="jpg-content" value="comparaison"> Comparaison</label>
                         </div>
-                        
-                        <div class="param">
-                            <label>Grille millimétrée</label>
-                            <div class="option-group">
-                                <label><input type="radio" name="jpg-grid" value="5mm" checked> Grille 5mm</label>
-                                <label><input type="radio" name="jpg-grid" value="1mm"> Grille 1mm</label>
-                                <label><input type="radio" name="jpg-grid" value="10mm"> Grille 10mm</label>
-                                <label><input type="radio" name="jpg-grid" value="none"> Aucune</label>
-                            </div>
-                        </div>
-                        
-                        <div class="param">
-                            <label>Annotations</label>
-                            <div class="option-group">
-                                <label><input type="checkbox" name="jpg-annotation" value="dimensions" checked> Dimensions et paramètres</label>
-                                <label><input type="checkbox" name="jpg-annotation" value="echelle" checked> Échelle graphique</label>
-                                <label><input type="checkbox" name="jpg-annotation" value="date" checked> Date & version</label>
-                            </div>
-                        </div>
-                        
-                        <div class="param">
-                            <label>Vue en coupe</label>
-                            <div class="slider-container">
-                                <input id="cutaway-slider" type="range" min="0" max="100" value="50" oninput="updateCutawayPreview(this.value)">
-                                <span id="cutaway-value">50%</span>
-                            </div>
-                        </div>
-                        
-                        <div class="export-actions">
-                            <button onclick="captureJPG()" class="export-action-btn">📸 Capturer JPG</button>
-                            <button onclick="closeExportModal()" class="export-cancel-btn">Annuler</button>
-                        </div>
-                        
-                        <div class="export-progress" id="jpg-progress"></div>
-                        <div id="jpg-status" class="export-status"></div>
                     </div>
                     
-                    <!-- Modal STL -->
-                    <div id="modal-stl" class="export-modal">
-                        <div class="section-title">Options d'export STL</div>
-                        
-                        <div class="param">
-                            <label>Type d'export</label>
-                            <div class="option-group">
-                                <label><input type="radio" name="stl-content" value="gobelet-only" checked> Gobelet seul (sans anneaux)</label>
-                                <label><input type="radio" name="stl-content" value="gobelet-with-rings"> Gobelet avec anneaux</label>
-                                <label><input type="radio" name="stl-content" value="ebauche"> Ébauche seule</label>
-                                <label><input type="radio" name="stl-content" value="comparison"> Comparaison (ébauche)</label>
-                            </div>
+                    <div class="param">
+                        <label>Grille millimétrée</label>
+                        <div class="option-group compact">
+                            <label><input type="radio" name="jpg-grid" value="5mm" checked> 5mm</label>
+                            <label><input type="radio" name="jpg-grid" value="1mm"> 1mm</label>
+                            <label><input type="radio" name="jpg-grid" value="10mm"> 10mm</label>
+                            <label><input type="radio" name="jpg-grid" value="none"> Aucune</label>
                         </div>
-                        
-                        <div class="param">
-                            <label>Format STL</label>
-                            <div class="option-group">
-                                <label><input type="radio" name="stl-format" value="binary" checked> Binaire (recommandé)</label>
-                                <label><input type="radio" name="stl-format" value="ascii"> ASCII (lisible)</label>
-                            </div>
-                        </div>
-                        
-                        <div class="param">
-                            <label>Résolution</label>
-                            <div class="option-group">
-                                <label><input type="radio" name="stl-resolution" value="high" checked> Haute (64 segments)</label>
-                                <label><input type="radio" name="stl-resolution" value="medium"> Moyenne (32 segments)</label>
-                                <label><input type="radio" name="stl-resolution" value="low"> Basse (16 segments)</label>
-                            </div>
-                        </div>
-                        
-                        <div class="export-actions">
-                            <button onclick="exportSTL()" class="export-action-btn">💾 Exporter STL</button>
-                            <button onclick="closeExportModal()" class="export-cancel-btn">Annuler</button>
-                        </div>
-                        
-                        <div class="export-progress" id="stl-progress"></div>
-                        <div id="stl-status" class="export-status"></div>
                     </div>
+                    
+                    <div class="param">
+                        <label>Annotations</label>
+                        <div class="option-group compact">
+                            <label><input type="checkbox" name="jpg-annotation" value="dimensions" checked> Dimensions</label>
+                            <label><input type="checkbox" name="jpg-annotation" value="echelle" checked> Échelle</label>
+                            <label><input type="checkbox" name="jpg-annotation" value="date" checked> Date</label>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group" style="margin-top: 15px; margin-bottom: 10px;">
+                        <button onclick="captureJPG()" class="export-btn compact">
+                            <span>📸</span> Capturer JPG
+                        </button>
+                    </div>
+                    
+                    <div class="export-progress" id="jpg-progress"></div>
+                    <div id="jpg-status" class="export-status"></div>
+                    
+                    <!-- Section STL -->
+                    <div class="section-title" style="margin-top: 25px;">Export STL 3D</div>
+                    
+                    <div class="param">
+                        <label>Modèle</label>
+                        <div class="option-group compact">
+                            <label><input type="radio" name="stl-content" value="gobelet-only" checked> Gobelet seul</label>
+                            <label><input type="radio" name="stl-content" value="gobelet-with-rings"> Avec anneaux</label>
+                            <label><input type="radio" name="stl-content" value="ebauche"> Ébauche</label>
+                            <label><input type="radio" name="stl-content" value="comparison"> Comparaison</label>
+                        </div>
+                    </div>
+                    
+                    <div class="param">
+                        <label>Format</label>
+                        <div class="option-group compact">
+                            <label><input type="radio" name="stl-format" value="binary" checked> Binaire</label>
+                            <label><input type="radio" name="stl-format" value="ascii"> ASCII</label>
+                        </div>
+                    </div>
+                    
+                    <div class="param">
+                        <label>Résolution</label>
+                        <div class="option-group compact">
+                            <label><input type="radio" name="stl-resolution" value="high" checked> Haute</label>
+                            <label><input type="radio" name="stl-resolution" value="medium"> Moyenne</label>
+                            <label><input type="radio" name="stl-resolution" value="low"> Basse</label>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group" style="margin-top: 15px; margin-bottom: 10px;">
+                        <button onclick="exportSTL()" class="export-btn compact">
+                            <span>🖨️</span> Exporter STL
+                        </button>
+                    </div>
+                    
+                    <div class="export-progress" id="stl-progress"></div>
+                    <div id="stl-status" class="export-status"></div>
                 </div>
             </div>
             
@@ -611,7 +632,14 @@
             
             element.classList.add('active');
             document.getElementById(tabId).classList.add('active');
-            closeExportModal();
+            
+            // Si c'est l'onglet export, réinitialiser les barres de progression
+            if (tabId === 'export') {
+                ExportSystem.updateProgress('jpg-progress', 0);
+                ExportSystem.updateProgress('stl-progress', 0);
+                document.getElementById('jpg-status').style.display = 'none';
+                document.getElementById('stl-status').style.display = 'none';
+            }
         }
 
         function updateParam(paramId, value) {
@@ -1163,42 +1191,6 @@
         }
 
         // ============ FONCTIONS D'EXPORT ============
-        function openExportModal(type) {
-            closeExportModal();
-            
-            const modal = document.getElementById(`modal-${type}`);
-            if (modal) {
-                modal.classList.add('active');
-                ExportSystem.currentModal = type;
-                
-                // Ajuster la hauteur si nécessaire
-                const modalRect = modal.getBoundingClientRect();
-                const viewportHeight = window.innerHeight;
-                if (modalRect.bottom > viewportHeight - 50) {
-                    modal.style.maxHeight = (viewportHeight - 100) + 'px';
-                    modal.style.overflowY = 'auto';
-                }
-            }
-            
-            // Animation des boutons
-            const jpgBtn = document.getElementById('btn-export-jpg');
-            const stlBtn = document.getElementById('btn-export-stl');
-            if (jpgBtn) jpgBtn.classList.remove('pulse');
-            if (stlBtn) stlBtn.classList.remove('pulse');
-            
-            if (type === 'jpg' && jpgBtn) jpgBtn.classList.add('pulse');
-            if (type === 'stl' && stlBtn) stlBtn.classList.add('pulse');
-        }
-
-        function closeExportModal() {
-            document.getElementById('modal-jpg').classList.remove('active');
-            document.getElementById('modal-stl').classList.remove('active');
-            ExportSystem.currentModal = null;
-            
-            document.getElementById('btn-export-jpg').classList.remove('pulse');
-            document.getElementById('btn-export-stl').classList.remove('pulse');
-        }
-
         async function captureJPG() {
             if (ExportSystem.isExporting) {
                 ExportSystem.showNotification('Un export est déjà en cours', 'error');
