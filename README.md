@@ -43,14 +43,15 @@ http-server -p 8000
 
 ```
 vesemt-simple/
-├── css/
+├── vesemt-css/
 │   └── style.css              # Feuille de style principale
-├── images/                    # 19 images du site
+├── images/                    # 20 images du site
 │   ├── 1er-tour-Definitif-200x300.png
 │   ├── 1er-tour-Definitif-5-800x445.png
 │   ├── Bandeau-2-800x445.jpg
 │   ├── Comparatif-ok.png
 │   ├── Decoupage-electoral.jpg
+│   ├── Gemini_Generated_Image_izuzpaizuzpaizuz.png
 │   ├── Illustration-800x445.png
 │   ├── Illustration.png
 │   ├── Ilustration-300x200.png
@@ -62,10 +63,11 @@ vesemt-simple/
 │   ├── Les-electeurs-fuient-les-promesses-politiques-800x445.png
 │   ├── Les-electeurs-fuient-les-promesses-politiques.png
 │   ├── Logo.jpg
+│   ├── New-bandeau-SITE.jpg
 │   ├── Nouvelle-image.png
 │   ├── Resultats-premier-tours-2026-municpales-1.jpg
 │   └── Resultats-premier-tours-2026-municpales.jpg
-├── articles/                  # 10 articles
+├── articles/                  # 11 articles
 │   ├── anatomie-rapport-force-autopsie-illusion.html
 │   ├── bilan-mandat-2020-2026.html
 │   ├── communique-bravo-deux-cotes-intervalles.html
@@ -87,6 +89,7 @@ vesemt-simple/
 ├── saint-pierre-des-corps.html  # Catégorie
 ├── vesemt-localement.html      # Page VESEMT localement
 ├── README.md                   # Ce fichier
+├── RAPPORT_ANALYSE.md          # Rapport d'analyse détaillé
 └── .gitignore                  # Fichiers ignorés par Git
 ```
 
@@ -118,7 +121,7 @@ vesemt-simple/
 
 ## 📝 Articles
 
-Le site contient 10 articles sur les thèmes suivants :
+Le site contient 11 articles sur les thèmes suivants :
 
 1. **Rapport VESEMT : Autopsie d'un vote discipliné dans le désordre**
    - Analyse des résultats électoraux
@@ -153,7 +156,7 @@ Le site contient 10 articles sur les thèmes suivants :
 ## 🎨 Personnalisation
 
 ### Modifier le CSS
-Le fichier `css/style.css` contient tous les styles du site. Vous pouvez modifier :
+Le fichier `vesemt-css/style.css` contient tous les styles du site. Vous pouvez modifier :
 - Les couleurs
 - Les polices
 - La mise en page
@@ -215,10 +218,10 @@ Le site est entièrement responsive et s'adapte à :
 ## 📊 Statistiques
 
 - **Total de fichiers HTML** : 20
-- **Total d'images** : 19
+- **Total d'images** : 20
 - **Total de fichiers CSS** : 1
 - **Lignes de code** : ~15,000
-- **Taille du projet** : 4.5 Mo
+- **Taille du projet** : 8 Mo
 
 ## 🤝 Contribution
 
@@ -245,5 +248,26 @@ Pour toute question ou suggestion, veuillez contacter l'équipe VESEMT via la pa
 ---
 
 **Date de création** : 1er avril 2026
-**Version** : 1.0.0
+**Version** : 1.1.0
 **Statut** : ✅ Complet et fonctionnel
+
+## 📋 Corrections effectuées (1er avril 2026)
+
+### ✅ Corrections visuelles majeures
+
+1. **Bandeau d'accueil (Hero Banner)**
+   - Ajout du hero banner sur toutes les pages (20 fichiers HTML)
+   - Image `New-bandeau-SITE.jpg` (177KB) téléchargée depuis le site original
+   - Correction visuelle majeure - le site a maintenant son identité visuelle
+
+2. **Image manquante dans "Qui sommes nous ?"**
+   - Téléchargement de l'image `Gemini_Generated_Image_izuzpaizuzpaizuz.png` (2.8MB)
+   - Restauration complète du contenu visuel de la page
+
+### 📖 Documentation
+
+- Création du rapport d'analyse détaillé (`RAPPORT_ANALYSE.md`)
+- Propositions d'amélioration pour la maintenabilité (humain + IA)
+- Plan d'action recommandé pour les évolutions futures
+
+Pour plus de détails, consultez le [RAPPORT_ANALYSE.md](RAPPORT_ANALYSE.md).

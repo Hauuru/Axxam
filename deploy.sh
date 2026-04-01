@@ -22,8 +22,8 @@ find . -name "Thumbs.db" -delete
 
 # Vérifier la structure
 echo "📁 Vérification de la structure..."
-if [ ! -d "css" ]; then
-    echo "❌ Erreur : dossier css manquant"
+if [ ! -d "vesemt-css" ]; then
+    echo "❌ Erreur : dossier vesemt-css manquant"
     exit 1
 fi
 
@@ -40,7 +40,7 @@ fi
 # Compter les fichiers
 html_files=$(find . -name "*.html" | wc -l)
 image_files=$(find images/ -type f | wc -l)
-css_files=$(find css/ -type f | wc -l)
+css_files=$(find vesemt-css/ -type f | wc -l)
 
 echo "📊 Statistiques :"
 echo "   - Fichiers HTML : $html_files"
@@ -57,7 +57,7 @@ for file in $(find . -name "*.html"); do
     
     for link in $links; do
         # Vérifier si le fichier existe
-        if [ ! -f "$link" ] && [ ! -f "articles/$(basename $link)" ] && [ ! -f "images/$(basename $link)" ] && [ ! -f "css/$(basename $link)" ]; then
+        if [ ! -f "$link" ] && [ ! -f "articles/$(basename $link)" ] && [ ! -f "images/$(basename $link)" ] && [ ! -f "vesemt-css/$(basename $link)" ]; then
             echo "   ⚠️  Lien brisé dans $file : $link"
             broken_links=$((broken_links + 1))
         fi

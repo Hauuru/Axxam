@@ -43,6 +43,20 @@ header {
     color: #7E7777;
 }
 
+/* Hero Banner */
+.hero-banner {
+    width: 100%;
+    max-width: 1406px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.hero-banner img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
 /* Navigation */
 nav {
     background-color: #232323;
