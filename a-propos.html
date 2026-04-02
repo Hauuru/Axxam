@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>À propos - Axxam</title>
+    <meta name="description" content="Découvrez Axxam, votre animateur événementiel. Passionné par les animations créatives et écologiques, je crée des moments inoubliables pour tous vos événements.">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://axxam.net/a-propos.html">
+    <meta property="og:title" content="À propos - Axxam - Animations créatives et durables">
+    <meta property="og:description" content="Découvrez Axxam, votre animateur événementiel. Passionné par les animations créatives et écologiques.">
+    <meta property="og:image" content="https://axxam.net/logo.jpg">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://axxam.net/a-propos.html">
+    <meta property="twitter:title" content="À propos - Axxam - Animations créatives et durables">
+    <meta property="twitter:description" content="Découvrez Axxam, votre animateur événementiel. Passionné par les animations créatives et écologiques.">
+    <meta property="twitter:image" content="https://axxam.net/logo.jpg">
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico">
+    <style>
+        /* Styles spécifiques À propos */
+        .profile-intro {
+            text-align: center;
+            margin-bottom: var(--space-xl);
+            padding: var(--space-lg);
+            background: linear-gradient(135deg, var(--primary-light), white);
+            border-radius: var(--border-radius);
+        }
+        
+        .mission-grid {
+            display: grid;
+            gap: var(--space-md);
+            margin-bottom: var(--space-xl);
+        }
+        
+        .mission-item {
+            background: var(--bg-white);
+            padding: var(--space-lg);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--primary);
+        }
+        
+        .values-container {
+            background: var(--bg-light);
+            padding: var(--space-xl);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--space-xl);
+        }
+        
+        .value-item {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+            padding-bottom: var(--space-lg);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .value-item:last-child {
+            border-bottom: none;
+        }
+        
+        .value-emoji {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+        
+        /* Parcours harmonieux en 4 blocs */
+        .journey-container {
+            margin-top: var(--space-xl);
+        }
+        
+        .journey-item {
+            background: white;
+            padding: var(--space-lg);
+            border-radius: var(--border-radius);
+            height: 100%;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        
+        .journey-item h3 {
+            color: var(--primary);
+            margin-bottom: var(--space-sm);
+        }
+        
+        .journey-item ul {
+            list-style-position: inside;
+            padding-left: var(--space-sm);
+        }
+        
+        .journey-item li {
+            margin-bottom: var(--space-xs);
+        }
+        
+        /* Qualités */
+        .qualities-grid {
+            margin-top: var(--space-lg);
+        }
+        
+        .quality-item {
+            text-align: center;
+            padding: var(--space-md);
+        }
+        
+        .quality-item h3 {
+            color: var(--primary);
+        }
+        
+        @media (max-width: 767px) {
+            .value-item {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .value-emoji {
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-container">
+            <img src="logo.jpg" alt="Logo Axxam" class="header-logo">
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="a-propos.html" class="active">À propos</a></li>
+                    <li><a href="services.html">Services</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="section">
+            <div class="container">
+                <!-- Introduction -->
+                <div class="profile-intro">
+                    <h1>À propos d'Axxam - Votre animateur événementiel</h1>
+                    <p style="max-width: 800px; margin: 0 auto;">
+                        Je m'appelle <strong>AÏT MOHAMED Léo</strong>, animateur passionné et touche-à-tout, engagé depuis plus de 15 ans. 
+                        Mon métier ? Accompagner des dynamiques uniques où chacun se retrouve pour apprendre, créer, jouer et vivre ensemble.
+                    </p>
+                </div>
+
+                <!-- Objectifs -->
+                <article class="card">
+                    <h2>Mes objectifs</h2>
+                    <p>Mon objectif va au-delà de l'occupationnel : je conçois des animations qui <strong>relient</strong>, <strong>éduquent</strong> et <strong>pérennisent des pratiques culturelles</strong>.</p>
+                    
+                    <div class="mission-grid grid grid-3">
+                        <div class="mission-item">
+                            <h3>Relier</h3>
+                            <p>Favoriser les échanges entre les participants et mettre en place une dynamique de groupe.</p>
+                        </div>
+                        <div class="mission-item">
+                            <h3>Éduquer</h3>
+                            <p>Nous avons tous des savoirs à partager, à cultiver. Mes animations sont pensées pour être des espaces où chacun peut offrir, recevoir, échanger afin de s'épanouir.</p>
+                        </div>
+                        <div class="mission-item">
+                            <h3>Pérenniser</h3>
+                            <p>Au-delà du temps passé ensemble, vous confortez votre capacité à pratiquer, cultiver et transmettre à nouveau une culture qui vous ressemble.</p>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Valeurs -->
+                <article class="card">
+                    <h2>Mes valeurs</h2>
+                    <div class="values-container">
+                        <div class="value-item">
+                            <span class="value-emoji">🌱</span>
+                            <div>
+                                <h3>Éducation populaire</h3>
+                                <p>Apprendre et transmettre en s'appuyant sur l'expérience de chacun. Se réapproprier les moyens et les objectifs de notre éducation.</p>
+                            </div>
+                        </div>
+                        <div class="value-item">
+                            <span class="value-emoji">♻️</span>
+                            <div>
+                                <h3>Permaculture</h3>
+                                <p>La permaculture ne se limite pas au jardinage. Elle intègre nos éléments de culture dans un ensemble de pratiques pérennes, qui préservent leur environnement.</p>
+                            </div>
+                        </div>
+                        <div class="value-item">
+                            <span class="value-emoji">🎲</span>
+                            <div>
+                                <h3>Esprit jeu</h3>
+                                <p>Le jeu est une pratique libre, incertaine, réglée, fictive, improductive et séparée. Le plaisir y est moteur d'apprentissage (merci Roger Caillois !).</p>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Parcours en 4 blocs harmonieux -->
+                <article class="card">
+                    <h2>Mon parcours</h2>
+                    <div class="journey-container">
+                        <div class="grid grid-4">
+                            <div class="journey-item">
+                                <h3>🌱 Nature & Permaculture</h3>
+                                <ul>
+                                    <li>BP REA en maraîchage bio + CCP Permaculture</li>
+                                    <li>Création et animation de jardins pédagogiques</li>
+                                    <li>Jardinier passionné</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="journey-item">
+                                <h3>🎨 Argile & Création</h3>
+                                <ul>
+                                    <li>3 ans de pratique du tournage transmis par ma mère potière</li>
+                                    <li>Animations en festival et centre de loisirs</li>
+                                    <li>Interventions en milieu ouvert</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="journey-item">
+                                <h3>♟️ Jeux de société</h3>
+                                <ul>
+                                    <li>15 ans d'expérience en association (soirées jeux, animation en pied d'immeuble)</li>
+                                    <li>DIFFE (Diplôme d'initiation de la Fédération d'échecs)</li>
+                                    <li>Interventions scolaires et périscolaires</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="journey-item">
+                                <h3>🎭 Animation générale</h3>
+                                <ul>
+                                    <li>20 ans d'expérience dans tout type de structure</li>
+                                    <li>BAFA</li>
+                                    <li>TAPS (spectacles, albums, événements)</li>
+                                    <li>Services jeunesse municipaux</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Pourquoi me choisir -->
+                <article class="card">
+                    <h2>Pourquoi me choisir ?</h2>
+                    <div class="qualities-grid grid grid-3">
+                        <div class="quality-item">
+                            <h3>Polyvalence</h3>
+                            <p>Je mêle compétences techniques (maraîchage, tournage, jeux de société) et pédagogiques.</p>
+                        </div>
+                        <div class="quality-item">
+                            <h3>Pédagogie active</h3>
+                            <p>Je privilégie le "faire ensemble" aux discours théoriques.</p>
+                        </div>
+                        <div class="quality-item">
+                            <h3>Adaptabilité</h3>
+                            <p>Publics enfants, ados, seniors - en milieu urbain ou rural, en milieu ouvert ou fermé.</p>
+                        </div>
+                    </div>
+                    <p style="
+                        text-align: center;
+                        font-style: italic;
+                        margin-top: var(--space-lg);
+                        padding: var(--space-md);
+                        background: var(--bg-light);
+                        border-radius: var(--border-radius);
+                    ">Un projet, une envie ? Parlons-en autour d'un café (ou d'une partie d'échecs !)</p>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2025 Axxam - Tous droits réservés</p>
+            <p>Invoqué par Calcifer et Hauuru</p>
+        </div>
+    </footer>
+</body>
+</html>

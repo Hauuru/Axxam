@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://axxam.net/sitemap.xml
