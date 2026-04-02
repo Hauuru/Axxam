@@ -227,3 +227,43 @@
 - Site accessible via axxam.net/vesemt.org/index.html
 - 52 fichiers renommés et déplacés
 - Déploiement réussi
+
+### 20:03 - Restauration du site Axxam.net
+- Détection d'un problème : le site Axxam.net a été supprimé lors du déploiement
+- Copie des fichiers du site Axxam.net depuis projects/active/Axxam.net/
+- Restauration de index.html, a-propos.html, contact.html, services.html
+- Restauration des fichiers statiques (favicon.png, logo.jpg, logo.rar)
+- Restauration des fichiers de configuration (CNAME, robots.txt, sitemap.xml)
+- Commit 3e9a4e7 créé avec 13 fichiers ajoutés
+- Push vers Hauuru/Axxam réussi
+- Le site Axxam.net est maintenant accessible à la racine du dépôt
+
+### 20:35 - Demande de mise à jour de la fabulation
+- Demande de l'utilisateur pour refaire la fabulation d'aujourd'hui
+- Mise à jour du journal des modifications avec tous les événements
+- Vue complète de la journée
+
+---
+
+## Résumé de la journée
+
+### Modifications effectuées
+- 28 fichiers modifiés (articles et pages statiques)
+- 6 nouveaux fichiers créés (template, styles, articles)
+- 52 fichiers renommés et déplacés dans vesemt.org/
+- 13 fichiers restaurés pour le site Axxam.net
+
+### Déploiements
+- 3 commits créés (1a4c083, fe06fb4, 3e9a4e7)
+- 3 pushes vers Hauuru/Axxam
+- GitHub Pages se mettra à jour automatiquement
+
+### Structure finale
+- Racine : Site Axxam.net (index.html, a-propos.html, contact.html, services.html, etc.)
+- vesemt.org/ : Site VESEMT (index.html, articles, styles, etc.)
+
+### Statut
+- ✅ Site VESEMT amélioré et déployé
+- ✅ Site Axxam.net restauré
+- ✅ GitHub Pages configuré
+- ✅ Documentation à jour
