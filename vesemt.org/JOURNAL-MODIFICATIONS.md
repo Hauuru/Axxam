@@ -218,3 +218,12 @@
 ### 18:00 - Fin des modifications
 - Arrêt des modifications comme demandé
 - Demande de permission pour déployer
+
+### 19:55 - Déploiement sur GitHub Pages
+- Identification du dépôt GitHub : Hauuru/Axxam
+- Déplacement des fichiers VESEMT dans vesemt.org/ pour correspondre à la structure du dépôt
+- Force push vers le dépôt distant (commit fe06fb4)
+- GitHub Pages se mettra à jour automatiquement
+- Site accessible via axxam.net/vesemt.org/index.html
+- 52 fichiers renommés et déplacés
+- Déploiement réussi
