@@ -36,11 +36,13 @@ header {
 .site-title a {
     color: #F44336;
     text-decoration: none;
+    font-weight: bold;
 }
 
 .site-description {
     font-size: 14px;
-    color: #7E7777;
+    color: #F44336;
+    font-weight: bold;
 }
 
 /* Hero Banner */
