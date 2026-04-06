@@ -44,7 +44,7 @@
 - **Bandeaux** : `New-bandeau-SITE.jpg` (177 Ko)
 - **Logos** : `Logo.jpg` (266 Ko) + versions redimensionnées
 - **Illustrations d'articles** : ~15 images PNG/JPG (200 Ko - 3.5 Mo chacune)
-- **Favicon** : `cropped-vesemet-pasteque-*.jpg` (15-23 Ko)
+- **Favicon** : `cropped-vesemt-pasteque-*.jpg` (15-23 Ko)
 
 ### Thème ColorMag (7.8 Mo)
 - **CSS principal** : `style.css` (133 Ko) - téléchargé plusieurs fois avec différentes versions
