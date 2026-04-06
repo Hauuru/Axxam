@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Saint-Pierre Autrement &#8211; VIVRE (SURTOUT) ENSEMBLE ET (SI POSSIBLE) SOLIDAIRES EN MÉTROPOLE TOURANGELLE</title>
+	<atom:link href="https://vesemt.org/?feed=rss2&#038;cat=4" rel="self" type="application/rss+xml" />
+	<link>https://vesemt.org</link>
+	<description>Comité Populaire</description>
+	<lastBuildDate>Fri, 13 Mar 2026 02:51:40 +0000</lastBuildDate>
+	<language>fr-FR</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.9.4</generator>
+
+<image>
+	<url>https://vesemt.org/wp-content/uploads/2026/03/cropped-vesemet-pasteque-32x32.jpg</url>
+	<title>Saint-Pierre Autrement &#8211; VIVRE (SURTOUT) ENSEMBLE ET (SI POSSIBLE) SOLIDAIRES EN MÉTROPOLE TOURANGELLE</title>
+	<link>https://vesemt.org</link>
+	<width>32</width>
+	<height>32</height>
+</image> 
+	<item>
+		<title>Saint-Pierre-Autrement : Derrière le Masque le Népotisme en Action.</title>
+		<link>https://vesemt.org/?p=302</link>
+		
+		<dc:creator><![CDATA[Le Plombier]]></dc:creator>
+		<pubDate>Tue, 03 Mar 2026 05:52:22 +0000</pubDate>
+				<category><![CDATA[Saint-Pierre Autrement]]></category>
+		<guid isPermaLink="false">https://vesemt.org/?p=302</guid>
+
+					<description><![CDATA[À l&#8217;attention exclusive du Peuple, le vrai, celui des quartiers que même Google Maps hésite à cartographier, aux Invisibles du]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>2026 : Saint-Pierre Autrement , mais pas n’importe comment : Toujours à droite tou-te-s !</title>
+		<link>https://vesemt.org/?p=228</link>
+		
+		<dc:creator><![CDATA[Le Plombier]]></dc:creator>
+		<pubDate>Tue, 03 Mar 2026 00:00:16 +0000</pubDate>
+				<category><![CDATA[Saint-Pierre Autrement]]></category>
+		<guid isPermaLink="false">https://vesemt.org/?p=228</guid>
+
+					<description><![CDATA[Introduction : l’art du « autrement » Il faut reconnaître au programme de Saint-Pierre Autrement un talent certain : celui]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Le Programme de SPA</title>
+		<link>https://vesemt.org/?p=445</link>
+		
+		<dc:creator><![CDATA[Le Plombier]]></dc:creator>
+		<pubDate>Sun, 01 Mar 2026 02:24:54 +0000</pubDate>
+				<category><![CDATA[Saint-Pierre Autrement]]></category>
+		<guid isPermaLink="false">https://vesemt.org/?p=445</guid>
+
+					<description><![CDATA[1 Programme SPA 2026]]></description>
+		
+		
+		
+			</item>
+	</channel>
+</rss>
