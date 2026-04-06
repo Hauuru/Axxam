@@ -50,13 +50,13 @@ Dites-moi simplement ce que vous voulez faire :
 ./agents/gestionnaire/handler.sh status
 
 # Lire un fichier
-./agents/gestionnaire/handler.sh read /home/hauuru/.openclaw/workspace/le-potager/documentation/README.md
+./agents/gestionnaire/handler.sh read /home/hauuru/.openclaw/workspace-marco/le-potager/documentation/README.md
 
 # Écrire un fichier
-./agents/gestionnaire/handler.sh write /home/hauuru/.openclaw/workspace/le-potager/site/test.html "<h1>Test</h1>"
+./agents/gestionnaire/handler.sh write /home/hauuru/.openclaw/workspace-marco/le-potager/site/test.html "<h1>Test</h1>"
 
 # Git push
-./agents/gestionnaire/handler.sh git_push /home/hauuru/.openclaw/workspace/le-potager/site/test.html "<h1>Test</h1>" "Test commit"
+./agents/gestionnaire/handler.sh git_push /home/hauuru/.openclaw/workspace-marco/le-potager/site/test.html "<h1>Test</h1>" "Test commit"
 ```
 
 ## 📦 Configuration
@@ -64,7 +64,8 @@ Dites-moi simplement ce que vous voulez faire :
 - **Dépôt Git** : Hauuru/Axxam
 - **Bot Discord** : Marco
 - **Serveur** : Le Jardin du Chateau
-- **Workspace** : `/home/hauuru/.openclaw/workspace/le-potager`
+- **Workspace** : `/home/hauuru/.openclaw/workspace-marco/le-potager`
+- **Agent** : Marco (workspace principal)
 
 ## 🎯 Actions disponibles
 
