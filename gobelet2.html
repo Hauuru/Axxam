@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Gobelet Potier - Édition augmentée</title>
+    <title>Gobelet Potier - Paroi courbe & creuse</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: #eef2f5; overflow: hidden; height: 100vh; }
         .app { display: flex; width: 100vw; height: 100vh; overflow: hidden; }
-        /* Panneau latéral */
         .panel {
-            width: 360px;
+            width: 380px;
             background: rgba(255,255,255,0.96);
             backdrop-filter: blur(4px);
             border-right: 1px solid #ccc;
@@ -209,7 +208,7 @@
 <div class="app">
     <div class="panel">
         <div class="panel-header">
-            <h1>🏺 Gobelet Potier · Édition augmentée</h1>
+            <h1>🏺 Gobelet Potier · Paroi courbe & creuse</h1>
             <div class="tabs" id="tabs">
                 <button class="tab active" data-tab="shape">Forme</button>
                 <button class="tab" data-tab="rings">Anneaux</button>
@@ -221,13 +220,14 @@
         <div id="tab-shape" class="tab-content active">
             <div class="info-box">📐 Dimensions finales (état cuit)</div>
             <div class="param"><label>Hauteur totale (mm) <span class="tooltip-text">Hauteur du gobelet fini</span></label><div class="slider-container"><input type="range" id="H_slider" min="40" max="250" step="1" value="110"><input type="number" id="H_num" value="110" step="1"></div></div>
-            <div class="param"><label>Diamètre extérieur (mm) <span class="tooltip-text">Largeur max du corps</span></label><div class="slider-container"><input type="range" id="D_slider" min="50" max="160" step="1" value="85"><input type="number" id="D_num" value="85" step="1"></div></div>
-            <div class="param"><label>Épaisseur de paroi (mm) <span class="tooltip-text">Épaisseur de la paroi (cuit)</span></label><div class="slider-container"><input type="range" id="thick_slider" min="3" max="25" step="0.5" value="8"><input type="number" id="thick_num" value="8" step="0.5"></div></div>
+            <div class="param"><label>Diamètre extérieur max (mm) <span class="tooltip-text">Largeur maximale (à mi-hauteur ou en haut)</span></label><div class="slider-container"><input type="range" id="D_slider" min="50" max="180" step="1" value="85"><input type="number" id="D_num" value="85" step="1"></div></div>
+            <div class="param"><label>Épaisseur paroi (horizontale) (mm) <span class="tooltip-text">Épaisseur de la matière</span></label><div class="slider-container"><input type="range" id="thick_slider" min="3" max="25" step="0.5" value="8"><input type="number" id="thick_num" value="8" step="0.5"></div></div>
+            <div class="param"><label>Courbure de la paroi (%) <span class="tooltip-text">Positif = ventru, négatif = resserré</span></label><div class="slider-container"><input type="range" id="courbure_slider" min="-80" max="80" step="5" value="0"><input type="number" id="courbure_num" value="0" step="5"></div></div>
             <div class="param"><label>Épaisseur du fond (mm)</label><div class="slider-container"><input type="range" id="e_fond_slider" min="3" max="20" step="1" value="6"><input type="number" id="e_fond_num" value="6" step="1"></div></div>
         </div>
 
         <div id="tab-rings" class="tab-content">
-            <div class="info-box">💍 Anneaux décoratifs (cuit)</div>
+            <div class="info-box">💍 Anneaux décoratifs (cuit) - suivent la courbure</div>
             <div class="param"><label>Nombre d'anneaux (0-4)</label><div class="slider-container"><input type="range" id="n_rings" min="0" max="4" step="1" value="2"><input type="number" id="n_rings_num" value="2" step="1"></div></div>
             <div id="rings-container"></div>
         </div>
@@ -253,7 +253,7 @@
                 <button class="mode-btn" data-mode="ebauche">🪨 Ébauche</button>
                 <button class="mode-btn" data-mode="comparaison">⚖️ Comparaison</button>
             </div>
-            <div class="param"><label>Épaisseur ébauche (mm) <span class="tooltip-text">Surépaisseur par rapport au gobelet final</span></label><input type="number" id="marge_ebauche" value="3" step="0.5"></div>
+            <div class="param"><label>Épaisseur ébauche (mm) <span class="tooltip-text">Surépaisseur ajoutée au diamètre extérieur</span></label><input type="number" id="marge_ebauche" value="3" step="0.5"></div>
             <button id="export-jpg" class="export">📸 Exporter JPG (vue en coupe)</button>
         </div>
 
@@ -287,8 +287,9 @@
     // ---------- État global ----------
     const state = {
         H: 110, D: 85, epaisseurParoi: 8, epaisseurFond: 6,
+        courbure: 0,          // -80..80 % (positif = ventru)
         n_rings: 2,
-        rings: [], // chaque anneau : { h, largeur, saillie, hauteurRelative (position depuis haut) }
+        rings: [], // chaque anneau : { hauteur, largeur, saillie, hauteurRelative (depuis haut) }
         dens_cuit: 1.6, dens_sec: 1.7, dens_cru: 1.9,
         ret_sec: 1.05, ret_cuit: 1.08,
         etat: "cru",   // cuit, sec, cru
@@ -298,100 +299,87 @@
         cutawayY: 15
     };
 
-    // Helper : diamètre intérieur = D - 2*epaisseurParoi
-    function getDint() { return Math.max(5, state.D - 2 * state.epaisseurParoi); }
-
-    // Échelle selon état
-    function getScale() {
-        if (state.etat === "cuit") return 1;
-        if (state.etat === "sec") return 1 / state.ret_sec;
-        return 1 / state.ret_cuit; // cru
+    // Fonction profil : rayon extérieur en fonction de y (0 = bas, H = haut)
+    // Pour un gobelet courbe, on utilise une parabole simple contrôlée par 'courbure'
+    // R(y) = R_base + (R_haut - R_base) * (y/H) + facteur_courbure * (y/H)*(1 - y/H)
+    // avec facteur_courbure = (courbure/100) * D (max déformation)
+    function getRadiusAt(y, etatScale = 1) {
+        const H = state.H * etatScale;
+        const D = state.D * etatScale;
+        const t = y / H; // 0 = bas, 1 = haut
+        // On choisit un profil : rayon bas = D/2, rayon haut = D/2 (on peut affiner plus tard)
+        const R_base = D/2;
+        const R_haut = D/2;
+        let R_linear = R_base + (R_haut - R_base) * t;
+        const deform = (state.courbure / 100) * (D/2) * 4 * t * (1 - t); // max au milieu
+        let R = R_linear + deform;
+        // éviter valeurs négatives
+        return Math.max(1, R);
     }
 
-    // Couleur selon état
-    function getColor() {
-        if (state.etat === "cru") return 0x5a9fd4;
-        if (state.etat === "sec") return 0xc97e5a;
-        return 0xb54535;
-    }
-
-    // Calcul des volumes et masses pour les 3 états
-    function computeStats() {
-        const scales = { cuit: 1, sec: 1/state.ret_sec, cru: 1/state.ret_cuit };
-        const dens = { cuit: state.dens_cuit, sec: state.dens_sec, cru: state.dens_cru };
-        const results = {};
-        for (let et of ["cuit", "sec", "cru"]) {
-            const s = scales[et];
-            const H = state.H * s;
-            const D = state.D * s;
-            const d_int = getDint() * s;
-            const e_fond = state.epaisseurFond * s;
-            const volCorps = Math.PI * ((D/2)**2 - (d_int/2)**2) * (H - e_fond);
-            const volFond = Math.PI * (d_int/2)**2 * e_fond;
-            let volAnneaux = 0;
-            for (let ring of state.rings) {
-                const largeurRing = ring.largeur * s;
-                const saillie = ring.saillie * s;
-                const rExt = D/2 + saillie;
-                const rInt = rExt - largeurRing;
-                const section = Math.PI * (rExt**2 - rInt**2);
-                volAnneaux += section * (ring.hauteur * s); // hauteur verticale de l'anneau
-            }
-            const volTotal = volCorps + volFond + volAnneaux;
-            const masse = volTotal * dens[et] / 1000;
-            results[et] = { vol: volTotal, masse: masse };
+    // Construit une géométrie de révolution pour la paroi extérieure (creuse)
+    function buildCurvedWall(extRadFunc, yStart, yEnd, segmentsRadial=48, segmentsHeight=48) {
+        const points = [];
+        const steps = segmentsHeight;
+        for (let i = 0; i <= steps; i++) {
+            const y = yStart + (yEnd - yStart) * (i / steps);
+            const r = extRadFunc(y);
+            points.push(new THREE.Vector2(r, y));
         }
-        return results;
+        const geometry = new THREE.LatheGeometry(points, segmentsRadial);
+        return geometry;
     }
 
-    function updateStatsUI() {
-        const stats = computeStats();
-        document.getElementById('stats-panel').innerHTML = `
-            <div>📐 Volume cuit : ${stats.cuit.vol.toFixed(1)} cm³ | ⚖️ ${stats.cuit.masse.toFixed(1)} g</div>
-            <div>📐 Volume sec : ${stats.sec.vol.toFixed(1)} cm³ | ⚖️ ${stats.sec.masse.toFixed(1)} g</div>
-            <div>📐 Volume cru : ${stats.cru.vol.toFixed(1)} cm³ | ⚖️ ${stats.cru.masse.toFixed(1)} g</div>
-        `;
-    }
-
-    // Construction du gobelet (avec ou sans anneaux)
+    // Construction du gobelet creux avec courbure
     function buildGoblet(includeRings = true) {
         const group = new THREE.Group();
         const s = getScale();
         const H = state.H * s;
         const D = state.D * s;
-        const d_int = getDint() * s;
+        const e_paroi = state.epaisseurParoi * s;
         const e_fond = state.epaisseurFond * s;
         const color = getColor();
-        const material = new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.1 });
-        // Corps
-        const bodyHeight = H - e_fond;
-        const bodyGeo = new THREE.CylinderGeometry(D/2, D/2, bodyHeight, 64, 32);
-        const body = new THREE.Mesh(bodyGeo, material);
-        body.position.y = bodyHeight/2;
-        group.add(body);
-        // Fond
-        const bottomGeo = new THREE.CylinderGeometry(d_int/2, d_int/2, e_fond, 48, 16);
-        const bottom = new THREE.Mesh(bottomGeo, material);
-        bottom.position.y = e_fond/2;
-        group.add(bottom);
+        const materialExt = new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.1 });
+        const materialInt = new THREE.MeshStandardMaterial({ color: 0xc7aa7a, roughness: 0.6, metalness: 0.05 }); // intérieur plus clair
         
+        // Paroi extérieure (de 0 à H - e_fond)
+        const extFunc = (y) => getRadiusAt(y, s);
+        const wallGeo = buildCurvedWall(extFunc, 0, H - e_fond, 56, 48);
+        const wallMesh = new THREE.Mesh(wallGeo, materialExt);
+        wallMesh.position.y = 0;
+        group.add(wallMesh);
+        
+        // Paroi intérieure : rayon = rayon extérieur - e_paroi
+        const intFunc = (y) => Math.max(2, getRadiusAt(y, s) - e_paroi);
+        const innerGeo = buildCurvedWall(intFunc, 0, H - e_fond, 56, 48);
+        const innerMesh = new THREE.Mesh(innerGeo, materialInt);
+        innerMesh.position.y = 0;
+        group.add(innerMesh);
+        
+        // Fond (cylindre plein à l'intérieur)
+        const fondRad = intFunc(0); // rayon intérieur au bas
+        const fondGeo = new THREE.CylinderGeometry(fondRad, fondRad, e_fond, 48, 16);
+        const fondMat = new THREE.MeshStandardMaterial({ color, roughness: 0.5 });
+        const fond = new THREE.Mesh(fondGeo, fondMat);
+        fond.position.y = e_fond/2;
+        group.add(fond);
+        
+        // Anneaux (s'ils suivent la courbure)
         if (includeRings && state.rings.length) {
-            // Calcul des positions Y des anneaux (depuis le haut)
-            let yCursor = H;
             for (let i = 0; i < state.rings.length; i++) {
                 const ring = state.rings[i];
                 const largeurRing = ring.largeur * s;
                 const saillie = ring.saillie * s;
-                const rExt = D/2 + saillie;
+                const hauteurRel = ring.hauteurRelative * s; // distance depuis le haut
+                const yPos = H - hauteurRel;
+                // Rayon extérieur à cette hauteur (incluant saillie)
+                const rExt = getRadiusAt(yPos, s) + saillie;
                 const torusGeo = new THREE.TorusGeometry(rExt, largeurRing/2, 32, 80);
                 const ringMat = new THREE.MeshStandardMaterial({ color: 0xd99e45, roughness: 0.3 });
                 const torus = new THREE.Mesh(torusGeo, ringMat);
                 torus.rotation.x = Math.PI/2;
-                // position Y : on descend de la hauteur relative (depuis le haut)
-                const yPos = H - ring.hauteurRelative * s;
                 torus.position.y = yPos;
                 group.add(torus);
-                // On ne modifie pas yCursor ici car on utilise hauteurRelative individuelle
             }
         }
         return group;
@@ -405,11 +393,74 @@
         const marge = state.marge_ebauche * s;
         const e_fond = state.epaisseurFond * s;
         const material = new THREE.MeshStandardMaterial({ color: 0xbc9a6c, roughness: 0.7, transparent: true, opacity: 0.65 });
+        // L'ébauche est simplement un cylindre élargi (pas de courbure)
         const bodyGeo = new THREE.CylinderGeometry(D/2 + marge, D/2 + marge, H + marge, 64, 32);
         const body = new THREE.Mesh(bodyGeo, material);
         body.position.y = (H + marge)/2;
         group.add(body);
         return group;
+    }
+
+    // Helper : facteur d'échelle pour l'état
+    function getScale() {
+        if (state.etat === "cuit") return 1;
+        if (state.etat === "sec") return 1 / state.ret_sec;
+        return 1 / state.ret_cuit; // cru
+    }
+
+    function getColor() {
+        if (state.etat === "cru") return 0x5a9fd4;
+        if (state.etat === "sec") return 0xc97e5a;
+        return 0xb54535;
+    }
+
+    // Calcul du volume (approximation numérique par tranches)
+    function computeVolume(etat) {
+        const s = (etat === "cuit") ? 1 : (etat === "sec") ? 1/state.ret_sec : 1/state.ret_cuit;
+        const H = state.H * s;
+        const e_fond = state.epaisseurFond * s;
+        const e_paroi = state.epaisseurParoi * s;
+        // Volume du fond
+        const radIntBas = getRadiusAt(0, s) - e_paroi;
+        const volFond = Math.PI * radIntBas * radIntBas * e_fond;
+        // Volume de la paroi par intégration
+        let volParoi = 0;
+        const slices = 200;
+        for (let i = 0; i < slices; i++) {
+            const y1 = (i / slices) * (H - e_fond);
+            const y2 = ((i+1) / slices) * (H - e_fond);
+            const rExt1 = getRadiusAt(y1, s);
+            const rExt2 = getRadiusAt(y2, s);
+            const rInt1 = rExt1 - e_paroi;
+            const rInt2 = rExt2 - e_paroi;
+            const volSlice = (Math.PI/3) * (y2-y1) * (rExt1*rExt1 + rExt1*rExt2 + rExt2*rExt2 - (rInt1*rInt1 + rInt1*rInt2 + rInt2*rInt2));
+            volParoi += Math.abs(volSlice);
+        }
+        // Volume des anneaux (approximation simple)
+        let volAnneaux = 0;
+        for (let ring of state.rings) {
+            const largeur = ring.largeur * s;
+            const saillie = ring.saillie * s;
+            const yPos = H - (ring.hauteurRelative * s);
+            const rExt = getRadiusAt(yPos, s) + saillie;
+            const rInt = rExt - largeur;
+            const section = Math.PI * (rExt*rExt - rInt*rInt);
+            volAnneaux += section * (ring.hauteur * s);
+        }
+        return volFond + volParoi + volAnneaux;
+    }
+
+    function updateStatsUI() {
+        const stats = {
+            cuit: { vol: computeVolume("cuit"), masse: computeVolume("cuit") * state.dens_cuit / 1000 },
+            sec: { vol: computeVolume("sec"), masse: computeVolume("sec") * state.dens_sec / 1000 },
+            cru: { vol: computeVolume("cru"), masse: computeVolume("cru") * state.dens_cru / 1000 }
+        };
+        document.getElementById('stats-panel').innerHTML = `
+            <div>📐 Volume cuit : ${stats.cuit.vol.toFixed(1)} cm³ | ⚖️ ${stats.cuit.masse.toFixed(1)} g</div>
+            <div>📐 Volume sec : ${stats.sec.vol.toFixed(1)} cm³ | ⚖️ ${stats.sec.masse.toFixed(1)} g</div>
+            <div>📐 Volume cru : ${stats.cru.vol.toFixed(1)} cm³ | ⚖️ ${stats.cru.masse.toFixed(1)} g</div>
+        `;
     }
 
     let scene, camera, renderer, controls, mainGroup;
@@ -429,7 +480,7 @@
             ebau.position.x = 1.8;
             mainGroup.add(gob, ebau);
         }
-        // Appliquer coupe
+        // Appliquer plan de coupe
         if (state.cutawayActive && clippingPlane) {
             mainGroup.traverse(child => { if(child.isMesh) child.material.clippingPlanes = [clippingPlane]; });
         } else {
@@ -438,6 +489,7 @@
         updateStatsUI();
     }
 
+    // Initialisation Three.js
     function initThree() {
         const container = document.getElementById('scene-container');
         const w = container.clientWidth, h = container.clientHeight;
@@ -488,7 +540,7 @@
         });
     }
 
-    // UI Anneaux dynamiques
+    // UI pour les anneaux
     function updateRingsUI() {
         const container = document.getElementById('rings-container');
         container.innerHTML = '';
@@ -505,7 +557,6 @@
                 <div class="param"><label>Hauteur depuis le haut (mm)</label><input type="range" min="5" max="${state.H-10}" step="1" value="${r.hauteurRelative}" data-ring="${i}" data-prop="hauteurRelative"><span>${r.hauteurRelative}</span></div>
             `;
             container.appendChild(div);
-            // attach events
             div.querySelectorAll('input[type="range"]').forEach(inp => {
                 inp.addEventListener('input', (e) => {
                     const idx = parseInt(inp.dataset.ring);
@@ -517,14 +568,13 @@
                 });
             });
         }
-        // Supprimer les anneaux en trop
         while(state.rings.length > state.n_rings) state.rings.pop();
     }
 
-    // Sauvegarde / chargement localStorage
+    // Sauvegarde locale
     function saveToLocal() {
         const toSave = {
-            H: state.H, D: state.D, epaisseurParoi: state.epaisseurParoi, epaisseurFond: state.epaisseurFond,
+            H: state.H, D: state.D, epaisseurParoi: state.epaisseurParoi, epaisseurFond: state.epaisseurFond, courbure: state.courbure,
             n_rings: state.n_rings, rings: state.rings,
             dens_cuit: state.dens_cuit, dens_sec: state.dens_sec, dens_cru: state.dens_cru,
             ret_sec: state.ret_sec, ret_cuit: state.ret_cuit,
@@ -537,15 +587,15 @@
         if (!data) return;
         try {
             const p = JSON.parse(data);
-            state.H = p.H; state.D = p.D; state.epaisseurParoi = p.epaisseurParoi; state.epaisseurFond = p.epaisseurFond;
+            state.H = p.H; state.D = p.D; state.epaisseurParoi = p.epaisseurParoi; state.epaisseurFond = p.epaisseurFond; state.courbure = p.courbure;
             state.n_rings = p.n_rings; state.rings = p.rings;
             state.dens_cuit = p.dens_cuit; state.dens_sec = p.dens_sec; state.dens_cru = p.dens_cru;
             state.ret_sec = p.ret_sec; state.ret_cuit = p.ret_cuit;
             state.marge_ebauche = p.marge_ebauche; state.etat = p.etat; state.mode = p.mode;
-            // Mettre à jour les inputs
             document.getElementById('H_slider').value = state.H; document.getElementById('H_num').value = state.H;
             document.getElementById('D_slider').value = state.D; document.getElementById('D_num').value = state.D;
             document.getElementById('thick_slider').value = state.epaisseurParoi; document.getElementById('thick_num').value = state.epaisseurParoi;
+            document.getElementById('courbure_slider').value = state.courbure; document.getElementById('courbure_num').value = state.courbure;
             document.getElementById('e_fond_slider').value = state.epaisseurFond; document.getElementById('e_fond_num').value = state.epaisseurFond;
             document.getElementById('n_rings').value = state.n_rings; document.getElementById('n_rings_num').value = state.n_rings;
             document.getElementById('dens_cuit').value = state.dens_cuit;
@@ -561,9 +611,7 @@
         } catch(e) {}
     }
 
-    // Export JPG avec coupe
     function exportJPG() {
-        // Activer temporairement la coupe si nécessaire
         const wasActive = state.cutawayActive;
         if (!wasActive) {
             state.cutawayActive = true;
@@ -582,11 +630,11 @@
         }
     }
 
-    // Liaison UI
     function bindUI() {
         document.getElementById('H_slider').addEventListener('input', (e) => { state.H = parseFloat(e.target.value); document.getElementById('H_num').value = state.H; regenerate(); saveToLocal(); });
         document.getElementById('D_slider').addEventListener('input', (e) => { state.D = parseFloat(e.target.value); document.getElementById('D_num').value = state.D; regenerate(); saveToLocal(); });
         document.getElementById('thick_slider').addEventListener('input', (e) => { state.epaisseurParoi = parseFloat(e.target.value); document.getElementById('thick_num').value = state.epaisseurParoi; regenerate(); saveToLocal(); });
+        document.getElementById('courbure_slider').addEventListener('input', (e) => { state.courbure = parseFloat(e.target.value); document.getElementById('courbure_num').value = state.courbure; regenerate(); saveToLocal(); });
         document.getElementById('e_fond_slider').addEventListener('input', (e) => { state.epaisseurFond = parseFloat(e.target.value); document.getElementById('e_fond_num').value = state.epaisseurFond; regenerate(); saveToLocal(); });
         document.getElementById('n_rings').addEventListener('input', (e) => { state.n_rings = parseInt(e.target.value); document.getElementById('n_rings_num').value = state.n_rings; updateRingsUI(); regenerate(); saveToLocal(); });
         document.getElementById('dens_cuit').addEventListener('change', (e) => { state.dens_cuit = parseFloat(e.target.value); updateStatsUI(); saveToLocal(); });
@@ -615,7 +663,6 @@
             });
         });
         
-        // Coupe interactive
         const cutSlider = document.getElementById('cutaway_slider');
         const cutVal = document.getElementById('cutaway_val');
         const cutBtn = document.getElementById('cutaway_toggle');
@@ -633,10 +680,8 @@
             cutBtn.style.background = state.cutawayActive ? "#e67e22" : "#f39c12";
             regenerate();
         });
-        
         document.getElementById('export-jpg').addEventListener('click', exportJPG);
         
-        // Tabs
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 const target = tab.dataset.tab;
@@ -648,7 +693,6 @@
         });
     }
 
-    // Démarrage
     function init() {
         bindUI();
         loadFromLocal();
