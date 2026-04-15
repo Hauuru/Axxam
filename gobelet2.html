@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Générateur de Gobelets Paramétrique - Version Complète</title>
+    
+    <style>
+        /* ============ VARIABLES CSS ============ */
+        :root { 
+            --primary: #3498db; --bg: #f5f5f5; --panel: #fff; --text: #333; --border: #ddd; 
+            --cru: #3498db; --sec: #d35400; --cuit: #c0392b; --success: #2ecc71; --warning: #f39c12; 
+            --danger: #e74c3c; --ring: #FF8C00; --grid: #888; --grid-light: #ccc;
+        }
+        
+        /* ============ RESET ET BASE ============ */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; }
+        
+        /* ============ LAYOUT PRINCIPAL ============ */
+        .container { display: flex; height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; overflow: hidden; }
+        
+        /* ============ PANEL DE CONTRÔLE ============ */
+        .controls { width: 350px; background: var(--panel); display: flex; flex-direction: column; border-right: 1px solid var(--border); height: 100vh; flex-shrink: 0; overflow-y: auto; }
+        .controls-header { padding: 15px; border-bottom: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
+        .controls-title { color: #2c3e50; margin-bottom: 15px; font-size: 1.5em; }
+        
+        /* ============ ONGLETS ============ */
+        .tabs { display: flex; margin-top: 10px; border-bottom: 2px solid var(--border); position: sticky; top: 0; background: var(--panel); z-index: 100; padding-top: 5px; }
+        .tab { flex: 1; padding: 10px; text-align: center; background: none; border: none; cursor: pointer; font-weight: 500; color: #666; transition: all 0.3s; }
+        .tab:hover { color: var(--primary); background-color: #f8f9fa; }
+        .tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: -2px; }
+        
+        /* ============ CONTENU DES PARAMÈTRES ============ */
+        .controls-content { flex: 1; overflow-y: auto; padding: 0 15px 15px 15px; }
+        .param-group { display: none; padding: 10px 0; }
+        .param-group.active { display: block; }
+        
+        /* ============ STYLES DES PARAMÈTRES ============ */
+        .param { margin-bottom: 15px; }
+        .param label { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: var(--text); font-weight: 600; }
+        .param label span { color: #666; font-size: 13px; font-weight: normal; }
+        .slider-container { display: flex; gap: 10px; align-items: center; }
+        input[type=range] { flex: 1; height: 6px; background: #ddd; border-radius: 3px; outline: none; -webkit-appearance: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); cursor: pointer; }
+        input[type=number] { width: 70px; padding: 6px; border: 1px solid var(--border); border-radius: 4px; text-align: center; }
+        .info-box { background: #f8f9fa; border-radius: 6px; padding: 10px; margin: 10px 0; font-size: 12px; text-align: center; border-left: 4px solid var(--primary); }
+        
+        /* ============ SECTIONS SPÉCIALES ============ */
+        .section-title { margin: 20px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--border); font-size: 15px; font-weight: 600; }
+        .button-group { display: flex; gap: 8px; margin-top: 10px; }
+        .mode-btn { flex: 1; padding: 10px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .mode-btn.active { color: white; }
+        .mode-btn[data-etat="cru"].active { background: var(--cru); border-color: var(--cru); }
+        .mode-btn[data-etat="sec"].active { background: var(--sec); border-color: var(--sec); }
+        .mode-btn[data-etat="cuit"].active { background: var(--cuit); border-color: var(--cuit); }
+        
+        /* ============ TABLEAU DES ANNEAUX ============ */
+        .ring-table { width: 100%; margin: 15px 0; border-collapse: collapse; font-size: 13px; }
+        .ring-table th, .ring-table td { padding: 8px; border: 1px solid var(--border); text-align: center; }
+        
+        /* ============ STYLES EXPORT ============ */
+        .option-group.compact { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 5px; }
+        .option-group.compact label { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 6px; border: 1px solid var(--border); border-radius: 4px; background: #f8f9fa; cursor: pointer; justify-content: center; }
+        .export-btn { background: var(--success); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .export-progress { height: 4px; background: var(--primary); width: 0%; transition: width 0.3s; margin: 10px 0; border-radius: 2px; }
+        .export-status { padding: 10px; margin: 10px 0; border-radius: 4px; font-size: 14px; text-align: center; display: none; }
+        .export-status.success { background: #d4edda; color: #155724; }
+        .export-status.error { background: #f8d7da; color: #721c24; }
+        
+        /* ============ STATISTIQUES ============ */
+        .stats { margin-top: 20px; border-top: 1px solid var(--border); padding: 15px; background: var(--panel); font-size: 13px; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        
+        /* ============ ZONE 3D ============ */
+        .viewer { flex: 1; background: #f0f0f0; position: relative; height: 100vh; overflow: hidden; }
+        #scene-container { width: 100%; height: 100%; }
+        
+        /* ============ OVERLAYS ============ */
+        .cutaway-controls, #etat-indicator, #cutaway-indicator, .help-bar { position: absolute; background: rgba(255,255,255,0.95); padding: 8px 12px; border-radius: 8px; font-size: 12px; z-index: 1000; backdrop-filter: blur(5px); }
+        .cutaway-controls { top: 10px; left: 10px; display: flex; gap: 8px; }
+        .help-bar { bottom: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; }
+        #etat-indicator { top: 10px; right: 10px; }
+        
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 900px) {
+            .container { flex-direction: column; position: relative; height: auto; min-height: 100vh; overflow-y: auto; }
+            .controls { width: 100%; height: auto; max-height: 55vh; border-right: none; border-bottom: 1px solid var(--border); }
+            .viewer { height: 45vh; min-height: 300px; }
+            .controls-header { padding: 10px; }
+            .controls-title { font-size: 1.2em; }
+            .tabs { position: sticky; top: 0; }
+            .help-bar { font-size: 10px; padding: 5px 8px; }
+        }
+        
+        .notification { position: fixed; top: 20px; right: 20px; padding: 12px 18px; background: var(--success); color: white; border-radius: 6px; z-index: 10000; display: none; }
+    </style>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="controls">
+        <div class="controls-header">
+            <h1 class="controls-title">🏺 Gobelets 5.0</h1>
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('dimensions')">Dimensions</button>
+                <button class="tab" onclick="showTab('anneaux')">Anneaux</button>
+                <button class="tab" onclick="showTab('materiau')">Matériau</button>
+                <button class="tab" onclick="showTab('tournage')">Tournage</button>
+                <button class="tab" onclick="showTab('export')">Export</button>
+            </div>
+        </div>
+        <div class="controls-content" id="controls-content">
+            <!-- Onglet Dimensions (généré dynamiquement) -->
+            <div id="dimensions" class="param-group active"><div id="dimensions-content"></div></div>
+            <div id="anneaux" class="param-group">
+                <div class="info-box">Anneaux (cuit)</div>
+                <div class="param"><label>Nb anneaux <span>0-4</span></label><div class="slider-container"><input id="n_r" type="range" min="0" max="4" step="1" value="2" oninput="updateParam('n',this.value)"><input id="n_n" type="number" min="0" max="4" step="1" value="2" oninput="updateParam('n',this.value)"></div></div>
+                <div class="param"><label>Hauteur 1er anneau (mm)</label><div class="slider-container"><input id="Hd_r" type="range" min="0" max="100" value="15" step="1" oninput="updateParam('Hd',this.value)"><input id="Hd_n" type="number" min="0" max="100" value="15" step="1" oninput="updateParam('Hd',this.value)"></div></div>
+                <div id="espacements-content"></div>
+                <div class="section-title">Profil des anneaux</div>
+                <table class="ring-table"><thead><tr><th>Anneau</th><th>Largeur (mm)</th><th>Saillie (mm)</th></tr></thead><tbody id="anneaux-body"></tbody></table>
+            </div>
+            <div id="materiau" class="param-group"><div id="materiau-content"></div></div>
+            <div id="tournage" class="param-group">
+                <div id="tournage-content"></div>
+                <div class="section-title">État visualisation</div>
+                <div class="button-group"><button class="mode-btn" data-etat="cru" onclick="setEtatVisu('cru')">Cru</button><button class="mode-btn" data-etat="sec" onclick="setEtatVisu('sec')">Sec</button><button class="mode-btn active" data-etat="cuit" onclick="setEtatVisu('cuit')">Cuit</button></div>
+                <div class="section-title">Mode affichage</div>
+                <div class="button-group"><button class="mode-btn" onclick="setVisuMode('gobelet')">Gobelet</button><button class="mode-btn" onclick="setVisuMode('ebauche')">Ébauche</button><button class="mode-btn active" onclick="setVisuMode('comparaison')">Comparaison</button></div>
+                <div id="info-conversion" style="margin-top:10px; font-size:12px; text-align:center;"></div>
+            </div>
+            <div id="export" class="param-group">
+                <div class="section-title">Export JPG (600 DPI)</div>
+                <div class="param"><label>Contenu</label><div class="option-group compact"><label><input type="radio" name="jpg-content" value="gobelet" checked> Gobelet</label><label><input type="radio" name="jpg-content" value="gobelet-with-rings"> +Anneaux</label><label><input type="radio" name="jpg-content" value="ebauche"> Ébauche</label><label><input type="radio" name="jpg-content" value="comparaison"> Comparaison</label></div></div>
+                <div class="param"><label>Grille</label><div class="option-group compact"><label><input type="radio" name="jpg-grid" value="5mm" checked> 5mm</label><label><input type="radio" name="jpg-grid" value="1mm"> 1mm</label><label><input type="radio" name="jpg-grid" value="10mm"> 10mm</label><label><input type="radio" name="jpg-grid" value="none"> Aucune</label></div></div>
+                <div class="param"><label>Annotations</label><div class="option-group compact"><label><input type="checkbox" name="jpg-annotation" value="dimensions" checked> Dimensions</label><label><input type="checkbox" name="jpg-annotation" value="echelle" checked> Échelle</label><label><input type="checkbox" name="jpg-annotation" value="date" checked> Date</label></div></div>
+                <button onclick="captureJPG()" class="export-btn">📸 Capturer JPG</button>
+                <div class="export-progress" id="jpg-progress"></div><div id="jpg-status" class="export-status"></div>
+                <div class="section-title">Export STL</div>
+                <div class="param"><label>Modèle</label><div class="option-group compact"><label><input type="radio" name="stl-content" value="gobelet-only" checked> Gobelet seul</label><label><input type="radio" name="stl-content" value="gobelet-with-rings"> Avec anneaux</label></div></div>
+                <button onclick="exportSTL()" class="export-btn">⬇️ Exporter STL</button>
+            </div>
+        </div>
+        <div class="stats" id="stats-panel"></div>
+    </div>
+    <div class="viewer">
+        <div id="scene-container"></div>
+        <div class="cutaway-controls"><button id="toggle-cutaway" onclick="toggleCutaway()">✂️ Coupe</button><span id="cutaway-value" style="font-size:11px;">Désactivé</span></div>
+        <div id="etat-indicator"></div>
+        <div class="help-bar"><span>🖱️ Glisser = rotation | 🖱️ droit = panoramique | 🔍 Molette = zoom</span><span id="coord">📐</span></div>
+    </div>
+</div>
+<div id="notification" class="notification"></div>
+
+<script>
+    // ------------------- PARAMÈTRES -------------------
+    let params = {
+        H: 100, D: 80, d: 70, e: 5, // Hauteur, diam ext, diam int, epaisseur fond
+        Hd: 15, n: 2,                // Hauteur 1er anneau, nb anneaux
+        largeurs: [10,10,10,10], saillies: [5,5,5,5], espaces: [0,0,0,0],
+        retrait_sec: 1.05, retrait_cuit: 1.08, densite_cru: 1.9, densite_sec: 1.7, densite_cuit: 1.6,
+        marge_tournage_ext: 2, marge_tournage_int: 2, marge_fond: 1.5
+    };
+    
+    // Variables globales Three.js
+    let scene, camera, renderer, controls, currentGroup = null;
+    let etatVisu = "cuit";   // cru, sec, cuit
+    let visuMode = "comparaison"; // gobelet, ebauche, comparaison
+    let cutawayEnabled = false;
+    let cutawayPlaneY = 0;
+    
+    // Fonctions d'initialisation des contrôles UI (génération dynamique)
+    function buildUI() {
+        const dimDiv = document.getElementById('dimensions-content');
+        dimDiv.innerHTML = `<div class="param"><label>Hauteur totale (mm) <span>cuit</span></label><div class="slider-container"><input id="H_r" type="range" min="30" max="300" value="${params.H}" step="1" oninput="updateParam('H',this.value)"><input id="H_n" type="number" min="30" max="300" value="${params.H}" step="1" oninput="updateParam('H',this.value)"></div></div>
+        <div class="param"><label>Diamètre extérieur (mm)</label><div class="slider-container"><input id="D_r" type="range" min="40" max="200" value="${params.D}" step="1" oninput="updateParam('D',this.value)"><input id="D_n" type="number" min="40" max="200" value="${params.D}" step="1" oninput="updateParam('D',this.value)"></div></div>
+        <div class="param"><label>Diamètre intérieur (mm)</label><div class="slider-container"><input id="d_r" type="range" min="30" max="180" value="${params.d}" step="1" oninput="updateParam('d',this.value)"><input id="d_n" type="number" min="30" max="180" value="${params.d}" step="1" oninput="updateParam('d',this.value)"></div></div>
+        <div class="param"><label>Épaisseur fond (mm)</label><div class="slider-container"><input id="e_r" type="range" min="2" max="20" value="${params.e}" step="0.5" oninput="updateParam('e',this.value)"><input id="e_n" type="number" min="2" max="20" value="${params.e}" step="0.5" oninput="updateParam('e',this.value)"></div></div>`;
+        
+        const matDiv = document.getElementById('materiau-content');
+        matDiv.innerHTML = `<div class="param"><label>Retrait sec → cru</label><input id="retrait_sec" type="number" step="0.01" value="${params.retrait_sec}" oninput="updateParam('retrait_sec',this.value)"></div>
+        <div class="param"><label>Retrait cuit → cru</label><input id="retrait_cuit" type="number" step="0.01" value="${params.retrait_cuit}" oninput="updateParam('retrait_cuit',this.value)"></div>
+        <div class="param"><label>Densité cru (g/cm³)</label><input id="densite_cru" type="number" step="0.05" value="${params.densite_cru}" oninput="updateParam('densite_cru',this.value)"></div>
+        <div class="param"><label>Densité sec</label><input id="densite_sec" type="number" step="0.05" value="${params.densite_sec}" oninput="updateParam('densite_sec',this.value)"></div>
+        <div class="param"><label>Densité cuit</label><input id="densite_cuit" type="number" step="0.05" value="${params.densite_cuit}" oninput="updateParam('densite_cuit',this.value)"></div>`;
+        
+        const tourDiv = document.getElementById('tournage-content');
+        tourDiv.innerHTML = `<div class="param"><label>Marge extérieure (mm)</label><input id="marge_tournage_ext" type="number" step="0.5" value="${params.marge_tournage_ext}" oninput="updateParam('marge_tournage_ext',this.value)"></div>
+        <div class="param"><label>Marge intérieure (mm)</label><input id="marge_tournage_int" type="number" step="0.5" value="${params.marge_tournage_int}" oninput="updateParam('marge_tournage_int',this.value)"></div>
+        <div class="param"><label>Marge fond (mm)</label><input id="marge_fond" type="number" step="0.5" value="${params.marge_fond}" oninput="updateParam('marge_fond',this.value)"></div>`;
+        
+        updateAnneauxUI();
+        updateEspacesUI();
+        updateStats();
+    }
+    
+    function updateParam(key, val) {
+        if(key === 'n') { params.n = parseInt(val); document.getElementById('n_r').value=val; document.getElementById('n_n').value=val; updateAnneauxUI(); updateEspacesUI(); }
+        else if(key === 'Hd') { params.Hd = parseFloat(val); document.getElementById('Hd_r').value=val; document.getElementById('Hd_n').value=val; }
+        else if(key === 'H') { params.H = parseFloat(val); document.getElementById('H_r').value=val; document.getElementById('H_n').value=val; }
+        else if(key === 'D') { params.D = parseFloat(val); document.getElementById('D_r').value=val; document.getElementById('D_n').value=val; }
+        else if(key === 'd') { params.d = parseFloat(val); document.getElementById('d_r').value=val; document.getElementById('d_n').value=val; }
+        else if(key === 'e') { params.e = parseFloat(val); document.getElementById('e_r').value=val; document.getElementById('e_n').value=val; }
+        else if(key === 'retrait_sec') params.retrait_sec = parseFloat(val);
+        else if(key === 'retrait_cuit') params.retrait_cuit = parseFloat(val);
+        else if(key === 'densite_cru') params.densite_cru = parseFloat(val);
+        else if(key === 'densite_sec') params.densite_sec = parseFloat(val);
+        else if(key === 'densite_cuit') params.densite_cuit = parseFloat(val);
+        else if(key === 'marge_tournage_ext') params.marge_tournage_ext = parseFloat(val);
+        else if(key === 'marge_tournage_int') params.marge_tournage_int = parseFloat(val);
+        else if(key === 'marge_fond') params.marge_fond = parseFloat(val);
+        else if(key.startsWith('largeur_')) { let idx = parseInt(key.split('_')[1]); params.largeurs[idx] = parseFloat(val); updateAnneauxUI(); }
+        else if(key.startsWith('saillie_')) { let idx = parseInt(key.split('_')[1]); params.saillies[idx] = parseFloat(val); updateAnneauxUI(); }
+        else if(key.startsWith('espace_')) { let idx = parseInt(key.split('_')[1]); params.espaces[idx] = parseFloat(val); }
+        updateStats();
+        regenerateScene();
+    }
+    
+    function updateAnneauxUI() {
+        let tbody = document.getElementById('anneaux-body');
+        tbody.innerHTML = '';
+        for(let i=0;i<params.n;i++) {
+            let row = tbody.insertRow();
+            row.insertCell(0).innerText = i+1;
+            row.insertCell(1).innerHTML = `<input type="number" step="1" value="${params.largeurs[i]}" style="width:70px" oninput="updateParam('largeur_${i}',this.value)">`;
+            row.insertCell(2).innerHTML = `<input type="number" step="1" value="${params.saillies[i]}" style="width:70px" oninput="updateParam('saillie_${i}',this.value)">`;
+        }
+        for(let i=params.n;i<4;i++) { params.largeurs[i]=0; params.saillies[i]=0; }
+    }
+    function updateEspacesUI() {
+        let container = document.getElementById('espacements-content');
+        container.innerHTML = '<div class="section-title">Espacements entre anneaux (mm)</div>';
+        for(let i=0;i<Math.max(0,params.n-1);i++) {
+            container.innerHTML += `<div class="param"><label>Espace après anneau ${i+1}</label><div class="slider-container"><input type="range" min="0" max="50" value="${params.espaces[i]}" step="1" oninput="updateParam('espace_${i}',this.value)"><input type="number" value="${params.espaces[i]}" step="1" oninput="updateParam('espace_${i}',this.value)"></div></div>`;
+        }
+    }
+    
+    function updateStats() {
+        let vol = Math.PI * (Math.pow(params.D/2,2) - Math.pow(params.d/2,2)) * params.H + Math.PI*Math.pow(params.d/2,2)*params.e;
+        let masse = vol * params.densite_cuit / 1000;
+        document.getElementById('stats-panel').innerHTML = `<div class="stat-row"><span>Volume cuit (cm³):</span><span>${vol.toFixed(1)}</span></div><div class="stat-row"><span>Masse cuit (g):</span><span>${masse.toFixed(1)}</span></div><div class="stat-row"><span>Diam ext cuit:</span><span>${params.D} mm</span></div>`;
+    }
+    
+    // ------------------- GÉOMÉTRIE ET ÉTATS -------------------
+    function applyRetrait(dim, etat) {
+        if(etat === 'cru') return dim * (etatVisu === 'cuit' ? params.retrait_cuit : (etatVisu === 'sec' ? params.retrait_sec : 1));
+        if(etat === 'sec') return dim * (etatVisu === 'cuit' ? params.retrait_cuit/params.retrait_sec : 1);
+        return dim;
+    }
+    
+    function getColorForEtat() {
+        if(etatVisu === 'cru') return 0x3498db;
+        if(etatVisu === 'sec') return 0xd35400;
+        return 0xc0392b;
+    }
+    
+    function createCylinder(rExt, rInt, height, yBottom, color, opacity=1, isHollow=true) {
+        let group = new THREE.Group();
+        let material = new THREE.MeshStandardMaterial({ color: color, roughness: 0.4, metalness: 0.1, transparent: opacity<1, opacity: opacity });
+        // paroi externe
+        let outerGeo = new THREE.CylinderGeometry(rExt, rExt, height, 64, 32);
+        let outerMesh = new THREE.Mesh(outerGeo, material);
+        outerMesh.position.y = yBottom + height/2;
+        group.add(outerMesh);
+        if(isHollow && rInt>0) {
+            let innerGeo = new THREE.CylinderGeometry(rInt, rInt, height+0.1, 64, 32);
+            let innerMat = new THREE.MeshStandardMaterial({ color: 0xccccaa, roughness: 0.6 });
+            let innerMesh = new THREE.Mesh(innerGeo, innerMat);
+            innerMesh.position.y = yBottom + height/2;
+            group.add(innerMesh);
+        }
+        return group;
+    }
+    
+    function buildGoblet(etat) {
+        let group = new THREE.Group();
+        let factor = (etat === 'cru') ? 1 : (etat === 'sec' ? 1/params.retrait_sec : 1/params.retrait_cuit);
+        let H_cur = params.H * factor;
+        let D_cur = params.D * factor;
+        let d_cur = params.d * factor;
+        let e_cur = params.e * factor;
+        let color = getColorForEtat();
+        
+        // Corps principal
+        let body = createCylinder(D_cur/2, d_cur/2, H_cur - e_cur, 0, color, 0.7, true);
+        group.add(body);
+        // Fond
+        let bottomGeo = new THREE.CylinderGeometry(d_cur/2, d_cur/2, e_cur, 48);
+        let bottomMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.5 });
+        let bottomMesh = new THREE.Mesh(bottomGeo, bottomMat);
+        bottomMesh.position.y = e_cur/2;
+        group.add(bottomMesh);
+        
+        // Anneaux
+        let yRing = H_cur - params.Hd * factor;
+        for(let i=0;i<params.n;i++) {
+            let larg = params.largeurs[i] * factor;
+            let saillie = params.saillies[i] * factor;
+            let ringGeo = new THREE.TorusGeometry(D_cur/2 + saillie, larg/2, 32, 100);
+            let ringMat = new THREE.MeshStandardMaterial({ color: 0xFF8C00 });
+            let ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI/2;
+            ring.position.y = yRing;
+            group.add(ring);
+            yRing -= larg;
+            if(i < params.n-1) yRing -= params.espaces[i] * factor;
+        }
+        return group;
+    }
+    
+    function buildEbauche() {
+        let group = new THREE.Group();
+        let mExt = params.marge_tournage_ext;
+        let mInt = params.marge_tournage_int;
+        let mFond = params.marge_fond;
+        let H_cru = params.H * params.retrait_cuit;
+        let D_cru = params.D * params.retrait_cuit;
+        let d_cru = params.d * params.retrait_cuit;
+        let e_cru = params.e * params.retrait_cuit;
+        let color = 0xaabbcc;
+        let corps = createCylinder((D_cru/2 + mExt), (d_cru/2 - mInt), H_cru + mFond, 0, color, 0.5, true);
+        group.add(corps);
+        return group;
+    }
+    
+    function regenerateScene() {
+        if(!scene) return;
+        if(currentGroup) scene.remove(currentGroup);
+        currentGroup = new THREE.Group();
+        if(visuMode === 'gobelet') {
+            currentGroup.add(buildGoblet(etatVisu));
+        } else if(visuMode === 'ebauche') {
+            currentGroup.add(buildEbauche());
+        } else { // comparaison
+            let gob = buildGoblet(etatVisu);
+            gob.position.x = -1.2;
+            let ebau = buildEbauche();
+            ebau.position.x = 1.2;
+            currentGroup.add(gob, ebau);
+        }
+        scene.add(currentGroup);
+        updateCutaway();
+    }
+    
+    function setEtatVisu(etat) {
+        etatVisu = etat;
+        document.querySelectorAll('.mode-btn[data-etat]').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.mode-btn[data-etat="${etat}"]`).classList.add('active');
+        document.getElementById('etat-indicator').innerHTML = `État: ${etat.toUpperCase()}`;
+        regenerateScene();
+    }
+    function setVisuMode(mode) { visuMode = mode; regenerateScene(); }
+    function toggleCutaway() { cutawayEnabled = !cutawayEnabled; updateCutaway(); }
+    function updateCutaway() {
+        if(!currentGroup) return;
+        if(cutawayEnabled && cutawayPlaneY !== 0) {
+            currentGroup.children.forEach(child => { if(child.isMesh) child.material.clippingPlanes = [new THREE.Plane(new THREE.Vector3(0,1,0), cutawayPlaneY)]; });
+        } else {
+            currentGroup.children.forEach(child => { if(child.isMesh) child.material.clippingPlanes = []; });
+        }
+    }
+    
+    // ------------------- EXPORT JPG / STL -------------------
+    async function captureJPG() {
+        let statusDiv = document.getElementById('jpg-status');
+        statusDiv.style.display = 'block';
+        statusDiv.className = 'export-status info';
+        statusDiv.innerText = 'Génération en cours...';
+        document.getElementById('jpg-progress').style.width = '50%';
+        // Simuler un rendu haute résolution
+        setTimeout(() => {
+            try {
+                let canvas = renderer.domElement;
+                let dataURL = canvas.toDataURL('image/jpeg', 0.95);
+                let link = document.createElement('a');
+                link.href = dataURL;
+                link.download = `gobelet_${etatVisu}_${new Date().toISOString().slice(0,19)}.jpg`;
+                link.click();
+                statusDiv.className = 'export-status success';
+                statusDiv.innerText = 'JPG exporté !';
+                document.getElementById('jpg-progress').style.width = '100%';
+                setTimeout(()=>{ statusDiv.style.display='none'; document.getElementById('jpg-progress').style.width='0%';},2000);
+            } catch(e) { statusDiv.className='export-status error'; statusDiv.innerText='Erreur export'; }
+        }, 100);
+    }
+    function exportSTL() {
+        let exporter = new THREE.STLExporter();
+        let objToExport = visuMode === 'gobelet' ? buildGoblet(etatVisu) : (visuMode==='ebauche'? buildEbauche() : buildGoblet(etatVisu));
+        let stlString = exporter.parse(objToExport);
+        let blob = new Blob([stlString], {type: 'text/plain'});
+        let link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `modele_3d.stl`;
+        link.click();
+        showNotification('STL exporté');
+    }
+    function showNotification(msg) { let n = document.getElementById('notification'); n.innerText=msg; n.style.display='flex'; setTimeout(()=>n.style.display='none',2000); }
+    
+    // ------------------- THREE.JS INIT -------------------
+    function initThree() {
+        const container = document.getElementById('scene-container');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xeeeeee);
+        camera = new THREE.PerspectiveCamera(45, width/height, 0.1, 1000);
+        camera.position.set(5, 4, 8);
+        camera.lookAt(0,2,0);
+        renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableZoom = true;
+        controls.enablePan = true;
+        controls.enableTouchRotate = true;
+        controls.rotateSpeed = 1.0;
+        // Lumière
+        let ambient = new THREE.AmbientLight(0x404040);
+        scene.add(ambient);
+        let dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(2,5,3);
+        scene.add(dirLight);
+        let fillLight = new THREE.PointLight(0xccaa88, 0.5);
+        fillLight.position.set(1,2,2);
+        scene.add(fillLight);
+        // Grille sol
+        let gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0xcccccc);
+        gridHelper.position.y = -0.1;
+        scene.add(gridHelper);
+        // Axes helper optionnel
+        // scene.add(new THREE.AxesHelper(5));
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            const w = container.clientWidth, h = container.clientHeight;
+            camera.aspect = w/h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        }
+        regenerateScene();
+        animate();
+    }
+    function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+    
+    // UI helpers
+    window.showTab = function(tabId, btn) {
+        document.querySelectorAll('.param-group').forEach(g => g.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        if(btn) btn.classList.add('active');
+        else document.querySelector(`.tab[onclick*="${tabId}"]`).classList.add('active');
+    };
+    window.updateParam = updateParam;
+    window.setEtatVisu = setEtatVisu;
+    window.setVisuMode = setVisuMode;
+    window.toggleCutaway = toggleCutaway;
+    window.captureJPG = captureJPG;
+    window.exportSTL = exportSTL;
+    
+    // Lancement
+    document.addEventListener('DOMContentLoaded', () => {
+        buildUI();
+        initThree();
+        setEtatVisu('cuit');
+        setVisuMode('comparaison');
+        document.getElementById('etat-indicator').style.display = 'block';
+    });
+</script>
+</body>
+</html>
