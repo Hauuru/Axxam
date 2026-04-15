@@ -3,502 +3,493 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Gobelet Paramétrique 3D - Version Stable</title>
+    <title>Générateur de Gobelets - Version complète corrigée</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        /* ============ VARIABLES CSS ============ */
+        :root { 
+            --primary: #3498db; --bg: #f5f5f5; --panel: #fff; --text: #333; --border: #ddd; 
+            --cru: #3498db; --sec: #d35400; --cuit: #c0392b; --success: #2ecc71; --warning: #f39c12; 
+            --danger: #e74c3c; --ring: #FF8C00; --grid: #888; --grid-light: #ccc;
         }
-
-        body {
-            font-family: system-ui, 'Segoe UI', sans-serif;
-            background: #eef2f5;
-            overflow: hidden;
-            height: 100vh;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; }
+        .container { display: flex; height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; overflow: hidden; }
+        .controls { width: 350px; background: var(--panel); display: flex; flex-direction: column; border-right: 1px solid var(--border); height: 100vh; flex-shrink: 0; overflow-y: auto; }
+        .controls-header { padding: 15px; border-bottom: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
+        .controls-title { color: #2c3e50; margin-bottom: 15px; font-size: 1.5em; }
+        .tabs { display: flex; margin-top: 10px; border-bottom: 2px solid var(--border); position: sticky; top: 0; background: var(--panel); z-index: 100; padding-top: 5px; }
+        .tab { flex: 1; padding: 10px; text-align: center; background: none; border: none; cursor: pointer; font-weight: 500; color: #666; transition: all 0.3s; }
+        .tab:hover { color: var(--primary); background-color: #f8f9fa; }
+        .tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: -2px; }
+        .controls-content { flex: 1; overflow-y: auto; padding: 0 15px 15px 15px; }
+        .param-group { display: none; padding: 10px 0; }
+        .param-group.active { display: block; }
+        .param { margin-bottom: 15px; }
+        .param label { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: var(--text); font-weight: 600; }
+        .param label span { color: #666; font-size: 13px; font-weight: normal; }
+        .slider-container { display: flex; gap: 10px; align-items: center; }
+        input[type=range] { flex: 1; height: 6px; background: #ddd; border-radius: 3px; outline: none; -webkit-appearance: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); cursor: pointer; }
+        input[type=number] { width: 70px; padding: 6px; border: 1px solid var(--border); border-radius: 4px; text-align: center; }
+        .info-box { background: #f8f9fa; border-radius: 6px; padding: 10px; margin: 10px 0; font-size: 12px; text-align: center; border-left: 4px solid var(--primary); }
+        .section-title { margin: 20px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--border); font-size: 15px; font-weight: 600; }
+        .button-group { display: flex; gap: 8px; margin-top: 10px; }
+        .mode-btn { flex: 1; padding: 10px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .mode-btn.active { color: white; }
+        .mode-btn[data-etat="cru"].active { background: var(--cru); border-color: var(--cru); }
+        .mode-btn[data-etat="sec"].active { background: var(--sec); border-color: var(--sec); }
+        .mode-btn[data-etat="cuit"].active { background: var(--cuit); border-color: var(--cuit); }
+        .ring-table { width: 100%; margin: 15px 0; border-collapse: collapse; font-size: 13px; }
+        .ring-table th, .ring-table td { padding: 8px; border: 1px solid var(--border); text-align: center; }
+        .option-group.compact { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 5px; }
+        .option-group.compact label { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 6px; border: 1px solid var(--border); border-radius: 4px; background: #f8f9fa; cursor: pointer; justify-content: center; }
+        .export-btn { background: var(--success); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .export-progress { height: 4px; background: var(--primary); width: 0%; transition: width 0.3s; margin: 10px 0; border-radius: 2px; }
+        .export-status { padding: 10px; margin: 10px 0; border-radius: 4px; font-size: 14px; text-align: center; display: none; }
+        .export-status.success { background: #d4edda; color: #155724; }
+        .export-status.error { background: #f8d7da; color: #721c24; }
+        .stats { margin-top: 20px; border-top: 1px solid var(--border); padding: 15px; background: var(--panel); font-size: 13px; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .viewer { flex: 1; background: #f0f0f0; position: relative; height: 100vh; overflow: hidden; }
+        #scene-container { width: 100%; height: 100%; }
+        .cutaway-controls, #etat-indicator, .help-bar { position: absolute; background: rgba(255,255,255,0.95); padding: 8px 12px; border-radius: 8px; font-size: 12px; z-index: 1000; backdrop-filter: blur(5px); }
+        .cutaway-controls { top: 10px; left: 10px; display: flex; gap: 8px; }
+        .help-bar { bottom: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; }
+        #etat-indicator { top: 10px; right: 10px; }
+        @media (max-width: 900px) {
+            .container { flex-direction: column; height: auto; min-height: 100vh; overflow-y: auto; }
+            .controls { width: 100%; height: auto; max-height: 55vh; border-right: none; border-bottom: 1px solid var(--border); }
+            .viewer { height: 45vh; min-height: 300px; }
+            .controls-title { font-size: 1.2em; }
         }
-
-        /* Layout principal */
-        .app {
-            display: flex;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Panneau de contrôle (défilable) */
-        .panel {
-            width: 340px;
-            background: #ffffff;
-            border-right: 1px solid #ddd;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            box-shadow: 2px 0 8px rgba(0,0,0,0.05);
-            z-index: 10;
-        }
-
-        .panel-header {
-            padding: 16px;
-            border-bottom: 1px solid #eee;
-            background: #fafcff;
-            position: sticky;
-            top: 0;
-            z-index: 2;
-        }
-
-        .panel-header h1 {
-            font-size: 1.4rem;
-            color: #1e466e;
-            margin-bottom: 12px;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
-        }
-
-        .tab {
-            padding: 8px 12px;
-            background: transparent;
-            border: none;
-            border-radius: 30px;
-            font-weight: 500;
-            color: #4a627a;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.85rem;
-        }
-
-        .tab.active {
-            background: #1e6f9f;
-            color: white;
-        }
-
-        .tab-content {
-            display: none;
-            padding: 20px 16px;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* contrôles */
-        .param {
-            margin-bottom: 20px;
-        }
-
-        .param label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: #1e2f3e;
-        }
-
-        .slider-container {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        input[type="range"] {
-            flex: 1;
-            height: 5px;
-            background: #cfdee9;
-            border-radius: 5px;
-            -webkit-appearance: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            width: 16px;
-            height: 16px;
-            background: #1e6f9f;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        input[type="number"] {
-            width: 70px;
-            padding: 6px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .info-box {
-            background: #eef3fc;
-            padding: 10px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            margin-bottom: 20px;
-            border-left: 4px solid #1e6f9f;
-        }
-
-        .section-title {
-            font-weight: 700;
-            margin: 20px 0 12px 0;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #cbdde9;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .mode-btn {
-            flex: 1;
-            padding: 8px;
-            background: #f0f4f9;
-            border: 1px solid #bdc4cc;
-            border-radius: 40px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .mode-btn.active {
-            background: #1e6f9f;
-            border-color: #1e6f9f;
-            color: white;
-        }
-
-        .ring-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-            margin: 10px 0;
-        }
-
-        .ring-table th, .ring-table td {
-            border: 1px solid #d0dee9;
-            padding: 8px;
-            text-align: center;
-        }
-
-        .export-btn {
-            background: #2c7a4d;
-            color: white;
-            border: none;
-            border-radius: 40px;
-            padding: 10px;
-            width: 100%;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .stats {
-            background: #f9fbfd;
-            padding: 12px;
-            border-top: 1px solid #e2e8f0;
-            font-size: 0.8rem;
-        }
-
-        /* zone 3D */
-        .viewer {
-            flex: 1;
-            position: relative;
-            background: #eef2f5;
-        }
-
-        #scene-container {
-            width: 100%;
-            height: 100%;
-        }
-
-        .info-bar {
-            position: absolute;
-            bottom: 12px;
-            left: 12px;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(8px);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 40px;
-            font-size: 0.7rem;
-            pointer-events: none;
-            z-index: 20;
-        }
-
-        .cutaway-toggle {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            background: rgba(255,255,255,0.9);
-            border: none;
-            border-radius: 30px;
-            padding: 6px 14px;
-            font-weight: 500;
-            cursor: pointer;
-            z-index: 20;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-        }
-
-        @media (max-width: 760px) {
-            .app { flex-direction: column; }
-            .panel { width: 100%; max-height: 48vh; }
-            .viewer { min-height: 52vh; }
-            .tab { font-size: 0.7rem; padding: 5px 10px; }
-        }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 12px 18px; background: var(--success); color: white; border-radius: 6px; z-index: 10000; display: none; }
     </style>
-    <!-- Three.js -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
-            }
-        }
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
 </head>
 <body>
-<div class="app">
-    <div class="panel">
-        <div class="panel-header">
-            <h1>🏺 Tourneur 5.0 · Gobelet paramétrique</h1>
-            <div class="tabs" id="tab-buttons">
-                <button class="tab active" data-tab="dim">Dimensions</button>
-                <button class="tab" data-tab="rings">Anneaux</button>
-                <button class="tab" data-tab="material">Matériau</button>
-                <button class="tab" data-tab="turning">Tournage</button>
-                <button class="tab" data-tab="export">Export</button>
+<div class="container">
+    <div class="controls">
+        <div class="controls-header">
+            <h1 class="controls-title">🏺 Gobelets 5.0 (corrigé)</h1>
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('dimensions')">Dimensions</button>
+                <button class="tab" onclick="showTab('anneaux')">Anneaux</button>
+                <button class="tab" onclick="showTab('materiau')">Matériau</button>
+                <button class="tab" onclick="showTab('tournage')">Tournage</button>
+                <button class="tab" onclick="showTab('export')">Export</button>
             </div>
         </div>
-
-        <div id="tab-dim" class="tab-content active">
-            <div class="info-box">📏 Dimensions finales (état CUIT)</div>
-            <div class="param"><label>Hauteur totale (mm) <span>H</span></label><div class="slider-container"><input type="range" id="H_slider" min="40" max="250" step="1" value="110"><input type="number" id="H_num" value="110" step="1"></div></div>
-            <div class="param"><label>Diamètre extérieur (mm) <span>D</span></label><div class="slider-container"><input type="range" id="D_slider" min="50" max="160" step="1" value="85"><input type="number" id="D_num" value="85" step="1"></div></div>
-            <div class="param"><label>Diamètre intérieur (mm) <span>d</span></label><div class="slider-container"><input type="range" id="d_slider" min="30" max="140" step="1" value="70"><input type="number" id="d_num" value="70" step="1"></div></div>
-            <div class="param"><label>Épaisseur fond (mm) <span>e</span></label><div class="slider-container"><input type="range" id="e_slider" min="3" max="20" step="0.5" value="6"><input type="number" id="e_num" value="6" step="0.5"></div></div>
-        </div>
-
-        <div id="tab-rings" class="tab-content">
-            <div class="info-box">💍 Anneaux décoratifs (état cuit)</div>
-            <div class="param"><label>Nombre d'anneaux (0‑4)</label><div class="slider-container"><input type="range" id="n_rings" min="0" max="4" step="1" value="2"><input type="number" id="n_rings_num" value="2" step="1"></div></div>
-            <div class="param"><label>Hauteur 1er anneau (mm)</label><div class="slider-container"><input type="range" id="Hd_slider" min="5" max="80" step="1" value="20"><input type="number" id="Hd_num" value="20" step="1"></div></div>
-            <div id="rings-dynamic"></div>
-            <div class="section-title">Profil des anneaux</div>
-            <table class="ring-table" id="ring-table-body"><thead><tr><th>#</th><th>Largeur (mm)</th><th>Saillie (mm)</th></tr></thead><tbody id="ring-tbody"></tbody></table>
-        </div>
-
-        <div id="tab-material" class="tab-content">
-            <div class="info-box">🧱 Coefficients de retrait / densité</div>
-            <div class="param"><label>Retrait Cru → Sec</label><input type="number" id="ret_sec" value="1.05" step="0.01"></div>
-            <div class="param"><label>Retrait Cru → Cuit</label><input type="number" id="ret_cuit" value="1.08" step="0.01"></div>
-            <div class="param"><label>Densité cru (g/cm³)</label><input type="number" id="dens_cru" value="1.9" step="0.05"></div>
-        </div>
-
-        <div id="tab-turning" class="tab-content">
-            <div class="info-box">🔧 Marges d'ébauche (tournage)</div>
-            <div class="param"><label>Marge extérieure (mm)</label><input type="number" id="marge_ext" value="2.0" step="0.5"></div>
-            <div class="param"><label>Marge intérieure (mm)</label><input type="number" id="marge_int" value="1.5" step="0.5"></div>
-            <div class="param"><label>Marge fond (mm)</label><input type="number" id="marge_fond" value="1.5" step="0.5"></div>
-            <div class="section-title">Visualisation</div>
-            <div class="button-group" id="etat-group">
-                <button class="mode-btn" data-etat="cru">🔵 Cru</button>
-                <button class="mode-btn" data-etat="sec">🟠 Sec</button>
-                <button class="mode-btn active" data-etat="cuit">🔴 Cuit</button>
+        <div class="controls-content">
+            <!-- Onglet Dimensions -->
+            <div id="dimensions" class="param-group active">
+                <div class="info-box">Dimensions finales (état CUIT)</div>
+                <div id="dimensions-content"></div>
             </div>
-            <div class="button-group" id="mode-group">
-                <button class="mode-btn" data-mode="gobelet">🍺 Gobelet</button>
-                <button class="mode-btn" data-mode="ebauche">🪨 Ébauche</button>
-                <button class="mode-btn active" data-mode="comparaison">⚖️ Comparaison</button>
+            <!-- Onglet Anneaux -->
+            <div id="anneaux" class="param-group">
+                <div class="info-box">Anneaux décoratifs (état CUIT)</div>
+                <div class="param"><label>Nb anneaux (0-4)</label><div class="slider-container"><input id="n_r" type="range" min="0" max="4" step="1" value="2" oninput="updateParam('n',this.value)"><input id="n_n" type="number" min="0" max="4" step="1" value="2" oninput="updateParam('n',this.value)"></div></div>
+                <div class="param"><label>Hauteur 1er anneau (mm)</label><div class="slider-container"><input id="Hd_r" type="range" min="0" max="100" value="20" step="1" oninput="updateParam('Hd',this.value)"><input id="Hd_n" type="number" min="0" max="100" value="20" step="1" oninput="updateParam('Hd',this.value)"></div></div>
+                <div id="espacements-content"></div>
+                <div class="section-title">Profil des anneaux</div>
+                <table class="ring-table"><thead><tr><th>Anneau</th><th>Largeur (mm)</th><th>Saillie (mm)</th></tr></thead><tbody id="anneaux-body"></tbody></table>
+            </div>
+            <!-- Onglet Matériau -->
+            <div id="materiau" class="param-group">
+                <div class="info-box">Coefficients de retrait et densités</div>
+                <div id="materiau-content"></div>
+            </div>
+            <!-- Onglet Tournage -->
+            <div id="tournage" class="param-group">
+                <div id="tournage-content"></div>
+                <div class="section-title">État de visualisation</div>
+                <div class="button-group">
+                    <button class="mode-btn" data-etat="cru" onclick="setEtatVisualisation('cru')">Cru</button>
+                    <button class="mode-btn" data-etat="sec" onclick="setEtatVisualisation('sec')">Sec</button>
+                    <button class="mode-btn active" data-etat="cuit" onclick="setEtatVisualisation('cuit')">Cuit</button>
+                </div>
+                <div class="section-title">Mode de visualisation</div>
+                <div class="button-group">
+                    <button class="mode-btn" onclick="setVisualisationMode('gobelet')">Gobelet seul</button>
+                    <button class="mode-btn" onclick="setVisualisationMode('ebauche')">Ébauche seule</button>
+                    <button class="mode-btn active" onclick="setVisualisationMode('comparaison')">Comparaison</button>
+                </div>
+                <div id="info-conversion" style="margin-top:10px; font-size:12px; text-align:center;"></div>
+            </div>
+            <!-- Onglet Export -->
+            <div id="export" class="param-group">
+                <div class="section-title">Export JPG (600 DPI)</div>
+                <div class="param"><label>Contenu</label><div class="option-group compact"><label><input type="radio" name="jpg-content" value="gobelet" checked> Gobelet</label><label><input type="radio" name="jpg-content" value="gobelet-with-rings"> Avec anneaux</label><label><input type="radio" name="jpg-content" value="ebauche"> Ébauche</label><label><input type="radio" name="jpg-content" value="comparaison"> Comparaison</label></div></div>
+                <div class="param"><label>Grille millimétrée</label><div class="option-group compact"><label><input type="radio" name="jpg-grid" value="5mm" checked> 5mm</label><label><input type="radio" name="jpg-grid" value="1mm"> 1mm</label><label><input type="radio" name="jpg-grid" value="10mm"> 10mm</label><label><input type="radio" name="jpg-grid" value="none"> Aucune</label></div></div>
+                <div class="param"><label>Annotations</label><div class="option-group compact"><label><input type="checkbox" name="jpg-annotation" value="dimensions" checked> Dimensions</label><label><input type="checkbox" name="jpg-annotation" value="echelle" checked> Échelle</label><label><input type="checkbox" name="jpg-annotation" value="date" checked> Date</label></div></div>
+                <button onclick="captureJPG()" class="export-btn">📸 Capturer JPG</button>
+                <div class="export-progress" id="jpg-progress"></div><div id="jpg-status" class="export-status"></div>
+                <div class="section-title">Export STL</div>
+                <div class="param"><label>Modèle</label><div class="option-group compact"><label><input type="radio" name="stl-content" value="gobelet-only" checked> Gobelet seul</label><label><input type="radio" name="stl-content" value="gobelet-with-rings"> Avec anneaux</label></div></div>
+                <button onclick="exportSTL()" class="export-btn">⬇️ Exporter STL</button>
             </div>
         </div>
-
-        <div id="tab-export" class="tab-content">
-            <div class="info-box">📸 Export image haute résolution</div>
-            <button id="jpg-btn" class="export-btn">📷 Capturer JPG (HD)</button>
-            <div class="section-title">📁 Export STL</div>
-            <button id="stl-btn" class="export-btn">⬇️ Télécharger STL (gobelet seul)</button>
-        </div>
-
-        <div class="stats" id="stats-panel">
-            <div>📐 Volume cuit : -- cm³</div>
-            <div>⚖️ Masse estimée : -- g</div>
-        </div>
+        <div class="stats" id="stats-panel"></div>
     </div>
-
     <div class="viewer">
         <div id="scene-container"></div>
-        <button id="cutawayBtn" class="cutaway-toggle">✂️ Coupe désactivée</button>
-        <div class="info-bar">🖱️ Glisser = rotation | Clic droit = panoramique | Molette = zoom</div>
+        <div class="cutaway-controls"><button id="toggle-cutaway" onclick="toggleCutaway()">✂️ Coupe</button><span id="cutaway-value">Désactivé</span></div>
+        <div id="etat-indicator"></div>
+        <div class="help-bar"><span>🖱️ Glisser = rotation | Clic droit = panoramique | Molette = zoom</span></div>
     </div>
 </div>
+<div id="notification" class="notification"></div>
 
-<script type="module">
-    import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    import { STLExporter } from 'three/addons/exporters/STLExporter.js';
-
-    // ---------- PARAMÈTRES ----------
-    const state = {
-        H: 110, D: 85, d: 70, e: 6,
-        n_rings: 2, Hd: 20,
-        ring_width: [12, 12, 12, 12],
-        ring_proj: [6, 6, 6, 6],
-        ring_gap: [4, 4, 4],
-        ret_sec: 1.05, ret_cuit: 1.08,
-        dens_cru: 1.9,
-        marge_ext: 2.0, marge_int: 1.5, marge_fond: 1.5,
-        etat: "cuit",      // cru, sec, cuit
-        mode: "comparaison"
+<script>
+    // ------------------- PARAMÈTRES -------------------
+    let params = {
+        H: 100, D: 80, d: 70, e: 5,
+        Hd: 20, n: 2,
+        largeurs: [12,12,12,12], saillies: [5,5,5,5], espaces: [4,4,4,0],
+        retrait_sec: 1.05, retrait_cuit: 1.08,
+        densite_cru: 1.9, densite_sec: 1.7, densite_cuit: 1.6,
+        marge_tournage_ext: 2, marge_tournage_int: 2, marge_fond: 1.5
     };
-
-    // Three globals
+    
+    // Variables Three.js
     let scene, camera, renderer, controls, mainGroup;
-    let clippingPlane, cutawayActive = false;
-
-    // helpers UI
-    function updateStats() {
-        const volCuit = Math.PI * ((state.D/2)**2 - (state.d/2)**2) * state.H + Math.PI * (state.d/2)**2 * state.e;
-        const masse = volCuit * state.dens_cru / 1.08; // approximation cuit
-        document.getElementById('stats-panel').innerHTML = `<div>📐 Volume cuit : ${volCuit.toFixed(1)} cm³</div><div>⚖️ Masse estimée : ${masse.toFixed(1)} g</div>`;
+    let etatVisu = "cuit";
+    let visuMode = "comparaison";
+    let cutawayEnabled = false;
+    let clippingPlane;
+    
+    // Fonctions d'échelle selon état (cuit = 1)
+    function getScaleFactor() {
+        if (etatVisu === "cuit") return 1;
+        if (etatVisu === "sec") return 1 / params.retrait_sec;
+        return 1 / params.retrait_cuit; // cru
     }
-
-    function syncUI() {
-        document.getElementById('H_slider').value = state.H; document.getElementById('H_num').value = state.H;
-        document.getElementById('D_slider').value = state.D; document.getElementById('D_num').value = state.D;
-        document.getElementById('d_slider').value = state.d; document.getElementById('d_num').value = state.d;
-        document.getElementById('e_slider').value = state.e; document.getElementById('e_num').value = state.e;
-        document.getElementById('n_rings').value = state.n_rings; document.getElementById('n_rings_num').value = state.n_rings;
-        document.getElementById('Hd_slider').value = state.Hd; document.getElementById('Hd_num').value = state.Hd;
-        document.getElementById('ret_sec').value = state.ret_sec;
-        document.getElementById('ret_cuit').value = state.ret_cuit;
-        document.getElementById('dens_cru').value = state.dens_cru;
-        document.getElementById('marge_ext').value = state.marge_ext;
-        document.getElementById('marge_int').value = state.marge_int;
-        document.getElementById('marge_fond').value = state.marge_fond;
-        updateRingsTable();
-        updateStats();
-    }
-
-    function updateRingsTable() {
-        const tbody = document.getElementById('ring-tbody');
-        tbody.innerHTML = '';
-        for (let i = 0; i < state.n_rings; i++) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${i+1}</td>
-                            <td><input type="number" step="1" value="${state.ring_width[i]}" class="ring-w" data-idx="${i}" style="width:70px"></td>
-                            <td><input type="number" step="1" value="${state.ring_proj[i]}" class="ring-p" data-idx="${i}" style="width:70px"></td>`;
-            tbody.appendChild(tr);
-        }
-        // gestion des gaps
-        const gapDiv = document.getElementById('rings-dynamic');
-        gapDiv.innerHTML = '<div class="section-title">Espacements (mm)</div>';
-        for (let i = 0; i < Math.max(0, state.n_rings-1); i++) {
-            gapDiv.innerHTML += `<div class="param"><label>Espace après anneau ${i+1}</label><input type="number" id="gap_${i}" value="${state.ring_gap[i] || 4}" step="1" style="width:100%"></div>`;
-        }
-        // add listeners
-        document.querySelectorAll('.ring-w').forEach(inp => inp.addEventListener('change', (e) => { state.ring_width[e.target.dataset.idx] = parseFloat(e.target.value); regenerate(); }));
-        document.querySelectorAll('.ring-p').forEach(inp => inp.addEventListener('change', (e) => { state.ring_proj[e.target.dataset.idx] = parseFloat(e.target.value); regenerate(); }));
-        for (let i = 0; i < state.n_rings-1; i++) {
-            const gapInput = document.getElementById(`gap_${i}`);
-            if(gapInput) gapInput.addEventListener('change', (e) => { state.ring_gap[i] = parseFloat(e.target.value); regenerate(); });
-        }
-    }
-
-    // Conversion dimension selon état (cru/sec/cuit)
-    function dimToEtat(value, baseEtat) {
-        // baseEtat : l'état pour lequel la valeur est donnée (toujours "cuit" pour les dimensions principales)
-        if (state.etat === "cuit") return value;
-        if (state.etat === "sec") return value * (state.ret_sec / state.ret_cuit);
-        if (state.etat === "cru") return value / state.ret_cuit;
-        return value;
-    }
-
+    
     // Couleur selon état
     function getColor() {
-        if (state.etat === "cru") return 0x5a9fd4;
-        if (state.etat === "sec") return 0xc97e5a;
-        return 0xb54535; // cuit terre cuite
+        if (etatVisu === "cru") return 0x3498db;
+        if (etatVisu === "sec") return 0xd35400;
+        return 0xc0392b;
     }
-
-    // Construction du gobelet (géométrie simple, opaque)
-    function buildGoblet() {
+    
+    // Construction du gobelet (échelle appliquée après construction)
+    function buildGoblet(includeRings = true) {
         const group = new THREE.Group();
-        const H_cur = dimToEtat(state.H, "cuit");
-        const D_cur = dimToEtat(state.D, "cuit");
-        const d_cur = dimToEtat(state.d, "cuit");
-        const e_cur = dimToEtat(state.e, "cuit");
+        const H = params.H;
+        const D = params.D;
+        const d = params.d;
+        const e = params.e;
         const color = getColor();
-        const materialBody = new THREE.MeshStandardMaterial({ color: color, roughness: 0.45, metalness: 0.15 });
-        const materialBottom = new THREE.MeshStandardMaterial({ color: color, roughness: 0.5 });
-
-        // corps extérieur (plein, simple)
-        const outerCyl = new THREE.Mesh(new THREE.CylinderGeometry(D_cur/2, D_cur/2, H_cur - e_cur, 64, 32), materialBody);
-        outerCyl.position.y = (H_cur - e_cur)/2;
-        group.add(outerCyl);
+        const material = new THREE.MeshStandardMaterial({ color: color, roughness: 0.4, metalness: 0.1 });
         
-        // fond (cylindre plein)
-        const bottom = new THREE.Mesh(new THREE.CylinderGeometry(d_cur/2, d_cur/2, e_cur, 48, 16), materialBottom);
-        bottom.position.y = e_cur/2;
-        group.add(bottom);
+        // Corps (cylindre extérieur) - hauteur totale moins le fond
+        const bodyHeight = H - e;
+        const bodyGeo = new THREE.CylinderGeometry(D/2, D/2, bodyHeight, 64, 32);
+        const bodyMesh = new THREE.Mesh(bodyGeo, material);
+        bodyMesh.position.y = bodyHeight / 2;
+        group.add(bodyMesh);
         
-        // ajout d'un évidement visuel léger (cercle intérieur) : simple décoration
-        const innerRingMat = new THREE.MeshStandardMaterial({ color: 0xcfb284, roughness: 0.6 });
-        if (d_cur > 5) {
-            const innerWall = new THREE.Mesh(new THREE.CylinderGeometry(d_cur/2 - 2, d_cur/2 - 2, H_cur - e_cur - 2, 48, 16), innerRingMat);
-            innerWall.position.y = (H_cur - e_cur)/2;
-            group.add(innerWall);
+        // Fond
+        const bottomGeo = new THREE.CylinderGeometry(d/2, d/2, e, 48, 16);
+        const bottomMesh = new THREE.Mesh(bottomGeo, material);
+        bottomMesh.position.y = e / 2;
+        group.add(bottomMesh);
+        
+        // Anneaux (optionnel)
+        if (includeRings && params.n > 0) {
+            let yRing = H - params.Hd;
+            for (let i = 0; i < params.n; i++) {
+                const larg = params.largeurs[i];
+                const saillie = params.saillies[i];
+                if (larg <= 0) continue;
+                const torusGeo = new THREE.TorusGeometry(D/2 + saillie, larg/2, 32, 80);
+                const ringMat = new THREE.MeshStandardMaterial({ color: 0xffaa55 });
+                const ring = new THREE.Mesh(torusGeo, ringMat);
+                ring.rotation.x = Math.PI / 2;
+                ring.position.y = yRing;
+                group.add(ring);
+                yRing -= larg;
+                if (i < params.n - 1) yRing -= (params.espaces[i] || 4);
+            }
         }
         
-        // Anneaux décoratifs
-        let yRing = H_cur - dimToEtat(state.Hd, "cuit");
-        for (let i = 0; i < state.n_rings; i++) {
-            const larg = state.ring_width[i];
-            const saillie = state.ring_proj[i];
-            if (larg <= 0) continue;
-            const torusGeo = new THREE.TorusGeometry(D_cur/2 + saillie, larg/2, 32, 80);
-            const ringMat = new THREE.MeshStandardMaterial({ color: 0xd99e45, roughness: 0.3, metalness: 0.2 });
-            const ring = new THREE.Mesh(torusGeo, ringMat);
-            ring.rotation.x = Math.PI / 2;
-            ring.position.y = yRing;
-            group.add(ring);
-            yRing -= larg;
-            if (i < state.n_rings-1) yRing -= (state.ring_gap[i] || 4);
-        }
+        // Appliquer l'échelle selon l'état (cru/sec/cuit)
+        const scale = getScaleFactor();
+        group.scale.set(scale, scale, scale);
         return group;
     }
-
-    // Ébauche (tournage brut)
+    
+    // Construction de l'ébauche (tournage)
     function buildEbauche() {
         const group = new THREE.Group();
-        const H_cru = state.H * state.ret_cuit;
-        const D_cru = state.D * state.ret_cuit;
-        const d_cru = state.d * state.ret_cuit;
-        const mExt = state.marge_ext;
-        const mInt = state.marge_int;
-        const mFond = state.marge_fond;
+        const H_cru = params.H * params.retrait_cuit;
+        const D_cru = params.D * params.retrait_cuit;
+        const mExt = params.marge_tournage_ext;
+        const mFond = params.marge_fond;
         const extRad = D_cru/2 + mExt;
-        const intRad = Math.max(5, d_cru/2 - mInt);
         const material = new THREE.MeshStandardMaterial({ color: 0xbc9a6c, roughness: 0.7, transparent: true, opacity: 0.65 });
         const body = new THREE.Mesh(new THREE.CylinderGeometry(extRad, extRad, H_cru + mFond, 64, 32), material);
         body.position.y = (H_cru + mFond)/2;
         group.add(body);
-        // évidement suggéré
-        const hollow = new THREE.Mesh(new THREE.CylinderGeometry(intRad, intRad, H_cru + mFond + 2, 48, 16), new THREE.MeshStandardMaterial({ color: 0x8b6946, roughness: 0.8 }));
-        hollow.position.y = (H_cru + mFond)/2;
-        group.add(hollow);
+        // Appliquer l'échelle selon l'état (pour l'ébauche, on l'affiche à la taille de l'état choisi)
+        const scale = getScaleFactor();
+        group.scale.set(scale, scale, scale);
         return group;
     }
-
+    
     function regenerateScene() {
-        if (!scene) return;
+        if (!mainGroup) return;
         while(mainGroup.children.length > 0) mainGroup.remove(mainGroup.children[0]);
         
-        if (state.mode === "gobelet") {
-            mainGroup.add(buildGoblet());
-        } else if (state.mode === "ebauche") {
-            mainGroup
+        if (visuMode === "gobelet") {
+            mainGroup.add(buildGoblet(true));
+        } else if (visuMode === "ebauche") {
+            mainGroup.add(buildEbauche());
+        } else { // comparaison
+            const gob = buildGoblet(true);
+            gob.position.x = -1.8;
+            const ebau = buildEbauche();
+            ebau.position.x = 1.8;
+            mainGroup.add(gob, ebau);
+        }
+        
+        // Gestion de la coupe
+        if (cutawayEnabled && clippingPlane) {
+            mainGroup.traverse(child => {
+                if (child.isMesh) child.material.clippingPlanes = [clippingPlane];
+            });
+        } else {
+            mainGroup.traverse(child => {
+                if (child.isMesh) child.material.clippingPlanes = [];
+            });
+        }
+        updateStats();
+    }
+    
+    function toggleCutaway() {
+        cutawayEnabled = !cutawayEnabled;
+        const btn = document.getElementById('toggle-cutaway');
+        const span = document.getElementById('cutaway-value');
+        if (cutawayEnabled) {
+            clippingPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 2);
+            btn.style.background = "#f39c12";
+            span.innerText = "Actif (Y=2cm)";
+        } else {
+            btn.style.background = "";
+            span.innerText = "Désactivé";
+        }
+        regenerateScene();
+    }
+    
+    // Statistiques
+    function updateStats() {
+        const scale = getScaleFactor();
+        const H_cur = params.H * scale;
+        const D_cur = params.D * scale;
+        const d_cur = params.d * scale;
+        const e_cur = params.e * scale;
+        const vol = Math.PI * ((D_cur/2)**2 - (d_cur/2)**2) * H_cur + Math.PI * (d_cur/2)**2 * e_cur;
+        let densite = params.densite_cuit;
+        if (etatVisu === "sec") densite = params.densite_sec;
+        if (etatVisu === "cru") densite = params.densite_cru;
+        const masse = vol * densite / 1000;
+        document.getElementById('stats-panel').innerHTML = `<div class="stat-row"><span>Volume (${etatVisu}) :</span><span>${vol.toFixed(1)} cm³</span></div>
+                                                           <div class="stat-row"><span>Masse (${etatVisu}) :</span><span>${masse.toFixed(1)} g</span></div>
+                                                           <div class="stat-row"><span>Diamètre extérieur :</span><span>${D_cur.toFixed(1)} mm</span></div>`;
+    }
+    
+    // Export JPG avec options (version simplifiée mais fonctionnelle)
+    function captureJPG() {
+        renderer.render(scene, camera);
+        const canvas = renderer.domElement;
+        const dataURL = canvas.toDataURL('image/jpeg', 0.95);
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = `gobelet_${etatVisu}_${Date.now()}.jpg`;
+        link.click();
+        showNotification("JPG exporté");
+    }
+    
+    function exportSTL() {
+        const includeRings = document.querySelector('input[name="stl-content"]:checked').value === 'gobelet-with-rings';
+        const tempGroup = new THREE.Group();
+        if (visuMode === "gobelet") tempGroup.add(buildGoblet(includeRings));
+        else if (visuMode === "ebauche") tempGroup.add(buildEbauche());
+        else tempGroup.add(buildGoblet(includeRings));
+        const exporter = new THREE.STLExporter();
+        const stlString = exporter.parse(tempGroup);
+        const blob = new Blob([stlString], {type: 'text/plain'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'modele.stl';
+        a.click();
+        URL.revokeObjectURL(url);
+        showNotification("STL exporté");
+    }
+    
+    function showNotification(msg) {
+        const n = document.getElementById('notification');
+        n.innerText = msg;
+        n.style.display = 'flex';
+        setTimeout(() => n.style.display = 'none', 2000);
+    }
+    
+    // UI binding
+    function updateParam(key, val) {
+        if (key === 'n') { params.n = parseInt(val); document.getElementById('n_r').value=val; document.getElementById('n_n').value=val; updateAnneauxUI(); updateEspacesUI(); regenerateScene(); }
+        else if (key === 'Hd') { params.Hd = parseFloat(val); document.getElementById('Hd_r').value=val; document.getElementById('Hd_n').value=val; regenerateScene(); }
+        else if (key === 'H') { params.H = parseFloat(val); document.getElementById('H_r').value=val; document.getElementById('H_n').value=val; regenerateScene(); }
+        else if (key === 'D') { params.D = parseFloat(val); document.getElementById('D_r').value=val; document.getElementById('D_n').value=val; regenerateScene(); }
+        else if (key === 'd') { params.d = parseFloat(val); document.getElementById('d_r').value=val; document.getElementById('d_n').value=val; regenerateScene(); }
+        else if (key === 'e') { params.e = parseFloat(val); document.getElementById('e_r').value=val; document.getElementById('e_n').value=val; regenerateScene(); }
+        else if (key === 'retrait_sec') { params.retrait_sec = parseFloat(val); regenerateScene(); }
+        else if (key === 'retrait_cuit') { params.retrait_cuit = parseFloat(val); regenerateScene(); }
+        else if (key === 'densite_cru') { params.densite_cru = parseFloat(val); updateStats(); }
+        else if (key === 'densite_sec') { params.densite_sec = parseFloat(val); updateStats(); }
+        else if (key === 'densite_cuit') { params.densite_cuit = parseFloat(val); updateStats(); }
+        else if (key === 'marge_tournage_ext') { params.marge_tournage_ext = parseFloat(val); if(visuMode!=='gobelet') regenerateScene(); }
+        else if (key === 'marge_tournage_int') { params.marge_tournage_int = parseFloat(val); regenerateScene(); }
+        else if (key === 'marge_fond') { params.marge_fond = parseFloat(val); regenerateScene(); }
+        else if (key.startsWith('largeur_')) { let idx = parseInt(key.split('_')[1]); params.largeurs[idx] = parseFloat(val); updateAnneauxUI(); regenerateScene(); }
+        else if (key.startsWith('saillie_')) { let idx = parseInt(key.split('_')[1]); params.saillies[idx] = parseFloat(val); updateAnneauxUI(); regenerateScene(); }
+        else if (key.startsWith('espace_')) { let idx = parseInt(key.split('_')[1]); params.espaces[idx] = parseFloat(val); regenerateScene(); }
+        updateStats();
+    }
+    
+    function updateAnneauxUI() {
+        let tbody = document.getElementById('anneaux-body');
+        tbody.innerHTML = '';
+        for(let i=0;i<params.n;i++) {
+            let row = tbody.insertRow();
+            row.insertCell(0).innerText = i+1;
+            row.insertCell(1).innerHTML = `<input type="number" step="1" value="${params.largeurs[i]}" style="width:70px" oninput="updateParam('largeur_${i}',this.value)">`;
+            row.insertCell(2).innerHTML = `<input type="number" step="1" value="${params.saillies[i]}" style="width:70px" oninput="updateParam('saillie_${i}',this.value)">`;
+        }
+        for(let i=params.n;i<4;i++) { params.largeurs[i]=0; params.saillies[i]=0; }
+    }
+    function updateEspacesUI() {
+        let container = document.getElementById('espacements-content');
+        container.innerHTML = '<div class="section-title">Espacements entre anneaux (mm)</div>';
+        for(let i=0;i<Math.max(0,params.n-1);i++) {
+            container.innerHTML += `<div class="param"><label>Espace après anneau ${i+1}</label><div class="slider-container"><input type="range" min="0" max="50" value="${params.espaces[i]}" step="1" oninput="updateParam('espace_${i}',this.value)"><input type="number" value="${params.espaces[i]}" step="1" oninput="updateParam('espace_${i}',this.value)"></div></div>`;
+        }
+    }
+    
+    function buildUI() {
+        const dimDiv = document.getElementById('dimensions-content');
+        dimDiv.innerHTML = `<div class="param"><label>Hauteur totale (mm)</label><div class="slider-container"><input id="H_r" type="range" min="30" max="300" value="${params.H}" step="1" oninput="updateParam('H',this.value)"><input id="H_n" type="number" min="30" max="300" value="${params.H}" step="1" oninput="updateParam('H',this.value)"></div></div>
+        <div class="param"><label>Diamètre extérieur (mm)</label><div class="slider-container"><input id="D_r" type="range" min="40" max="200" value="${params.D}" step="1" oninput="updateParam('D',this.value)"><input id="D_n" type="number" min="40" max="200" value="${params.D}" step="1" oninput="updateParam('D',this.value)"></div></div>
+        <div class="param"><label>Diamètre intérieur (mm)</label><div class="slider-container"><input id="d_r" type="range" min="30" max="180" value="${params.d}" step="1" oninput="updateParam('d',this.value)"><input id="d_n" type="number" min="30" max="180" value="${params.d}" step="1" oninput="updateParam('d',this.value)"></div></div>
+        <div class="param"><label>Épaisseur fond (mm)</label><div class="slider-container"><input id="e_r" type="range" min="2" max="20" value="${params.e}" step="0.5" oninput="updateParam('e',this.value)"><input id="e_n" type="number" min="2" max="20" value="${params.e}" step="0.5" oninput="updateParam('e',this.value)"></div></div>`;
+        
+        const matDiv = document.getElementById('materiau-content');
+        matDiv.innerHTML = `<div class="param"><label>Retrait sec → cru</label><input id="retrait_sec" type="number" step="0.01" value="${params.retrait_sec}" oninput="updateParam('retrait_sec',this.value)"></div>
+        <div class="param"><label>Retrait cuit → cru</label><input id="retrait_cuit" type="number" step="0.01" value="${params.retrait_cuit}" oninput="updateParam('retrait_cuit',this.value)"></div>
+        <div class="param"><label>Densité cru (g/cm³)</label><input id="densite_cru" type="number" step="0.05" value="${params.densite_cru}" oninput="updateParam('densite_cru',this.value)"></div>
+        <div class="param"><label>Densité sec</label><input id="densite_sec" type="number" step="0.05" value="${params.densite_sec}" oninput="updateParam('densite_sec',this.value)"></div>
+        <div class="param"><label>Densité cuit</label><input id="densite_cuit" type="number" step="0.05" value="${params.densite_cuit}" oninput="updateParam('densite_cuit',this.value)"></div>`;
+        
+        const tourDiv = document.getElementById('tournage-content');
+        tourDiv.innerHTML = `<div class="param"><label>Marge extérieure (mm)</label><input id="marge_tournage_ext" type="number" step="0.5" value="${params.marge_tournage_ext}" oninput="updateParam('marge_tournage_ext',this.value)"></div>
+        <div class="param"><label>Marge intérieure (mm)</label><input id="marge_tournage_int" type="number" step="0.5" value="${params.marge_tournage_int}" oninput="updateParam('marge_tournage_int',this.value)"></div>
+        <div class="param"><label>Marge fond (mm)</label><input id="marge_fond" type="number" step="0.5" value="${params.marge_fond}" oninput="updateParam('marge_fond',this.value)"></div>`;
+        
+        updateAnneauxUI();
+        updateEspacesUI();
+    }
+    
+    function setEtatVisualisation(etat) {
+        etatVisu = etat;
+        document.querySelectorAll('.mode-btn[data-etat]').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.mode-btn[data-etat="${etat}"]`).classList.add('active');
+        document.getElementById('etat-indicator').innerHTML = `État: ${etat.toUpperCase()}`;
+        regenerateScene();
+    }
+    function setVisualisationMode(mode) {
+        visuMode = mode;
+        regenerateScene();
+    }
+    function showTab(tabId) {
+        document.querySelectorAll('.param-group').forEach(g => g.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`.tab[onclick*="${tabId}"]`).classList.add('active');
+    }
+    
+    // Initialisation Three.js
+    function initThree() {
+        const container = document.getElementById('scene-container');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xeef2f5);
+        camera = new THREE.PerspectiveCamera(40, width/height, 0.1, 500);
+        camera.position.set(12, 10, 15);
+        camera.lookAt(0, 5, 0);
+        renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableZoom = true;
+        controls.enablePan = true;
+        controls.enableTouchRotate = true;
+        controls.zoomSpeed = 1.2;
+        // Lumières
+        const ambient = new THREE.AmbientLight(0x5c6e7a);
+        scene.add(ambient);
+        const mainLight = new THREE.DirectionalLight(0xfff5e0, 1.2);
+        mainLight.position.set(5, 12, 4);
+        scene.add(mainLight);
+        const fillLight = new THREE.PointLight(0xd6c8b0, 0.5);
+        fillLight.position.set(-2, 5, 5);
+        scene.add(fillLight);
+        // Grille
+        const gridHelper = new THREE.GridHelper(30, 20, 0x7e8c8d, 0xbdc3c7);
+        gridHelper.position.y = -0.2;
+        scene.add(gridHelper);
+        
+        mainGroup = new THREE.Group();
+        scene.add(mainGroup);
+        
+        regenerateScene();
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+        
+        window.addEventListener('resize', () => {
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            camera.aspect = w/h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        });
+    }
+    
+    // Lancement
+    document.addEventListener('DOMContentLoaded', () => {
+        buildUI();
+        initThree();
+        setEtatVisualisation('cuit');
+        setVisualisationMode('comparaison');
+        document.getElementById('etat-indicator').style.display = 'block';
+        updateStats();
+        // Exposer globalement
+        window.updateParam = updateParam;
+        window.setEtatVisualisation = setEtatVisualisation;
+        window.setVisualisationMode = setVisualisationMode;
+        window.toggleCutaway = toggleCutaway;
+        window.captureJPG = captureJPG;
+        window.exportSTL = exportSTL;
+        window.showTab = showTab;
+    });
+</script>
+</body>
+</html>
