@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Script pour ajouter les crédits de création dans le footer de toutes les pages VESEMT
+# Exécuter depuis la racine du projet VESEMT (dossier contenant index.html)
 
 # Liste de tous les fichiers HTML
 HTML_FILES=(
@@ -30,8 +31,8 @@ HTML_FILES=(
     "articles/mise-au-point-cimetiere-interet-metropolitain.html"
 )
 
-# Répertoire de base
-BASE_DIR="/home/hauuru/.openclaw/workspace/projects/active/vesemt-simple/vesemt.org"
+# Répertoire de base = répertoire courant
+BASE_DIR="$(pwd)"
 
 # Texte à ajouter après le copyright
 CREDITS_LINE='            <p class="footer-credits">🌱 Créé avec passion par Le Plombier, Marco, Calcifere et Hauuru</p>'
