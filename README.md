@@ -1,6 +1,6 @@
 # VESEMT - Site HTML Simple
 
-## 📝 Description
+## 📝 Descriptionc
 
 Version HTML+CSS simple du site VESEMT (VIVRE (SURTOUT) ENSEMBLE ET (SI POSSIBLE) SOLIDAIRES EN MÉTROPOLE TOURANGELLE).
 
