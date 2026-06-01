@@ -3,93 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boxing Club Saint Pierre des Corps - Ouverture Prochaine</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        
-        .bandeau {
-            background: rgba(0, 0, 0, 0.8);
-            padding: 60px 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            max-width: 800px;
-            margin: 20px;
-        }
-        
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            color: #ff6b35;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-        
-        .subtitle {
-            font-size: 1.3em;
-            margin-bottom: 30px;
-            color: #ffd700;
-        }
-        
-        .info {
-            font-size: 1.1em;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-        
-        .coming-soon {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #ff6b35;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
-        
-        .logo-placeholder {
-            width: 120px;
-            height: 120px;
-            background: #ff6b35;
-            border-radius: 50%;
-            margin: 0 auto 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3em;
-            font-weight: bold;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-    </style>
+    <title>Boxing Club SPDC</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="bandeau">
-        <div class="logo-placeholder">🥊</div>
-        <h1>Boxing Club Saint Pierre des Corps</h1>
-        <div class="subtitle">Le nouveau club de boxe de votre ville</div>
-        <div class="info">
-            Préparez-vous à découvrir un espace dédié à la boxe, 
-            accessible à tous les niveaux et âges. 
-            Des cours encadrés par des professionnels passionnés 
-            vous attendent pour vous transformer et atteindre vos objectifs.
-        </div>
-        <div class="coming-soon">
-            🚀 OUVERTURE PROCHAINE 🚀
-        </div>
-    </div>
+    <header>
+        <nav>
+            <div class="logo">
+                <h1>Boxing Club SPDC</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#accueil">Accueil</a></li>
+                <li><a href="#programmes">Programmes</a></li>
+                <li><a href="#tarifs">Tarifs</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="accueil" class="hero">
+            <div class="hero-content">
+                <h2>Bienvenue au Boxing Club SPDC</h2>
+                <p>Le meilleur club de boxe de la région pour tous les niveaux</p>
+                <button class="cta-button">Commencer votre parcours</button>
+            </div>
+        </section>
+
+        <section id="programmes" class="programmes">
+            <h2>Nos Programmes</h2>
+            <div class="programmes-grid">
+                <div class="programme-card">
+                    <h3>Boxe Débutant</h3>
+                    <p>Apprenez les bases de la boxe avec nos coachs certifiés</p>
+                    <ul>
+                        <li>Techniques de base</li>
+                        <li>Conditionnement physique</li>
+                        <li>Sécurité et éthique</li>
+                    </ul>
+                </div>
+                <div class="programme-card">
+                    <h3>Boxe Intermédiaire</h3>
+                    <p>Perfectionnez votre technique et votre condition</p>
+                    <ul>
+                        <li>Combats d'entraînement</li>
+                        <li>Stratégies avancées</li>
+                        <li>Préparation compétition</li>
+                    </ul>
+                </div>
+                <div class="programme-card">
+                    <h3>Boxe Avancée</h3>
+                    <p>Pour les athlètes expérimentés</p>
+                    <ul>
+                        <li>Compétitions</li>
+                        <li>Entraînement intensif</li>
+                        <li>Coaching personnalisé</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="tarifs" class="tarifs">
+            <h2>Nos Tarifs</h2>
+            <div class="tarifs-grid">
+                <div class="tarif-card">
+                    <h3>Abonnement Mensuel</h3>
+                    <p class="price">€50/mois</p>
+                    <ul>
+                        <li>Accès illimité</li>
+                        <li>Tous les cours</li>
+                        <li>Équipement fourni</li>
+                    </ul>
+                </div>
+                <div class="tarif-card">
+                    <h3>Abonnement Trimestriel</h3>
+                    <p class="price">€140/trimestre</p>
+                    <ul>
+                        <li>Économisez 7%</li>
+                        <li>Accès illimité</li>
+                        <li>Coaching personnalisé</li>
+                    </ul>
+                </div>
+                <div class="tarif-card">
+                    <h3>Cours Découverte</h3>
+                    <p class="price">€20/séance</p>
+                    <ul>
+                        <li>1 séance d'essai</li>
+                        <li>Équipement fourni</li>
+                        <li>Pas d'engagement</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="contact">
+            <h2>Contactez-nous</h2>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <h3>Adresse</h3>
+                    <p>123 Rue de la Boxe<br>75000 Paris, France</p>
+                </div>
+                <div class="contact-item">
+                    <h3>Téléphone</h3>
+                    <p>01 23 45 67 89</p>
+                </div>
+                <div class="contact-item">
+                    <h3>Email</h3>
+                    <p>contact@boxingclubspdc.fr</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Boxing Club SPDC. Tous droits réservés.</p>
+    </footer>
+
+    <script src="script.js"></script>
 </body>
 </html>
