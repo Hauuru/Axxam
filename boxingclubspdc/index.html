@@ -3,122 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boxing Club SPDC</title>
+    <title>Boxing Club SPDC - Saint-Pierre-des-Corps</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
-        <nav>
+        <div class="container">
             <div class="logo">
-                <h1>Boxing Club SPDC</h1>
+                <h1>🥊 Boxing Club SPDC</h1>
+                <p>Saint-Pierre-des-Corps</p>
             </div>
-            <ul class="nav-links">
-                <li><a href="#accueil">Accueil</a></li>
-                <li><a href="#programmes">Programmes</a></li>
-                <li><a href="#tarifs">Tarifs</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-        </nav>
+            <nav>
+                <ul>
+                    <li><a href="#accueil">Accueil</a></li>
+                    <li><a href="#club">Le Club</a></li>
+                    <li><a href="#offres">Nos Offres</a></li>
+                    <li><a href="#equipe">L'Équipe</a></li>
+                    <li><a href="#evenements">Événements</a></li>
+                    <li><a href="#contact">Inscription</a></li>
+                </ul>
+            </nav>
+        </div>
     </header>
 
-    <main>
-        <section id="accueil" class="hero">
+    <section id="accueil" class="hero">
+        <div class="container">
             <div class="hero-content">
-                <h2>Bienvenue au Boxing Club SPDC</h2>
-                <p>Le meilleur club de boxe de la région pour tous les niveaux</p>
-                <button class="cta-button">Commencer votre parcours</button>
+                <h2>Devenez Champion de Votre Vie</h2>
+                <p>Rejoignez le Boxing Club SPDC et transformez votre corps et votre esprit</p>
+                <div class="cta-buttons">
+                    <a href="#offres" class="btn btn-primary">Découvrir nos offres</a>
+                    <a href="#contact" class="btn btn-secondary">S'inscrire maintenant</a>
+                </div>
+                <div class="trust-badges">
+                    <div class="badge">
+                        <span class="badge-icon">🏆</span>
+                        <span>Club affilié FFB</span>
+                    </div>
+                    <div class="badge">
+                        <span class="badge-icon">👨‍🏫</span>
+                        <span>Entraîneurs certifiés</span>
+                    </div>
+                    <div class="badge">
+                        <span class="badge-icon">🏋️</span>
+                        <span>Équipements professionnels</span>
+                    </div>
+                </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <section id="programmes" class="programmes">
-            <h2>Nos Programmes</h2>
-            <div class="programmes-grid">
-                <div class="programme-card">
-                    <h3>Boxe Débutant</h3>
-                    <p>Apprenez les bases de la boxe avec nos coachs certifiés</p>
-                    <ul>
-                        <li>Techniques de base</li>
-                        <li>Conditionnement physique</li>
-                        <li>Sécurité et éthique</li>
-                    </ul>
+    <section id="club" class="club">
+        <div class="container">
+            <h2>🏆 Le Boxing Club SPDC</h2>
+            <div class="club-intro">
+                <p>Nous sommes une association sportive dynamique, dédiée à l'enseignement de la boxe à tous les niveaux. Que vous soyez débutant ou pratiquant confirmé, notre équipe d'experts vous accompagne dans votre progression.</p>
+            </div>
+            <div class="club-features">
+                <div class="feature">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Approche personnalisée</h3>
+                    <p>Programmes adaptés à votre niveau et à vos objectifs</p>
                 </div>
-                <div class="programme-card">
-                    <h3>Boxe Intermédiaire</h3>
-                    <p>Perfectionnez votre technique et votre condition</p>
-                    <ul>
-                        <li>Combats d'entraînement</li>
-                        <li>Stratégies avancées</li>
-                        <li>Préparation compétition</li>
-                    </ul>
+                <div class="feature">
+                    <div class="feature-icon">👥</div>
+                    <h3>Atmosphère conviviale</h3>
+                    <p>Un club où chacun se sent comme chez lui</p>
                 </div>
-                <div class="programme-card">
-                    <h3>Boxe Avancée</h3>
-                    <p>Pour les athlètes expérimentés</p>
-                    <ul>
-                        <li>Compétitions</li>
-                        <li>Entraînement intensif</li>
-                        <li>Coaching personnalisé</li>
-                    </ul>
+                <div class="feature">
+                    <div class="feature-icon">🏅</div>
+                    <h3>Excellence sportive</h3>
+                    <p>Formation de qualité pour tous les niveaux de compétition</p>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <section id="tarifs" class="tarifs">
-            <h2>Nos Tarifs</h2>
-            <div class="tarifs-grid">
-                <div class="tarif-card">
-                    <h3>Abonnement Mensuel</h3>
-                    <p class="price">€50/mois</p>
+    <section id="offres" class="offres">
+        <div class="container">
+            <h2>📋 Nos Offres</h2>
+            <div class="offres-grid">
+                <div class="offre-card">
+                    <div class="offre-icon">👦</div>
+                    <h3>Jeunes (8-15 ans)</h3>
+                    <div class="offre-price">45€/mois</div>
                     <ul>
-                        <li>Accès illimité</li>
-                        <li>Tous les cours</li>
-                        <li>Équipement fourni</li>
+                        <li>Initiation à la boxe</li>
+                        <li>Développement moteur</li>
+                        <li>Éducation sportive</li>
+                        <li>Compétitions scolaires</li>
                     </ul>
+                    <a href="#contact" class="btn btn-outline">Contactez-nous</a>
                 </div>
-                <div class="tarif-card">
-                    <h3>Abonnement Trimestriel</h3>
-                    <p class="price">€140/trimestre</p>
+                <div class="offre-card featured">
+                    <div class="offre-icon">👨‍💼</div>
+                    <h3>Adultes (16+ ans)</h3>
+                    <div class="offre-price">55€/mois</div>
                     <ul>
-                        <li>Économisez 7%</li>
-                        <li>Accès illimité</li>
-                        <li>Coaching personnalisé</li>
+                        <li>Boxe loisir & compétition</li>
+                        <li>Remise en forme</li>
+                        <li>Self-défense</li>
+                        <li>Compétitions régionales</li>
                     </ul>
-                </div>
-                <div class="tarif-card">
-                    <h3>Cours Découverte</h3>
-                    <p class="price">€20/séance</p>
-                    <ul>
-                        <li>1 séance d'essai</li>
-                        <li>Équipement fourni</li>
-                        <li>Pas d'engagement</li>
-                    </ul>
+                    <a href="#contact" class="btn btn-primary">Contactez-nous</a>
                 </div>
             </div>
-        </section>
+            <div class="offre-benefits">
+                <h3>🎁 Avantages membres</h3>
+                <div class="benefits-grid">
+                    <div class="benefit">
+                        <span class="benefit-icon">🎯</span>
+                        <span>Accès illimité aux entraînements</span>
+                    </div>
+                    <div class="benefit">
+                        <span class="benefit-icon">👕</span>
+                        <span>Équipement fourni</span>
+                    </div>
+                    <div class="benefit">
+                        <span class="benefit-icon">📅</span>
+                        <span>Événements exclusifs</span>
+                    </div>
+                    <div class="benefit">
+                        <span class="benefit-icon">🏆</span>
+                        <span>Coaching individuel</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        <section id="contact" class="contact">
-            <h2>Contactez-nous</h2>
-            <div class="contact-info">
-                <div class="contact-item">
-                    <h3>Adresse</h3>
-                    <p>123 Rue de la Boxe<br>75000 Paris, France</p>
+    <section id="equipe" class="equipe">
+        <div class="container">
+            <h2>👨‍🏫 L'Équipe d'Entraîneurs</h2>
+            <div class="equipe-grid">
+                <div class="coach-card">
+                    <div class="coach-avatar">👨‍💼</div>
+                    <h3>Coach Principal</h3>
+                    <p>20 ans d'expérience</p>
+                    <p>Champion régional</p>
+                    <p>Formation FFB certifiée</p>
                 </div>
-                <div class="contact-item">
-                    <h3>Téléphone</h3>
-                    <p>01 23 45 67 89</p>
+                <div class="coach-card">
+                    <div class="coach-avatar">👩‍💼</div>
+                    <h3>Coach Adjoint</h3>
+                    <p>10 ans d'expérience</p>
+                    <p>Spécialiste jeunes</p>
+                    <p>Éducateur sportif</p>
                 </div>
-                <div class="contact-item">
-                    <h3>Email</h3>
-                    <p>contact@boxingclubspdc.fr</p>
+                <div class="coach-card">
+                    <div class="coach-avatar">👨‍🎓</div>
+                    <h3>Préparateur Physique</h3>
+                    <p>Expert en conditionnement</p>
+                    <p>Nutritionniste sportif</p>
+                    <p>Programmes personnalisés</p>
                 </div>
             </div>
-        </section>
-    </main>
+            <div class="equipe-stats">
+                <div class="stat">
+                    <span class="stat-number">15+</span>
+                    <span class="stat-label">Années d'expérience</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">50+</span>
+                    <span class="stat-label">Champions formés</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">Certifiés FFB</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="evenements" class="evenements">
+        <div class="container">
+            <h2>🎪 Événements & Actualités</h2>
+            <div class="evenements-grid">
+                <div class="evenement-card">
+                    <div class="evenement-icon">♟️</div>
+                    <h3>Chess Boxing</h3>
+                    <div class="evenement-date">14 juin 2026</div>
+                    <p>Événement exceptionnel en collaboration avec le club d'échecs Échiquier Corpétrussien pour les fêtes municipales.</p>
+                    <div class="evenement-participants">À venir</div>
+                </div>
+                <div class="evenement-card">
+                    <div class="evenement-icon">🏛️</div>
+                    <h3>Forum des Associations 2026</h3>
+                    <div class="evenement-date">À venir</div>
+                    <p>Préparation de notre stand pour le forum des associations 2026.</p>
+                    <div class="evenement-participants">À venir</div>
+                </div>
+                <div class="evenement-card">
+                    <div class="evenement-icon">🎯</div>
+                    <h3>Compétitions Internes</h3>
+                    <div class="evenement-date">Toute l'année</div>
+                    <p>Organisation de compétitions internes et démonstrations pour les membres du club.</p>
+                    <div class="evenement-participants">Membres</div>
+                </div>
+            </div>
+            <div class="evenements-presse">
+                <h3>📰 Presse & Médias</h3>
+                <div class="presse-grid">
+                    <div class="presse-item">
+                        <span class="presse-icon">📰</span>
+                        <span>INFOBOXE - Bulletin officiel de la Fédération Française de Boxe</span>
+                    </div>
+                    <div class="presse-item">
+                        <span class="presse-icon">📰</span>
+                        <span>2 titres de presse locale</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2>📞 Rejoignez-nous !</h2>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <h3>Informations pratiques</h3>
+                    <div class="info-item">
+                        <span class="info-icon">📍</span>
+                        <div>
+                            <strong>Adresse:</strong><br>
+                            Gymnase de la Morinerie<br>
+                            Saint-Pierre-des-Corps
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-icon">🕐</span>
+                        <div>
+                            <strong>Horaires:</strong><br>
+                            Lundi-Vendredi: 18h-21h<br>
+                            Samedi: 9h-12h
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-icon">📧</span>
+                        <div>
+                            <strong>Email:</strong><br>
+                            boxingclubspdc@gmail.com
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-icon">📱</span>
+                        <div>
+                            <strong>Téléphone:</strong><br>
+                            06 49 09 80 80
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-info">
+                    <h3>Comment nous contacter</h3>
+                    <p>Pour toute inscription ou information, contactez-nous directement :</p>
+                    <div class="contact-methods">
+                        <div class="method-item">
+                            <span class="method-icon">📞</span>
+                            <div>
+                                <strong>Par téléphone</strong><br>
+                                06 49 09 80 80<br>
+                                <small>Lun-Ven: 18h-21h | Sam: 9h-12h</small>
+                            </div>
+                        </div>
+                        <div class="method-item">
+                            <span class="method-icon">📧</span>
+                            <div>
+                                <strong>Par email</strong><br>
+                                boxingclubspdc@gmail.com<br>
+                                <small>Réponse sous 48h</small>
+                            </div>
+                        </div>
+                        <div class="method-item">
+                            <span class="method-icon">📍</span>
+                            <div>
+                                <strong>Sur place</strong><br>
+                                Gymnase de la Morinerie<br>
+                                <small>Horaires d'ouverture</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="contact-note">
+                        <p>🎯 <strong>Nouveau membre ?</strong> Appelez-nous pour un premier essai gratuit !</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <footer>
-        <p>&copy; 2024 Boxing Club SPDC. Tous droits réservés.</p>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Boxing Club SPDC</h3>
+                    <p>Association sportive de boxe</p>
+                    <p>© 2026 Tous droits réservés</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Liens rapides</h3>
+                    <ul>
+                        <li><a href="#accueil">Accueil</a></li>
+                        <li><a href="#club">Le Club</a></li>
+                        <li><a href="#offres">Nos Offres</a></li>
+                        <li><a href="#equipe">L'Équipe</a></li>
+                        <li><a href="#evenements">Événements</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Suivez-nous</h3>
+                    <p>À venir sur les réseaux sociaux</p>
+                </div>
+            </div>
+        </div>
     </footer>
-
-    <script src="script.js"></script>
 </body>
 </html>

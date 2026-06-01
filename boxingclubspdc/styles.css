@@ -1,5 +1,4 @@
-/* Styles CSS pour Boxing Club SPDC */
-
+/* CSS Reset */
 * {
     margin: 0;
     padding: 0;
@@ -7,201 +6,651 @@
 }
 
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Roboto', sans-serif;
     line-height: 1.6;
     color: #333;
-    background-color: #f4f4f4;
+    background-color: #f8f9fa;
 }
 
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header */
 header {
-    background-color: #2c3e50;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     color: white;
     padding: 1rem 0;
     position: fixed;
     width: 100%;
     top: 0;
     z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
-nav {
+header .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 2rem;
 }
 
 .logo h1 {
+    font-family: 'Oswald', sans-serif;
     font-size: 1.8rem;
-    color: #e74c3c;
+    margin-bottom: 0.2rem;
 }
 
-.nav-links {
-    display: flex;
+.logo p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+nav ul {
     list-style: none;
+    display: flex;
     gap: 2rem;
 }
 
-.nav-links a {
+nav a {
     color: white;
     text-decoration: none;
-    font-weight: bold;
+    font-weight: 500;
     transition: color 0.3s ease;
 }
 
-.nav-links a:hover {
-    color: #e74c3c;
+nav a:hover {
+    color: #3498db;
 }
 
-main {
-    margin-top: 80px;
-}
-
+/* Hero Section */
 .hero {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    padding: 120px 0 80px;
     text-align: center;
-    padding: 4rem 2rem;
-    min-height: 60vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    margin-top: 80px;
 }
 
-.hero-content h2 {
+.hero h2 {
+    font-family: 'Oswald', sans-serif;
     font-size: 3rem;
     margin-bottom: 1rem;
 }
 
-.hero-content p {
+.hero p {
     font-size: 1.2rem;
     margin-bottom: 2rem;
+    opacity: 0.9;
 }
 
-.cta-button {
-    background-color: #e74c3c;
-    color: white;
-    padding: 1rem 2rem;
-    border: none;
-    border-radius: 5px;
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.cta-button:hover {
-    background-color: #c0392b;
-}
-
-.programmes, .tarifs, .contact {
-    padding: 4rem 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.programmes h2, .tarifs h2, .contact h2 {
-    text-align: center;
-    font-size: 2.5rem;
+.cta-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
     margin-bottom: 3rem;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 1rem 2rem;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-block;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: white;
+    border: 2px solid white;
+}
+
+.btn-secondary:hover {
+    background: white;
+    color: #667eea;
+}
+
+.btn-outline {
+    background: transparent;
+    color: #e74c3c;
+    border: 2px solid #e74c3c;
+}
+
+.btn-outline:hover {
+    background: #e74c3c;
+    color: white;
+}
+
+.trust-badges {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.badge {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+    min-width: 150px;
+}
+
+.badge-icon {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Club Section */
+.club {
+    padding: 80px 0;
+    background: white;
+}
+
+.club h2 {
+    text-align: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
     color: #2c3e50;
 }
 
-.programmes-grid, .tarifs-grid {
+.club-intro {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 3rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.club-features {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
 }
 
-.programme-card, .tarif-card {
+.feature {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.feature:hover {
+    transform: translateY(-5px);
+}
+
+.feature-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.feature h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.feature p {
+    color: #666;
+}
+
+/* Offers Section */
+.offres {
+    padding: 80px 0;
+    background: #f8f9fa;
+}
+
+.offres h2 {
+    text-align: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: #2c3e50;
+}
+
+.offres-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.offre-card {
     background: white;
     padding: 2rem;
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    text-align: center;
     transition: transform 0.3s ease;
+    position: relative;
 }
 
-.programme-card:hover, .tarif-card:hover {
+.offre-card:hover {
     transform: translateY(-5px);
 }
 
-.programme-card h3, .tarif-card h3 {
+.offre-card.featured {
+    border: 3px solid #e74c3c;
+}
+
+.offre-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.offre-card h3 {
     color: #2c3e50;
     margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.offre-price {
     font-size: 1.5rem;
+    font-weight: 700;
+    color: #e74c3c;
+    margin-bottom: 1rem;
 }
 
-.programme-card ul, .tarif-card ul {
+.offre-card ul {
     list-style: none;
-    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+    text-align: left;
 }
 
-.programme-card li, .tarif-card li {
+.offre-card li {
     padding: 0.5rem 0;
     border-bottom: 1px solid #eee;
+    color: #666;
 }
 
-.programme-card li:last-child, .tarif-card li:last-child {
+.offre-card li:last-child {
     border-bottom: none;
 }
 
-.tarif-card .price {
-    font-size: 2rem;
-    color: #e74c3c;
-    font-weight: bold;
-    margin: 1rem 0;
+.offre-benefits {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
-.contact-info {
+.offre-benefits h3 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 2rem;
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.benefit {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.benefit-icon {
+    font-size: 1.2rem;
+}
+
+/* Team Section */
+.equipe {
+    padding: 80px 0;
+    background: white;
+}
+
+.equipe h2 {
+    text-align: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: #2c3e50;
+}
+
+.equipe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.coach-card {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.coach-card:hover {
+    transform: translateY(-5px);
+}
+
+.coach-avatar {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.coach-card h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.coach-card p {
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.equipe-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    text-align: center;
+}
+
+.stat {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 10px;
+}
+
+.stat-number {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+/* Events Section */
+.evenements {
+    padding: 80px 0;
+    background: white;
+}
+
+.evenements h2 {
+    text-align: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: #2c3e50;
+}
+
+.evenements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.evenement-card {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.evenement-card:hover {
+    transform: translateY(-5px);
+}
+
+.evenement-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.evenement-card h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.evenement-date {
+    background: #e74c3c;
+    color: white;
+    padding: 0.3rem 1rem;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.evenement-card p {
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.evenement-participants {
+    background: #3498db;
+    color: white;
+    padding: 0.3rem 1rem;
+    border-radius: 20px;
+    display: inline-block;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.evenements-presse {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.evenements-presse h3 {
+    color: #2c3e50;
+    margin-bottom: 2rem;
+}
+
+.presse-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.presse-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.presse-icon {
+    font-size: 1.2rem;
+}
+
+/* Contact Section */
+.contact {
+    padding: 80px 0;
+    background: #f8f9fa;
+}
+
+.contact h2 {
+    text-align: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: #2c3e50;
+}
+
+.contact-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 3rem;
+}
+
+.contact-info h3 {
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+}
+
+.info-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: flex-start;
+}
+
+.info-icon {
+    font-size: 1.2rem;
+    margin-top: 0.2rem;
+}
+
+.info-item strong {
+    color: #2c3e50;
+}
+
+.contact-form h3 {
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* Footer */
+footer {
+    background: #2c3e50;
+    color: white;
+    padding: 40px 0;
+    margin-top: 80px;
+}
+
+.footer-content {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 2rem;
 }
 
-.contact-item {
-    background: white;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-.contact-item h3 {
-    color: #2c3e50;
+.footer-section h3 {
     margin-bottom: 1rem;
+    color: #3498db;
 }
 
-footer {
-    background-color: #2c3e50;
-    color: white;
-    text-align: center;
-    padding: 2rem;
-    margin-top: 4rem;
+.footer-section ul {
+    list-style: none;
+}
+
+.footer-section ul li {
+    margin-bottom: 0.5rem;
+}
+
+.footer-section a {
+    color: #bdc3c7;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-section a:hover {
+    color: #3498db;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    nav {
+    header .container {
         flex-direction: column;
         gap: 1rem;
     }
     
-    .nav-links {
+    nav ul {
+        flex-wrap: wrap;
+        justify-content: center;
         gap: 1rem;
     }
     
-    .hero-content h2 {
+    .hero h2 {
         font-size: 2rem;
     }
     
-    .hero-content p {
-        font-size: 1rem;
+    .cta-buttons {
+        flex-direction: column;
+        align-items: center;
     }
     
-    .programmes-grid, .tarifs-grid {
+    .trust-badges {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .club-features,
+    .offres-grid,
+    .equipe-grid,
+    .contact-content,
+    .equipe-stats,
+    .benefits-grid {
         grid-template-columns: 1fr;
     }
     
-    .contact-info {
+    
+    .footer-content {
         grid-template-columns: 1fr;
+        text-align: center;
     }
 }
