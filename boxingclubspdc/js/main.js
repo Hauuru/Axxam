@@ -1,5 +1,92 @@
-// Scroll Animations
+// Sticky Navigation and Scroll Animations
 document.addEventListener('DOMContentLoaded', function() {
+    // Sticky Navigation
+    const nav = document.querySelector('nav');
+    const scrollIndicator = document.querySelector('.scroll-indicator');
+    const menuToggle = document.querySelector('.menu-toggle');
+    const navLinks = document.querySelectorAll('nav ul li a');
+
+    let lastScrollTop = 0;
+    let isScrolling = false;
+
+    // Scroll event handler
+    window.addEventListener('scroll', function() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrollPercent = (scrollTop / scrollHeight) * 100;
+
+        // Update scroll indicator
+        scrollIndicator.style.transform = `scaleX(${scrollPercent / 100})`;
+
+        // Sticky navigation logic
+        if (scrollTop > 100) {
+            nav.classList.add('sticky', 'scrolled');
+            scrollIndicator.classList.add('active');
+        } else {
+            nav.classList.remove('sticky', 'scrolled');
+            scrollIndicator.classList.remove('active');
+        }
+
+        // Hide/show navigation on scroll (optional)
+        if (!isScrolling) {
+            requestAnimationFrame(function() {
+                if (scrollTop > lastScrollTop && scrollTop > 200) {
+                    // Scrolling down - hide nav
+                    nav.style.transform = 'translateY(-100%)';
+                } else {
+                    // Scrolling up - show nav
+                    nav.style.transform = 'translateY(0)';
+                }
+                lastScrollTop = scrollTop;
+                isScrolling = false;
+            });
+        }
+        isScrolling = true;
+    });
+
+    // Mobile menu toggle
+    menuToggle.addEventListener('click', function() {
+        nav.classList.toggle('active');
+        menuToggle.classList.toggle('active');
+    });
+
+    // Close mobile menu when clicking links
+    navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            nav.classList.remove('active');
+            menuToggle.classList.remove('active');
+        });
+    });
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(event) {
+        const isClickInsideNav = nav.contains(event.target);
+        const isClickOnToggle = menuToggle.contains(event.target);
+
+        if (!isClickInsideNav && !isClickOnToggle && nav.classList.contains('active')) {
+            nav.classList.remove('active');
+            menuToggle.classList.remove('active');
+        }
+    });
+
+    // Smooth scroll for navigation links
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetSection = document.querySelector(targetId);
+
+            if (targetSection) {
+                const offsetTop = targetSection.offsetTop - 80; // Account for sticky nav
+                window.scrollTo({
+                    top: offsetTop,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    // Scroll Animations
     // Intersection Observer for scroll animations
     const observerOptions = {
         threshold: 0.1,
