@@ -226,29 +226,33 @@ nav a:hover {
 .offre-details {
     margin-bottom: 1rem;
     padding: 1rem;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(44, 62, 80, 0.1);
     border-radius: 8px;
     border-left: 4px solid #e74c3c;
+    border: 1px solid rgba(44, 62, 80, 0.2);
 }
 
 .offre-schedule, .offre-conditions {
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
+    color: #2c3e50;
 }
 
 .offre-schedule strong, .offre-conditions strong {
-    color: #2c3e50;
+    color: #1a252f;
     display: block;
     margin-bottom: 0.25rem;
+    font-weight: 600;
 }
 
 .offre-conditions {
-    border-top: 1px solid #eee;
+    border-top: 1px solid rgba(44, 62, 80, 0.3);
     padding-top: 0.5rem;
 }
 
 .offre-conditions strong {
-    color: #27ae60;
+    color: #1e8449;
+    font-weight: 600;
 }
 
 .offres h2 {
