@@ -1,5 +1,35 @@
-// Gallery Filter
+// Scroll Animations
 document.addEventListener('DOMContentLoaded', function() {
+    // Intersection Observer for scroll animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+
+                // Add stagger animation to cards
+                if (entry.target.classList.contains('card')) {
+                    const cards = entry.target.querySelectorAll('.card');
+                    cards.forEach((card, index) => {
+                        setTimeout(() => {
+                            card.style.opacity = '1';
+                            card.style.transform = 'translateY(0)';
+                        }, index * 100);
+                    });
+                }
+            }
+        });
+    }, observerOptions);
+
+    // Observe all sections and animated elements
+    const animatedElements = document.querySelectorAll('section, .fade-in, .fade-in-left, .fade-in-right, .card, .gallery-item, .temoignage-card, .video-card');
+    animatedElements.forEach(el => observer.observe(el));
+
+    // Gallery Filter
     const categoryBtns = document.querySelectorAll('.category-btn');
     const galleryItems = document.querySelectorAll('.gallery-item');
 
