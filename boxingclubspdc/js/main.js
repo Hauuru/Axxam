@@ -147,6 +147,134 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Lightbox Functionality
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImage = document.getElementById('lightbox-image');
+    const lightboxTitle = document.getElementById('lightbox-title');
+    const lightboxDescription = document.getElementById('lightbox-description');
+    const lightboxClose = document.getElementById('lightbox-close');
+    const lightboxPrev = document.getElementById('lightbox-prev');
+    const lightboxNext = document.getElementById('lightbox-next');
+
+    let currentImageIndex = 0;
+    let allImages = [];
+
+    // Collect all gallery items
+    galleryItems.forEach((item, index) => {
+        allImages.push({
+            src: item.getAttribute('data-image'),
+            title: item.getAttribute('data-title'),
+            description: item.getAttribute('data-description'),
+            element: item
+        });
+    });
+
+    // Open lightbox
+    function openLightbox(index) {
+        currentImageIndex = index;
+        const imageData = allImages[index];
+
+        lightboxImage.src = imageData.src;
+        lightboxTitle.textContent = imageData.title;
+        lightboxDescription.textContent = imageData.description;
+
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Update navigation buttons visibility
+        updateNavigationButtons();
+    }
+
+    // Close lightbox
+    function closeLightbox() {
+        lightbox.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Show previous image
+    function showPreviousImage() {
+        if (currentImageIndex > 0) {
+            openLightbox(currentImageIndex - 1);
+        }
+    }
+
+    // Show next image
+    function showNextImage() {
+        if (currentImageIndex < allImages.length - 1) {
+            openLightbox(currentImageIndex + 1);
+        }
+    }
+
+    // Update navigation buttons visibility
+    function updateNavigationButtons() {
+        lightboxPrev.style.display = currentImageIndex === 0 ? 'none' : 'flex';
+        lightboxNext.style.display = currentImageIndex === allImages.length - 1 ? 'none' : 'flex';
+    }
+
+    // Event listeners for gallery items
+    galleryItems.forEach((item, index) => {
+        item.addEventListener('click', function() {
+            openLightbox(index);
+        });
+    });
+
+    // Event listeners for lightbox controls
+    lightboxClose.addEventListener('click', closeLightbox);
+    lightboxPrev.addEventListener('click', showPreviousImage);
+    lightboxNext.addEventListener('click', showNextImage);
+
+    // Click outside to close
+    lightbox.addEventListener('click', function(e) {
+        if (e.target === lightbox) {
+            closeLightbox();
+        }
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (lightbox.classList.contains('active')) {
+            switch(e.key) {
+                case 'Escape':
+                    closeLightbox();
+                    break;
+                case 'ArrowLeft':
+                    showPreviousImage();
+                    break;
+                case 'ArrowRight':
+                    showNextImage();
+                    break;
+            }
+        }
+    });
+
+    // Touch support for mobile
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    lightbox.addEventListener('touchstart', function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+
+    lightbox.addEventListener('touchend', function(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+
+        if (Math.abs(diff) > swipeThreshold) {
+            if (diff > 0) {
+                // Swipe left - next image
+                showNextImage();
+            } else {
+                // Swipe right - previous image
+                showPreviousImage();
+            }
+        }
+    }
+
     // Formspree Form Handler
     const form = document.getElementById('inscription-form');
     const formSuccess = document.getElementById('form-success');

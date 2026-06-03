@@ -320,7 +320,7 @@
 
             <div class="galerie-grid">
                 <!-- Entraînement -->
-                <div class="gallery-item" data-category="entraînement">
+                <div class="gallery-item" data-category="entraînement" data-image="https://via.placeholder.com/800x600/2c3e50/ffffff?text=Entraînement+1" data-title="Entraînement Technique" data-description="Travail des bases et perfectionnement">
                     <div class="gallery-image">
                         <img src="https://via.placeholder.com/400x300/2c3e50/ffffff?text=Entraînement+1" alt="Entraînement technique">
                         <div class="gallery-overlay">
@@ -331,7 +331,7 @@
                     </div>
                 </div>
 
-                <div class="gallery-item" data-category="entraînement">
+                <div class="gallery-item" data-category="entraînement" data-image="https://via.placeholder.com/800x600/34495e/ffffff?text=Entraînement+2" data-title="Conditionnement" data-description="Préparation physique intensive">
                     <div class="gallery-image">
                         <img src="https://via.placeholder.com/400x300/34495e/ffffff?text=Entraînement+2" alt="Séance conditionnement">
                         <div class="gallery-overlay">
@@ -343,7 +343,7 @@
                 </div>
 
                 <!-- Compétition -->
-                <div class="gallery-item" data-category="competition">
+                <div class="gallery-item" data-category="competition" data-image="https://via.placeholder.com/800x600/e74c3c/ffffff?text=Compétition+1" data-title="Tournoi Régional" data-description="Compétition inter-clubs">
                     <div class="gallery-image">
                         <img src="https://via.placeholder.com/400x300/e74c3c/ffffff?text=Compétition+1" alt="Tournoi régional">
                         <div class="gallery-overlay">
@@ -354,7 +354,7 @@
                     </div>
                 </div>
 
-                <div class="gallery-item" data-category="competition">
+                <div class="gallery-item" data-category="competition" data-image="https://via.placeholder.com/800x600/c0392b/ffffff?text=Compétition+2" data-title="Championnat Départemental" data-description="Excellence sportive">
                     <div class="gallery-image">
                         <img src="https://via.placeholder.com/400x300/c0392b/ffffff?text=Compétition+2" alt="Championnat départemental">
                         <div class="gallery-overlay">
@@ -366,7 +366,7 @@
                 </div>
 
                 <!-- Événements -->
-                <div class="gallery-item" data-category="evenement">
+                <div class="gallery-item" data-category="evenement" data-image="https://via.placeholder.com/800x600/3498db/ffffff?text=Événement+1" data-title="Forum des Associations" data-description="Présentation du club">
                     <div class="gallery-image">
                         <img src="https://via.placeholder.com/400x300/3498db/ffffff?text=Événement+1" alt="Forum des Associations">
                         <div class="gallery-overlay">
@@ -377,9 +377,9 @@
                     </div>
                 </div>
 
-                <div class="gallery-item" data-category="evenement">
+                <div class="gallery-item" data-category="evenement" data-image="https://via.placeholder.com/800x600/2980b9/ffffff?text=Événement+2" data-title="Chess Boxing" data-description="Événement exceptionnel">
                     <div class="gallery-image">
-                        <img src="https://via.placeholder.com/400x29/2980b9/ffffff?text=Événement+2" alt="Chess Boxing">
+                        <img src="https://via.placeholder.com/400x300/2980b9/ffffff?text=Événement+2" alt="Chess Boxing">
                         <div class="gallery-overlay">
                             <span class="gallery-icon">♟️</span>
                             <h3>Chess Boxing</h3>
@@ -389,7 +389,7 @@
                 </div>
 
                 <!-- Membres -->
-                <div class="gallery-item" data-category="membres">
+                <div class="gallery-item" data-category="membres" data-image="https://via.placeholder.com/800x600/27ae60/ffffff?text=Membres+1" data-title="Équipe d'Entraîneurs" data-description="Professionnels passionnés">
                     <div class="gallery-image">
                         <img src="https://via.placeholder.com/400x300/27ae60/ffffff?text=Membres+1" alt="Équipe d'entraîneurs">
                         <div class="gallery-overlay">
@@ -400,7 +400,7 @@
                     </div>
                 </div>
 
-                <div class="gallery-item" data-category="membres">
+                <div class="gallery-item" data-category="membres" data-image="https://via.placeholder.com/800x600/229954/ffffff?text=Membres+2" data-title="Jeunes Boxeurs" data-description="Nouvelle génération">
                     <div class="gallery-image">
                         <img src="https://via.placeholder.com/400x300/229954/ffffff?text=Membres+2" alt="Jeunes boxeurs">
                         <div class="gallery-overlay">
@@ -411,7 +411,7 @@
                     </div>
                 </div>
 
-                <div class="gallery-item" data-category="membres">
+                <div class="gallery-item" data-category="membres" data-image="https://via.placeholder.com/800x600/1e8449/ffffff?text=Membres+3" data-title="Vétérans" data-description="Expérience et savoir-faire">
                     <div class="gallery-image">
                         <img src="https://via.placeholder.com/400x300/1e8449/ffffff?text=Membres+3" alt="Vétérans">
                         <div class="gallery-overlay">
@@ -749,6 +749,20 @@
             </div>
         </div>
     </section>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-content">
+            <button class="lightbox-close" id="lightbox-close">&times;</button>
+            <button class="lightbox-prev" id="lightbox-prev">&#10094;</button>
+            <button class="lightbox-next" id="lightbox-next">&#10095;</button>
+            <img src="" alt="" class="lightbox-image" id="lightbox-image">
+            <div class="lightbox-caption">
+                <h3 id="lightbox-title"></h3>
+                <p id="lightbox-description"></p>
+            </div>
+        </div>
+    </div>
 
     <section id="contact" class="contact">
         <div class="container">
