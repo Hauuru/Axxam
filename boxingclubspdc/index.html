@@ -322,93 +322,21 @@
 
     <section id="evenements" class="evenements">
         <div class="container">
-            <h2>🎪 Événements & Actualités</h2>
-            <div class="evenements-tabs">
-                <button class="tab-btn active" data-tab="prochain">Prochains Événements</button>
-                <button class="tab-btn" data-tab="actualite">Actualités</button>
-                <button class="tab-btn" data-tab="passe">Événements Passés</button>
-            </div>
-
-            <div class="tab-content active" id="prochain">
-                <div class="evenements-grid">
-                    <div class="evenement-card">
-                        <div class="evenement-date">14 juin 2026</div>
-                        <div class="evenement-icon">♟️</div>
-                        <h3>Chess Boxing - Fêtes Municipales</h3>
-                        <p>Événement exceptionnel en collaboration avec le club d'échecs Échiquier Corpétrussien.</p>
-                        <div class="evenement-details">
-                            <span class="detail">📍 Gymnase de la Morinerie</span>
-                            <span class="detail">⏰ 20h00</span>
-                            <span class="detail">🎫 Gratuit</span>
-                        </div>
-                        <div class="evenement-status">🔥 Événement complet</div>
-                    </div>
-                    <div class="evenement-card">
-                        <div class="evenement-date">29 septembre 2026</div>
-                        <div class="evenement-icon">🏛️</div>
-                        <h3>Forum des Associations</h3>
-                        <p>Présentation du club et inscription pour la saison 2026-2027.</p>
-                        <div class="evenement-details">
-                            <span class="detail">📍 Salle Polyvalente</span>
-                            <span class="detail">⏰ 10h00-18h00</span>
-                            <span class="detail">🎫 Gratuit</span>
-                        </div>
-                        <div class="evenement-status">📝 Inscriptions ouvertes</div>
-                    </div>
-                    <div class="evenement-card">
-                        <div class="evenement-date">17 décembre 2026</div>
-                        <div class="evenement-icon">🎄</div>
-                        <h3>Soirée de Noël</h3>
-                        <p>Soirée conviviale avec remise des prix et démonstrations.</p>
-                        <div class="evenement-details">
-                            <span class="detail">📍 Gymnase de la Morinerie</span>
-                            <span class="detail">⏰ 19h00</span>
-                            <span class="detail">🎫 Membres</span>
-                        </div>
-                        <div class="evenement-status">🎁 Réservation obligatoire</div>
-                    </div>
+            <h2>🎪 Événements Passés</h2>
+            <div class="evenements-grid">
+                <div class="evenement-card past">
+                    <div class="evenement-date">12 avril 2026</div>
+                    <div class="evenement-icon">🥊</div>
+                    <h3>Gala de Boxe</h3>
+                    <p>Soirée de compétitions internes avec 12 combats et plus de 100 spectateurs.</p>
+                    <div class="evenement-status">✅ Terminé</div>
                 </div>
-            </div>
-
-            <div class="tab-content" id="actualite">
-                <div class="actualites-grid">
-                    <div class="actualite-card">
-                        <div class="actualite-date">2 juin 2026</div>
-                        <h3>🏆 Victoire au Championnat Départemental</h3>
-                        <p>Nos boxeurs ont brillé lors du championnat départemental avec 3 médailles d'or et 2 médailles d'argent !</p>
-                        <div class="actualite-readmore">Lire la suite →</div>
-                    </div>
-                    <div class="actualite-card">
-                        <div class="actualite-date">15 mai 2026</div>
-                        <h3>🎊 Nouveau partenaire : Axxam</h3>
-                        <p>Nous sommes fiers d'accueillir Axxam comme nouveau partenaire officiel du club !</p>
-                        <div class="actualite-readmore">Lire la suite →</div>
-                    </div>
-                    <div class="actualite-card">
-                        <div class="actualite-date">1er mai 2026</div>
-                        <h3>📊 Saison 2025-2026 terminée</h3>
-                        <p>Retour sur une saison exceptionnelle avec 15 nouveaux licenciés et 3 titres régionaux !</p>
-                        <div class="actualite-readmore">Lire la suite →</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tab-content" id="passe">
-                <div class="evenements-grid">
-                    <div class="evenement-card past">
-                        <div class="evenement-date">12 avril 2026</div>
-                        <div class="evenement-icon">🥊</div>
-                        <h3>Gala de Boxe</h3>
-                        <p>Soirée de compétitions internes avec 12 combats et plus de 100 spectateurs.</p>
-                        <div class="evenement-status">✅ Terminé</div>
-                    </div>
-                    <div class="evenement-card past">
-                        <div class="evenement-date">8 mars 2026</div>
-                        <div class="evenement-icon">👩</div>
-                        <h3>Journée Internationale des Droits des Femmes</h3>
-                        <p>Démonstration de boxe féminine et atelier d'initiation.</p>
-                        <div class="evenement-status">✅ Terminé</div>
-                    </div>
+                <div class="evenement-card past">
+                    <div class="evenement-date">8 mars 2026</div>
+                    <div class="evenement-icon">👩</div>
+                    <h3>Journée Internationale des Droits des Femmes</h3>
+                    <p>Démonstration de boxe féminine et atelier d'initiation.</p>
+                    <div class="evenement-status">✅ Terminé</div>
                 </div>
             </div>
 
@@ -436,14 +364,6 @@
         <div class="container">
             <h2>📸 Galerie Photos</h2>
             <p class="galerie-intro">Découvrez notre club à travers nos moments forts</p>
-
-            <div class="galerie-categories">
-                <button class="category-btn active" data-category="all">Toutes</button>
-                <button class="category-btn" data-category="entraînement">Entraînement</button>
-                <button class="category-btn" data-category="competition">Compétition</button>
-                <button class="category-btn" data-category="evenement">Événements</button>
-                <button class="category-btn" data-category="membres">Membres</button>
-            </div>
 
             <div class="galerie-grid">
                 <!-- Entraînement -->
@@ -877,19 +797,6 @@
         </div>
     </section>
 
-    <!-- Lightbox -->
-    <div class="lightbox" id="lightbox">
-        <div class="lightbox-content">
-            <button class="lightbox-close" id="lightbox-close">&times;</button>
-            <button class="lightbox-prev" id="lightbox-prev">&#10094;</button>
-            <button class="lightbox-next" id="lightbox-next">&#10095;</button>
-            <img src="" alt="" class="lightbox-image" id="lightbox-image">
-            <div class="lightbox-caption">
-                <h3 id="lightbox-title"></h3>
-                <p id="lightbox-description"></p>
-            </div>
-        </div>
-    </div>
 
     <section id="contact" class="contact">
         <div class="container">
@@ -1035,7 +942,5 @@
         </div>
     </footer>
 
-    <!-- JavaScript -->
-    <script src="js/main.js"></script>
 </body>
 </html>
