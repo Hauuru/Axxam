@@ -220,16 +220,16 @@ nav a:hover {
 /* Offers Section */
 .offres {
     padding: 80px 0;
-    background: #f8f9fa;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .offre-details {
     margin-bottom: 1rem;
     padding: 1rem;
-    background: rgba(44, 62, 80, 0.1);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
     border-radius: 8px;
-    border-left: 4px solid #e74c3c;
-    border: 1px solid rgba(44, 62, 80, 0.2);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    color: #2c3e50;
 }
 
 .offre-schedule, .offre-conditions {
@@ -246,7 +246,7 @@ nav a:hover {
 }
 
 .offre-conditions {
-    border-top: 1px solid rgba(44, 62, 80, 0.3);
+    border-top: 1px solid rgba(102, 126, 234, 0.3);
     padding-top: 0.5rem;
 }
 
@@ -260,7 +260,7 @@ nav a:hover {
     font-family: 'Oswald', sans-serif;
     font-size: 2.5rem;
     margin-bottom: 3rem;
-    color: #2c3e50;
+    color: white;
 }
 
 .offres-grid {
@@ -271,7 +271,7 @@ nav a:hover {
 }
 
 .offre-card {
-    background: white;
+    background: rgba(255, 255, 255, 0.95);
     padding: 2rem;
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
@@ -314,8 +314,8 @@ nav a:hover {
 
 .offre-card li {
     padding: 0.5rem 0;
-    border-bottom: 1px solid #eee;
-    color: #666;
+    border-bottom: 1px solid #ddd;
+    color: #444;
 }
 
 .offre-card li:last-child {
@@ -331,7 +331,7 @@ nav a:hover {
 
 .offre-benefits h3 {
     text-align: center;
-    color: #2c3e50;
+    color: white;
     margin-bottom: 2rem;
 }
 
@@ -346,7 +346,7 @@ nav a:hover {
     align-items: center;
     gap: 0.5rem;
     padding: 1rem;
-    background: #f8f9fa;
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 5px;
 }
 
