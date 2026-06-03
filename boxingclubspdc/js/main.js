@@ -1,5 +1,11 @@
-// Sticky Navigation and Scroll Animations
+// Performance Optimized Main Script
 document.addEventListener('DOMContentLoaded', function() {
+    'use strict';
+
+    // Performance: Use requestAnimationFrame for scroll events
+    let ticking = false;
+
+    // Sticky Navigation
     // Sticky Navigation
     const nav = document.querySelector('nav');
     const scrollIndicator = document.querySelector('.scroll-indicator');
@@ -364,20 +370,140 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(section);
     });
     
-    // Lazy loading for images
+    // Performance: Debounce scroll events
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Performance: Throttle resize events
+    function throttle(func, limit) {
+        let inThrottle;
+        return function() {
+            const args = arguments;
+            const context = this;
+            if (!inThrottle) {
+                func.apply(context, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
+    }
+
+    // Lazy loading for images with priority loading
     if ('IntersectionObserver' in window) {
         const imageObserver = new IntersectionObserver(function(entries) {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     const img = entry.target;
+
+                    // Load image
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        delete img.dataset.src;
+                    }
+
                     img.classList.add('loaded');
                     imageObserver.unobserve(img);
                 }
             });
+        }, {
+            rootMargin: '50px',
+            threshold: 0.1
         });
-        
-        document.querySelectorAll('img.lazy').forEach(img => {
+
+        // Priority loading for above-the-fold images
+        const priorityImages = document.querySelectorAll('img.priority');
+        priorityImages.forEach(img => {
+            if (!img.src && img.dataset.src) {
+                img.src = img.dataset.src;
+            }
+            imageObserver.observe(img);
+        });
+
+        // Lazy load other images
+        const lazyImages = document.querySelectorAll('img.lazy:not(.priority)');
+        lazyImages.forEach(img => {
             imageObserver.observe(img);
         });
     }
+
+    // Performance: Preload critical resources
+    function preloadCriticalResources() {
+        const criticalResources = [
+            '/styles.css',
+            '/js/main.js'
+        ];
+
+        criticalResources.forEach(url => {
+            const link = document.createElement('link');
+            link.rel = 'preload';
+            link.href = url;
+            link.as = url.includes('.css') ? 'style' : 'script';
+            document.head.appendChild(link);
+        });
+    }
+
+    // Performance: Remove unused CSS
+    function removeUnusedCSS() {
+        // This would typically be done during build process
+        // Here we add a placeholder for CSS optimization
+        console.log('CSS optimization: Remove unused styles in build process');
+    }
+
+    // Performance: Optimize font loading
+    function optimizeFontLoading() {
+        // Use font-display: swap for better performance
+        const fontLink = document.createElement('link');
+        fontLink.rel = 'stylesheet';
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Oswald:wght@500;700&display=swap';
+        document.head.appendChild(fontLink);
+    }
+
+    // Initialize performance optimizations
+    preloadCriticalResources();
+    optimizeFontLoading();
+
+    // Performance monitoring (optional)
+    if ('performance' in window) {
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const perfData = performance.getEntriesByType('navigation')[0];
+                console.log('Page load time:', perfData.loadEventEnd - perfData.loadEventStart, 'ms');
+            }, 0);
+        });
+    }
+
+    // Register service worker for PWA functionality
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                })
+                .catch(function(error) {
+                    console.log('ServiceWorker registration failed: ', error);
+                });
+        });
+    }
+
+    // Check for internet connectivity
+    window.addEventListener('online', function() {
+        console.log('Application is online');
+        document.body.classList.remove('offline');
+        document.body.classList.add('online');
+    });
+
+    window.addEventListener('offline', function() {
+        console.log('Application is offline');
+        document.body.classList.remove('online');
+        document.body.classList.add('offline');
+    });
 });
