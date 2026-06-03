@@ -223,6 +223,34 @@ nav a:hover {
     background: #f8f9fa;
 }
 
+.offre-details {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    border-left: 4px solid #e74c3c;
+}
+
+.offre-schedule, .offre-conditions {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.offre-schedule strong, .offre-conditions strong {
+    color: #2c3e50;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.offre-conditions {
+    border-top: 1px solid #eee;
+    padding-top: 0.5rem;
+}
+
+.offre-conditions strong {
+    color: #27ae60;
+}
+
 .offres h2 {
     text-align: center;
     font-family: 'Oswald', sans-serif;
@@ -371,6 +399,32 @@ nav a:hover {
     margin-bottom: 0.5rem;
 }
 
+.coach-qualifications {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.qualification {
+    background: #e74c3c;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.coach-contact {
+    background: #3498db;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
 .equipe-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -439,6 +493,102 @@ nav a:hover {
     color: #2c3e50;
     margin-bottom: 1rem;
     font-size: 1.3rem;
+}
+
+/* Tabs for evenements */
+.evenements-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.tab-btn.active {
+    background: #e74c3c;
+    transform: scale(1.05);
+}
+
+.tab-btn:hover {
+    background: #2980b9;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.evenement-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin: 1rem 0;
+}
+
+.detail {
+    background: #ecf0f1;
+    padding: 0.25rem 0.5rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+}
+
+.evenement-status {
+    background: #27ae60;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
+.actualites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.actualite-card {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 10px;
+    border-left: 4px solid #3498db;
+}
+
+.actualite-date {
+    color: #3498db;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.actualite-readmore {
+    color: #3498db;
+    font-weight: bold;
+    margin-top: 1rem;
+    cursor: pointer;
+}
+
+.evenement-card.past {
+    opacity: 0.7;
+}
+
+.evenement-card.past .evenement-status {
+    background: #95a5a6;
 }
 
 .evenement-date {
