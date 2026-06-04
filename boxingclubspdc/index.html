@@ -80,43 +80,43 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header>
+    <!-- Header Principal -->
+    <div class="header-main">
         <div class="container">
-            <div class="logo">
-                <h1>🥊 Boxing Club SPDC</h1>
-                <p>Saint-Pierre-des-Corps</p>
-            </div>
-            <!-- Scroll Indicator -->
-            <div class="scroll-indicator"></div>
-
-            <!-- Sticky Navigation -->
-            <nav>
-                <div class="menu-toggle">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+            <div class="header-top">
+                <div class="logo">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjRkZGIi8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMwMDAiPuKAljwvdGV4dD4KPC9zdmc+" alt="Boxing Club SPDC Logo">
+                    <div>
+                        <h1>Boxing Club SPDC</h1>
+                        <p class="subtitle">Saint-Pierre-des-Corps</p>
+                    </div>
                 </div>
-                <ul>
-                    <li><a href="#accueil">Accueil</a></li>
-                    <li><a href="#club">Le Club</a></li>
-                    <li><a href="#offres">Nos Offres</a></li>
-                    <li><a href="#equipe">L'Équipe</a></li>
-                    <li><a href="#evenements">Événements</a></li>
-                    <li><a href="#horaires">Horaires</a></li>
-                    <li><a href="#galerie">Galerie</a></li>
-                    <li><a href="#temoignages">Témoignages</a></li>
-                    <li><a href="#tiktok">TikTok</a></li>
-                    <li><a href="#contact">Inscription</a></li>
-                </ul>
-            </nav>
+            </div>
         </div>
-    </header>
+    </div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="#accueil">Accueil</a></li>
+                <li><a href="#club">Le Club</a></li>
+                <li><a href="#offres">Nos Offres</a></li>
+                <li><a href="#equipe">L'Équipe</a></li>
+                <li><a href="#evenements">Événements</a></li>
+                <li><a href="#horaires">Horaires</a></li>
+                <li><a href="#galerie">Galerie</a></li>
+                <li><a href="#temoignages">Témoignages</a></li>
+                <li><a href="#contact">Inscription</a></li>
+            </ul>
+        </div>
+    </nav>
 
     <section id="accueil" class="hero">
         <div class="container">
             <div class="hero-content">
-                <h2>Devenez Champion de Votre Vie</h2>
-                <p>Rejoignez le Boxing Club SPDC et transformez votre corps et votre esprit</p>
+                <h2>Boxing Club SPDC</h2>
+                <p>Devenez Champion de Votre Vie</p>
                 <div class="cta-buttons">
                     <a href="#offres" class="btn btn-primary">Découvrir nos offres</a>
                     <a href="#contact" class="btn btn-secondary">S'inscrire maintenant</a>
@@ -133,6 +133,42 @@
                     <div class="badge">
                         <span class="badge-icon">🏋️</span>
                         <span>Équipements professionnels</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Grid -->
+    <section class="services-section">
+        <div class="container">
+            <div class="services-grid">
+                <div class="service-card">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRkZGIi8+Cjwvc3ZnPg==" alt="Cours de Boxe">
+                    <div class="service-card-content">
+                        <h3>Boxe Anglaise</h3>
+                        <p>Techniques fondamentales et avancées de boxe anglaise pour tous niveaux</p>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRkZGIi8+Cjwvc3ZnPg==" alt="Fitness">
+                    <div class="service-card-content">
+                        <h3>Remise en Forme</h3>
+                        <p>Programmes de fitness et conditionnement physique adaptés à vos objectifs</p>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRkZGIi8+Cjwvc3ZnPg==" alt="Jeunes">
+                    <div class="service-card-content">
+                        <h3>Cours Jeunes</h3>
+                        <p>Enseignement de la boxe pour enfants et adolescents dans une ambiance sécurisée</p>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRkZGIi8+Cjwvc3ZnPg==" alt="Spécial">
+                    <div class="service-card-content">
+                        <h3>Cours Particuliers</h3>
+                        <p>Coaching individuel sur mesure pour une progression rapide et efficace</p>
                     </div>
                 </div>
             </div>
@@ -673,19 +709,17 @@
 
     <section id="temoignages" class="temoignages">
         <div class="container">
-            <h2>💬 Témoignages de Membres</h2>
+            <h2>🗣️ Témoignages de Membres</h2>
             <p class="temoignages-intro">Ce que nos membres disent de notre club</p>
 
             <div class="temoignages-grid">
                 <!-- Témoignage 1 -->
                 <div class="temoignage-card">
                     <div class="temoignage-header">
-                        <div class="temoignage-avatar">
-                            <img src="https://via.placeholder.com/80x80/3498db/ffffff?text=JD" alt="Jean Dupont">
-                        </div>
+                        <div class="temoignage-avatar">👨</div>
                         <div class="temoignage-info">
-                            <h3>Jean Dupont</h3>
-                            <p class="temoignage-category">Adulte - Compétition</p>
+                            <h4>Jean Dupont</h4>
+                            <p class="temoignage-role">Adulte - Compétition</p>
                             <div class="temoignage-rating">
                                 <span class="star">⭐</span>
                                 <span class="star">⭐</span>
@@ -704,12 +738,10 @@
                 <!-- Témoignage 2 -->
                 <div class="temoignage-card">
                     <div class="temoignage-header">
-                        <div class="temoignage-avatar">
-                            <img src="https://via.placeholder.com/80x80/e74c3c/ffffff?text=SM" alt="Sophie Martin">
-                        </div>
+                        <div class="temoignage-avatar">👩</div>
                         <div class="temoignage-info">
-                            <h3>Sophie Martin</h3>
-                            <p class="temoignage-category">Jeune - Loisir</p>
+                            <h4>Sophie Martin</h4>
+                            <p class="temoignage-role">Jeune - Loisir</p>
                             <div class="temoignage-rating">
                                 <span class="star">⭐</span>
                                 <span class="star">⭐</span>
@@ -752,12 +784,10 @@
                 <!-- Témoignage 4 -->
                 <div class="temoignage-card">
                     <div class="temoignage-header">
-                        <div class="temoignage-avatar">
-                            <img src="https://via.placeholder.com/80x80/f39c12/ffffff?text=LG" alt="Lucie Garcia">
-                        </div>
+                        <div class="temoignage-avatar">👩</div>
                         <div class="temoignage-info">
-                            <h3>Lucie Garcia</h3>
-                            <p class="temoignage-category">Adulte - Auto-défense</p>
+                            <h4>Lucie Garcia</h4>
+                            <p class="temoignage-role">Adulte - Auto-défense</p>
                             <div class="temoignage-rating">
                                 <span class="star">⭐</span>
                                 <span class="star">⭐</span>

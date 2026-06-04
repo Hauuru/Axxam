@@ -1,4 +1,4 @@
-/* CSS Moderne et Élégant pour Boxing Club SPDC */
+/* CSS Inspiré du MFC Gym - Style Professionnel Martial Arts */
 
 /* Reset et Base */
 * {
@@ -8,10 +8,10 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Arial', sans-serif;
     line-height: 1.6;
-    color: #2c3e50;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    color: #333;
+    background: #000;
     min-height: 100vh;
 }
 
@@ -21,68 +21,483 @@ body {
     padding: 0 20px;
 }
 
-/* Header */
-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header - Style MFC Gym */
+.header-main {
+    background: #000;
     color: white;
-    padding: 3rem 0;
-    text-align: center;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    padding: 2rem 0;
     position: relative;
-    overflow: hidden;
 }
 
-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="50" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="30" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-    opacity: 0.3;
-}
-
-header h1 {
-    font-size: 3rem;
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 1rem;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo img {
+    height: 60px;
+    width: auto;
+}
+
+.logo h1 {
+    font-size: 1.8rem;
     font-weight: 700;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    position: relative;
-    z-index: 1;
+    color: #fff;
+    margin: 0;
 }
 
-header .subtitle {
-    font-size: 1.4rem;
-    margin-bottom: 2.5rem;
-    font-weight: 300;
-    position: relative;
-    z-index: 1;
+.logo .subtitle {
+    font-size: 0.9rem;
+    color: #ccc;
+    margin: 0;
 }
 
-header .highlights {
+/* Navigation */
+nav {
+    background: #000;
+    border-top: 1px solid #333;
+    border-bottom: 1px solid #333;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+nav ul {
+    list-style: none;
     display: flex;
     justify-content: center;
-    gap: 2.5rem;
+    gap: 2rem;
     flex-wrap: wrap;
-    position: relative;
-    z-index: 1;
+    padding: 1rem 0;
 }
 
-header .highlight {
-    font-size: 1.2rem;
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    padding: 0.8rem 1.2rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+}
+
+nav ul li a:hover {
+    background: #333;
+    color: #fff;
+}
+
+/* Hero Section */
+.hero {
+    background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRkZGIi8+Cjwvc3ZnPg==') center/cover;
+    color: white;
+    padding: 6rem 0;
+    text-align: center;
+    position: relative;
+}
+
+.hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.hero h2 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.hero p {
+    font-size: 1.4rem;
+    margin-bottom: 2.5rem;
+    opacity: 0.9;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 1rem 2rem;
+    border-radius: 4px;
+    text-decoration: none;
     font-weight: 600;
-    background: rgba(255,255,255,0.2);
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: white;
+    border: 2px solid #e74c3c;
+}
+
+.btn-secondary:hover {
+    background: #e74c3c;
+    color: white;
+}
+
+.trust-badges {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255,255,255,0.1);
     padding: 0.8rem 1.5rem;
     border-radius: 25px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.badge-icon {
+    font-size: 1.2rem;
+}
+
+/* Services Grid - Style MFC Gym */
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin: 4rem 0;
+}
+
+.service-card {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.service-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.service-card-content {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.service-card h3 {
+    color: #e74c3c;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.service-card p {
+    color: #ccc;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* Club Section - Style MFC Gym */
+.club {
+    background: #111;
+    color: white;
+    padding: 5rem 0;
+}
+
+.club h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: #e74c3c;
+    font-weight: 700;
+}
+
+.club-intro {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto 3rem;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #ccc;
+}
+
+.club-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.feature {
+    background: #1a1a1a;
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid #333;
+    text-align: center;
     transition: all 0.3s ease;
 }
 
-header .highlight:hover {
-    background: rgba(255,255,255,0.3);
-    transform: translateY(-2px);
+.feature:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.feature h3 {
+    color: #e74c3c;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.feature p {
+    color: #ccc;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Testimonials Section - Style MFC Gym */
+.testimonials {
+    background: #000;
+    color: white;
+    padding: 5rem 0;
+}
+
+.testimonials h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: #e74c3c;
+    font-weight: 700;
+}
+
+.testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.testimonial-card {
+    background: #111;
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid #333;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.testimonial-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.testimonial-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #e74c3c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+.testimonial-content {
+    margin-bottom: 1.5rem;
+    font-style: italic;
+    color: #ccc;
+    line-height: 1.6;
+}
+
+.testimonial-author {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.testimonial-name {
+    font-weight: 600;
+    color: #e74c3c;
+}
+
+.testimonial-role {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+/* Existing Témoignages Section - Update to MFC Gym Style */
+.temoignages {
+    background: #111;
+    color: white;
+    padding: 5rem 0;
+}
+
+.temoignages h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: #e74c3c;
+    font-weight: 700;
+}
+
+.temoignages-intro {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto 3rem;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #ccc;
+}
+
+.temoignages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.temoignage-card {
+    background: #1a1a1a;
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid #333;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.temoignage-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.temoignage-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.temoignage-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #e74c3c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.temoignage-info h4 {
+    color: #e74c3c;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+
+.temoignage-info .temoignage-role {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.temoignage-content {
+    color: #ccc;
+    line-height: 1.6;
+    font-style: italic;
+    margin-bottom: 1rem;
+}
+
+.temoignage-rating {
+    display: flex;
+    gap: 0.2rem;
+}
+
+.temoignage-date {
+    color: #888;
+    font-size: 0.9rem;
+    text-align: right;
+}
+
+.temoignages-stats {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin: 3rem 0;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #e74c3c;
+    display: block;
+}
+
+.stat-label {
+    color: #ccc;
+    font-size: 1rem;
+}
+
+.temoignages-cta {
+    text-align: center;
+    margin-top: 3rem;
+}
+
+.temoignages-cta h3 {
+    color: #e74c3c;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.temoignages-cta p {
+    color: #ccc;
+    margin-bottom: 2rem;
 }
 
 /* Navigation */
@@ -824,24 +1239,43 @@ section h2::after {
     transform: translateY(0);
 }
 
-/* Footer */
+/* Footer - Style MFC Gym */
 footer {
-    background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
+    background: #000;
     color: white;
-    text-align: center;
-    padding: 3rem 0;
-    box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+    padding: 3rem 0 2rem;
+    border-top: 1px solid #333;
 }
 
-footer p {
+.footer-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.footer-section h3 {
+    color: #e74c3c;
+    font-size: 1.3rem;
     margin-bottom: 1rem;
-    font-size: 1.1rem;
+    font-weight: 600;
 }
 
-footer .signature {
-    font-style: italic;
-    opacity: 0.8;
-    margin-top: 1rem;
+.footer-section p {
+    margin-bottom: 0.5rem;
+    color: #ccc;
+    font-size: 0.95rem;
+}
+
+.footer-bottom {
+    border-top: 1px solid #333;
+    padding-top: 2rem;
+    text-align: center;
+}
+
+.footer-bottom p {
+    color: #888;
+    font-size: 0.9rem;
 }
 
 /* Responsive */
