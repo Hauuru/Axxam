@@ -25,12 +25,11 @@
 
 ### Structure du site
 ```
-vesemt-simple/
-├── articles/              (11 articles)
-├── images/               (20 images)
-├── vesemt-css/           (1 fichier CSS)
+vesemt/
+├── articles/              (20 articles)
+├── images/               (28 images)
+├── vesemt-css/           (3 fichiers CSS)
 ├── index.html
-├── page-2.html
 ├── qui-sommes-nous.html
 ├── elections-municipales-2026.html
 ├── contacter-reseaux.html
@@ -39,14 +38,15 @@ vesemt-simple/
 ├── saint-pierre-des-corps.html
 ├── le-quotidien-le-vrai.html
 ├── author-le-plombier.html
-└── deploy.sh
+├── sitemap.xml
+└── robots.txt
 ```
 
 ### Statistiques
-- **Fichiers HTML** : 20
-- **Images** : 20
-- **Fichiers CSS** : 1
-- **Taille totale** : ~8MB
+- **Fichiers HTML** : 30
+- **Images** : 28
+- **Fichiers CSS** : 3
+- **Taille totale** : ~4MB
 - **Visites mensuelles estimées** : 100 à 1000
 
 ---
@@ -412,7 +412,6 @@ vesemt-simple/
 ├── vesemt-css/           # Feuilles de style
 │   └── style.css
 ├── index.html            # Page d'accueil
-├── page-2.html           # Page de pagination
 ├── qui-sommes-nous.html  # Page "Qui sommes nous ?"
 ├── elections-municipales-2026.html  # Page élections
 ├── contacter-reseaux.html  # Page contact

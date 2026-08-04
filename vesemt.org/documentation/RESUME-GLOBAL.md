@@ -4,12 +4,13 @@
 
 ## Vue d'ensemble
 
-**Site** : https://vesemt.org
-**Type** : WordPress 6.9.4
-**Thème** : ColorMag 4.1.2
+**Site** : https://vesemt.org (original) → https://axxam.net/vesemt.org/ (version statique publiée)
+**Type** : WordPress 6.9.4 → HTML statique
+**Thème** : ColorMag 4.1.2 → HTML/CSS maison
 **Date d'analyse** : 01/04/2026
 **Durée totale** : ~15 minutes
 **Taille du clone** : 54 Mo
+**Version statique publiée** : 30 HTML, 28 images, 3 CSS, ~4 Mo (maintenance août 2026)
 
 ---
 
