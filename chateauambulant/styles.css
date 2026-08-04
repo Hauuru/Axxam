@@ -156,6 +156,32 @@ body.mode-nuit {
     color: var(--couleur-or);
 }
 
+/* Barre de navigation inter-pages */
+.pied-navigation {
+    margin-top: 40px;
+    padding: 15px;
+    background: var(--couleur-parchemin);
+    border: 1px solid var(--couleur-or);
+    border-radius: 5px;
+    text-align: center;
+}
+
+.pied-navigation a {
+    display: inline-block;
+    margin: 4px 6px;
+    padding: 6px 12px;
+    text-decoration: none;
+    color: var(--couleur-texte);
+    border: 1px solid var(--couleur-or);
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.pied-navigation a:hover {
+    background: var(--couleur-or);
+    color: var(--couleur-fond);
+}
+
 /* Bouton pour basculer le mode nuit */
 .bouton-mode-nuit {
     position: fixed;
