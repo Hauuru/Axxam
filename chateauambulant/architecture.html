@@ -133,11 +133,8 @@
         </div>
 
         <!-- Pied de page -->
-        <div class="porte-grimoire">
-            <a href="securite.html" class="lien-grimoire">📜🔮 Voir la Sécurité...</a>
-        </div>
-        <footer style="text-align: center; margin-top: 40px; font-size: 0.8em;">
-            <p>Dernière mise à jour : <span id="last-updated">2026-08-01</span></p>
+        <footer>
+            <p>© 2026 Foyer de Calcifère | Dernière mise à jour : <span id="last-updated"></span></p>
         </footer>
         <nav class="pied-navigation">
             <a href="index.html">🏠 Accueil</a>
@@ -147,7 +144,7 @@
             <a href="memoire.html">📜 Mémoire</a>
         </nav>
         <script>
-            document.getElementById('last-updated').textContent = new Date().toISOString().split('T')[0];
+            document.getElementById('last-updated').textContent = new Date(document.lastModified).toLocaleDateString('fr-FR');
         </script>
     </div>
 </body>

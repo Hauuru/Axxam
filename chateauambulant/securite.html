@@ -368,8 +368,8 @@ Tous les 28 jours, je :
         </div>
     </footer>
 
-    <footer class="porte-grimoire">
-        <p class="texte-grimoire">Dernière mise à jour : <span id="last-updated" class="terme-grimoire">2026-08-01</span></p>
+    <footer>
+        <p>© 2026 Foyer de Calcifère | Dernière mise à jour : <span id="last-updated"></span></p>
     </footer>
 
     <nav class="pied-navigation">
@@ -382,7 +382,7 @@ Tous les 28 jours, je :
 
     <script src="script.js" defer></script>
     <script>
-        document.getElementById('last-updated').textContent = new Date().toISOString().split('T')[0];
+        document.getElementById('last-updated').textContent = new Date(document.lastModified).toLocaleDateString('fr-FR');
     </script>
 </body>
 </html>

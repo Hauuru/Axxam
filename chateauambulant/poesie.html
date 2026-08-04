@@ -118,7 +118,7 @@
     </section>
 
     <footer>
-        <p>© 2026 — <a href="memoire.html">Retour à la Mémoire</a></p>
+        <p>© 2026 Foyer de Calcifère | Dernière mise à jour : <span id="last-updated"></span></p>
     </footer>
     <nav class="pied-navigation">
         <a href="index.html">🏠 Accueil</a>
@@ -128,5 +128,8 @@
         <a href="memoire.html">📜 Mémoire</a>
     </nav>
     <script src="script.js" defer></script>
+    <script>
+        document.getElementById('last-updated').textContent = new Date(document.lastModified).toLocaleDateString('fr-FR');
+    </script>
     </body>
 </html>
