@@ -26,8 +26,11 @@ une déduplication par similarité de titres (Jaccard ≥ 0,5).
 ## 2. Conversion d'un article
 
 ```bash
-python3 tools/convert.py <pID> [--slug mon-slug]
+python3 tools/convert.py <pID> [--slug mon-slug] [--force]
 ```
+
+> `--force` régénère un article déjà converti (utilisé pour appliquer les
+> corrections du convertisseur, ex. image à la une manquante).
 
 Le convertisseur (DOM parser maison, standard library) :
 

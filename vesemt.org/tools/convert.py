@@ -261,18 +261,21 @@ def extract(h, p):
             title = re.sub(r"\s{2,}", " ", title).strip()
     m = re.search(r'datetime="([^"]+)"', h)
     iso = m.group(1)[:10] if m else None
-    m = re.search(r'class="attachment-colormag-featured-image[^"]*"[^>]*srcset="([^"]+)"', h)
+    m = re.search(r'<img[^>]*attachment-colormag-featured-image[^>]*>', h)
     feat = None
     if m:
-        cands = [x.split(" ")[0] for x in m.group(1).split(",")]
-        sized = [u for u in cands if re.search(r"\d+w$", u)]
-        if sized:
-            feat = max(sized, key=lambda u: int(re.search(r"(\d+)w", u).group(1)))
-        else:
-            feat = cands[0] if cands else None
-    if not feat:
-        m = re.search(r'class="attachment-colormag-featured-image[^"]*"[^>]*src="([^"]+)"', h)
-        feat = m.group(1) if m else None
+        tag = m.group(0)
+        ms = re.search(r'srcset="([^"]+)"', tag)
+        if ms:
+            cands = [x.split(" ")[0] for x in ms.group(1).split(",")]
+            sized = [u for u in cands if re.search(r"\d+w$", u)]
+            if sized:
+                feat = max(sized, key=lambda u: int(re.search(r"(\d+)w", u).group(1)))
+            else:
+                feat = cands[0] if cands else None
+        if not feat:
+            ms = re.search(r'src="([^"]+)"', tag)
+            feat = ms.group(1) if ms else None
 
     def capture(div_open):
         """Capture depuis <div class=...> jusqu'à son </div> correspondant."""
@@ -513,9 +516,10 @@ def make_article(slug, meta, body_html, image_rel, prev_link, next_link, og_rel=
 def main():
     args = sys.argv[1:]
     if not args:
-        print("Usage : python3 tools/convert.py <pID> [--slug X]")
+        print("Usage : python3 tools/convert.py <pID> [--slug X] [--force]")
         return 1
     p = args[0]
+    force = "--force" in args
     slug_override = None
     if "--slug" in args:
         slug_override = args[args.index("--slug") + 1]
@@ -529,9 +533,11 @@ def main():
 
     slug = slug_override or slugify(info["title"] or f"article-{p}")
     dest = os.path.join(ARTICLES, slug + ".html")
-    if os.path.exists(dest):
+    if os.path.exists(dest) and not force:
         print(f"  ! {slug}.html existe déjà — abandon.")
         return 1
+    if os.path.exists(dest):
+        print(f"  {slug}.html existant — régénération (--force).")
 
     # rendu du contenu
     builder = DomBuilder()

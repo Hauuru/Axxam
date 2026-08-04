@@ -54,7 +54,7 @@ Le site est publié via GitHub Pages sur `https://axxam.net/vesemt.org/` (domain
 ## 📊 Statistiques
 
 - **Total de fichiers HTML** : 63 (5 pages + 58 articles)
-- **Total d'images** : 57 (toutes en JPEG, ≤ 800 px)
+- **Total d'images** : 86 (toutes en JPEG, ≤ 800 px)
 - **Total de fichiers CSS** : 3
 - **Liens internes** : 0 cassé (vérifié) ; **placeholders** : 0 restant
 - **Rendu** : 0 erreur JS, 0 image cassée, 0 overflow (desktop + mobile, Playwright)
