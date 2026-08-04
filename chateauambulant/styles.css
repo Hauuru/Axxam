@@ -1,0 +1,315 @@
+:root {
+    --gold: #d4af37;       /* Or des grimoires */
+    --dark-blue: #2c3e50;  /* Bleu nuit */
+    --parchment: #f9f9f9;  /* Parchemin */
+    --ink: #333;           /* Encre */
+    --shadow: rgba(0,0,0,0.1);
+    
+    /* Variables pour le mode nuit/grimoire */
+    --couleur-fond: #f5e7d3;
+    --couleur-texte: #3a2c1a;
+    --couleur-or: #d4af37;
+    --couleur-parchemin: #e8d5b5;
+}
+
+body {
+    font-family: monospace;
+    line-height: 1.6;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: var(--parchment);
+    color: var(--ink);
+}
+
+h1, h2, h3 {
+    color: var(--dark-blue);
+    border-bottom: 1px solid var(--gold);
+    padding-bottom: 5px;
+}
+
+section {
+    margin-bottom: 30px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px var(--shadow);
+}
+
+pre {
+    background-color: var(--parchment);
+    padding: 10px;
+    border-radius: 3px;
+    overflow-x: auto;
+    border-left: 3px solid var(--gold);
+}
+
+.timestamp {
+    color: #7f8c8d;
+    font-size: 0.9em;
+}
+
+nav {
+    background-color: var(--parchment);
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    border: 1px solid var(--gold);
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+nav li a {
+    text-decoration: none;
+    color: var(--dark-blue);
+    padding: 5px 10px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+nav li a:hover {
+    background-color: var(--gold);
+    color: white;
+}
+/* Pied de page */
+.footer {
+    background-color: #2c3e50;
+    color: #d4af37;
+    text-align: center;
+    padding: 15px;
+    position: fixed;
+    bottom: 0;
+    width: 100vw;
+    margin-left: -50vw;
+    left: 50%;
+    font-family: monospace;
+    border-top: 1px solid #d4af37;
+}
+
+.footer a {
+    color: #f9f9f9;
+    text-decoration: none;
+    margin: 0 10px;
+    font-weight: bold;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+    color: #d4af37;
+}
+
+/* ----- Effets Magiques ----- */
+
+/* Poussière d'étoiles (fond animé) */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        radial-gradient(circle at 10% 20%, rgba(255, 215, 0, 0.1) 0.3px, transparent 1px),
+        radial-gradient(circle at 90% 80%, rgba(255, 215, 0, 0.1) 0.3px, transparent 1px),
+        radial-gradient(circle at 30% 50%, rgba(255, 215, 0, 0.1) 0.2px, transparent 0.8px);
+    background-size: 150px 150px, 200px 200px, 100px 100px;
+    pointer-events: none;
+    z-index: -1;
+    animation: twinkle 8s infinite ease-in-out;
+}
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.4; }
+    20% { opacity: 0.6; }
+    40% { opacity: 0.3; }
+    60% { opacity: 0.7; }
+    80% { opacity: 0.5; }
+}
+
+/* Animation de parchemin qui se déroule (pour les sections principales) */
+.parchemin {
+    transform-origin: top;
+    animation: unroll 1.2s ease-out forwards;
+    opacity: 0;
+}
+
+@keyframes unroll {
+    0% {
+        transform: scaleY(0.1);
+        opacity: 0;
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        transform: scaleY(1);
+        opacity: 1;
+    }
+}
+
+/* Animation progressive du texte (effet "encre qui s'écrit") */
+.texte-grimoire {
+    background: linear-gradient(var(--couleur-fond), var(--couleur-fond)) no-repeat;
+    background-size: 0% 100%;
+    animation: writeText 2s forwards;
+    animation-delay: 0.5s;
+}
+
+@keyframes writeText {
+    to {
+        background-size: 100% 100%;
+    }
+}
+
+/* Variables pour le mode nuit */
+:root {
+    --couleur-fond: #f5e7d3;
+    --couleur-texte: #3a2c1a;
+    --couleur-or: #d4af37;
+    --couleur-parchemin: #e8d5b5;
+}
+
+body.mode-nuit {
+    --couleur-fond: #1a120b;
+    --couleur-texte: #d4af37;
+    --couleur-parchemin: #2a1e0f;
+}
+
+/* Appliquer les variables aux éléments existants */
+body {
+    background-color: var(--couleur-fond);
+    color: var(--couleur-texte);
+}
+
+.parchemin {
+    background: linear-gradient(to bottom, var(--couleur-parchemin) 95%, var(--couleur-fond) 100%);
+    border-color: var(--couleur-or);
+}
+
+.titre-grimoire, .sous-titre-grimoire {
+    color: var(--couleur-or);
+}
+
+/* Bouton pour basculer le mode nuit */
+.bouton-mode-nuit {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--couleur-or);
+    color: var(--couleur-fond);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+}
+
+.bouton-mode-nuit:hover {
+    transform: scale(1.1);
+}
+
+/* Tableaux style Grimoire (fusion des styles + animation) */
+.grimoire-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-family: monospace;
+    box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+    background-color: var(--couleur-parchemin);
+    position: relative; /* Pour l'animation */
+}
+
+.grimoire-table th {
+    background-color: var(--couleur-or);
+    color: var(--couleur-fond);
+    padding: 10px;
+    text-align: center;
+    border: 1px solid var(--couleur-or);
+}
+
+.grimoire-table td {
+    padding: 8px 12px;
+    border: 1px solid rgba(205, 170, 125, 0.5);
+    text-align: center;
+    color: var(--couleur-texte);
+}
+
+.grimoire-table tr:nth-child(even) {
+    background-color: rgba(212, 175, 55, 0.1);
+}
+
+.grimoire-table tr:hover {
+    background-color: rgba(212, 175, 55, 0.2);
+}
+
+/* Animation des bordures (sans overflow: hidden) */
+.grimoire-table::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px solid var(--couleur-or);
+    pointer-events: none;
+    animation: inkDry 3s ease-in-out infinite;
+    opacity: 0.7;
+    z-index: -1; /* Place l'animation derrière le contenu */
+}
+
+@keyframes inkDry {
+    0% {
+        transform: scaleX(0) scaleY(0.1);
+        opacity: 0.3;
+    }
+    20% {
+        transform: scaleX(1) scaleY(0.1);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scaleX(1) scaleY(1);
+        opacity: 0;
+    }
+}
+/* Style forcé pour les nœuds Mermaid (organigramme) */
+.mermaid .node rect {
+    fill: var(--couleur-or) !important;
+    stroke: #8b4513 !important;
+    stroke-width: 1.5px !important;
+}
+
+.mermaid .node text {
+    fill: var(--couleur-texte) !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+}
+
+.mermaid .edgeLabel text {
+    fill: var(--couleur-texte) !important;
+    background-color: var(--couleur-parchemin) !important;
+}
+
+/* Animation des bordures (sans overflow: hidden) */
+.grimoire-table::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px solid var(--couleur-or);
+    pointer-events: none;
+    animation: inkDry 3s ease-in-out infinite;
+    opacity: 0.7;
+    z-index: -1; /* Place l'animation derrière le contenu */
+}

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture — Foyer de Calcifère</title>
+    <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Cinzel:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
+</head>
+<body>
+    <div class="parchemin">
+        <h1 class="titre-grimoire">📜 Architecture du Foyer ✨</h1>
+        <div class="mermaid" style="background: var(--couleur-parchemin); padding: 15px; border: 1px solid var(--couleur-or); border-radius: 5px;">
+            %%{init: {'theme': 'neutral', 'themeVariables': {
+                'primaryColor': '#d4af37',
+                'primaryBorderColor': '#8b4513',
+                'primaryTextColor': '#3a2c1a',
+                'edgeLabelBackground': '#f5e7d3',
+                'tertiaryColor': '#e8d5b5',
+                'fontFamily': 'Cinzel'
+            }}}%%
+            flowchart TD
+                subgraph User["👤 Utilisateur"]
+                    U[Interface CLI/WebSocket]
+                end
+                subgraph Gateway["🌐 Sen (Port 8766)"]
+                    SenWS[WebSocket Server]
+                    SenCore[Sen Core\nmistral-medium-2508]
+                end
+                subgraph Orchestrator["🔥 Calcifère (Port 8901)"]
+                    CalcCore[Calcifère Core\nnvidia-nemotron-ultra]
+                    Router[Router Intentionnel]
+                end
+                subgraph Agents["🤖 Agents Spécialisés"]
+                    Sophie[Sophie\nPort: 8902\nStratège]
+                    Marco[Marco\nPort: 8903\nCréatif]
+                    Hinn[Hinn\nPort: 8904\nSystème]
+                end
+                User <-- "WebSocket" --> SenWS
+                SenWS --> SenCore
+                SenCore -.->|HTTP exec| CalcCore
+                CalcCore --> Router
+                Router --> Sophie
+                Router --> Marco
+                Router --> Hinn
+        </div>
+        <noscript>
+            <div style="background: var(--couleur-parchemin); padding: 20px; text-align: center; color: var(--couleur-texte); margin-top: 10px;">
+                <p>📜 <strong>Carte des flux</strong> 📜</p>
+                <p>Utilisateur → Sen (8766) → Calcifère (8901) → [Sophie|Marco|Hinn]</p>
+                <p><em>Activez JavaScript pour voir le diagramme interactif.</em></p>
+            </div>
+        </noscript>
+        </div>
+        <h2 class="sous-titre-grimoire">📜 Tableau des Agents & Ports 🔮</h2>
+        <table class="grimoire-table">
+            <tr>
+                <th>Composant ⚡</th>
+                <th>Port 🔒</th>
+                <th>Rôle 📜</th>
+                <th>Modèle/Protocole 🛡️</th>
+            </tr>
+            <tr>
+                <td>Sen</td>
+                <td>8766 (WS)</td>
+                <td>Gardienne conversationnelle</td>
+                <td><code>mistral-medium-2508</code></td>
+            </tr>
+            <tr>
+                <td>Calcifère</td>
+                <td>8901</td>
+                <td>Orchestrateur</td>
+                <td><code>nvidia-nemotron-ultra</code></td>
+            </tr>
+            <tr>
+                <td>Sophie</td>
+                <td>8902</td>
+                <td>Stratège</td>
+                <td><code>llama-3.3-70b</code></td>
+            </tr>
+            <tr>
+                <td>Marco</td>
+                <td>8903</td>
+                <td>Créatif</td>
+                <td><code>glm-4.7-flash</code></td>
+            </tr>
+            <tr>
+                <td>Hinn</td>
+                <td>8904</td>
+                <td>Système</td>
+                <td><code>gpt-oss-120b</code></td>
+            </tr>
+            <tr>
+                <td>MCP Fédération</td>
+                <td>5000</td>
+                <td>Gateway outils système</td>
+                <td><code>TCP/JSON-RPC</code></td>
+            </tr>
+        </table>
+
+        <!-- Section MCP -->
+        <h2 class="sous-titre-grimoire">🔗 Flux MCP (MicroAgentsNet) 🛡️</h2>
+        <p class="texte-grimoire">
+            Le <span class="terme-grimoire">MCP Fédération Gateway</span> isole les appels système via :
+            <ul>
+                <li>Protocole sécurisé pour la communication.</li>
+                <li>Outils fédérés : lecture de fichiers, recherche.</li>
+                <li>Logs d'audit : dossier dédié aux activités.</li>
+            </ul>
+        </p>
+        <div class="diagramme-grimoire mermaid">
+            flowchart LR
+                Hinn[Hinn\nPort: 8904] -->|JSON-RPC| MCP[MCP\nPort: 5000]
+                MCP -->|stdout| Tools[(Outils\n/bin/ls, /bin/cat)]
+        </div>
+
+        <!-- Pied de page -->
+        <div class="porte-grimoire">
+            <a href="securite.html" class="lien-grimoire">📜🔮 Voir la Sécurité...</a>
+        </div>
+        <footer style="text-align: center; margin-top: 40px; font-size: 0.8em;">
+            <p>Dernière mise à jour : <span id="last-updated">2026-08-01</span></p>
+        </footer>
+        <script>
+            document.getElementById('last-updated').textContent = new Date().toISOString().split('T')[0];
+        </script>
+    </div>
+</body>
+</html>
+    <div class="footer">
+        <a href="index.html">Accueil</a> |
+        <a href="architecture.html">Architecture</a> |
+        <a href="memoire.html">Mémoire</a> |
+        <a href="poesie.html">Poésie</a> |
+        <a href="securite.html">Sécurité</a>
+    </div>
+</body>
