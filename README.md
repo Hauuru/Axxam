@@ -1,9 +1,11 @@
 # Axxam – Dépôt Multi-Sites
 
-Bienvenue dans le dépôt **Axxam**, qui contient deux projets web distincts :
+Bienvenue dans le dépôt **Axxam**, qui contient quatre projets web distincts :
 
 1. **`/`** – Site **axxam.net** : site professionnel d'entrepreneur
 2. **`/vesemt.org/`** – Site **vesemt.org** : conversion HTML+CSS du site WordPress politique
+3. **`/boxingclubspdc/`** – Site **Boxing Club SPDC** : site PWA optimisé du club de boxe
+4. **`/chateauambulant/`** – Site **Château Ambulant** : grimoire documentant le système multi-agents « Foyer de Calcifère »
 
 ---
 
@@ -20,14 +22,32 @@ Axxam/
 ├── favicon.png, logo.jpg   ← Ressources (axxam.net)
 ├── CNAME, robots.txt, sitemap.xml  ← Configuration
 │
-└── vesemt.org/             ← Site HTML+CSS de vesemt.org
+├── vesemt.org/             ← Site HTML+CSS de vesemt.org
+│   ├── index.html
+│   ├── articles/
+│   ├── images/
+│   ├── vesemt-css/style.css
+│   ├── README.md           ← Documentation détaillée du site vesemt.org
+│   ├── RAPPORT_ANALYSE.md
+│   └── ... (20 pages HTML)
+│
+├── boxingclubspdc/         ← Site PWA du Boxing Club SPDC
+│   ├── index.html
+│   ├── styles.css
+│   ├── js/main.js
+│   ├── manifest.json, service-worker.js
+│   ├── images/
+│   ├── README.md           ← Documentation détaillée du site SPDC
+│   └── ...
+│
+└── chateauambulant/        ← Site grimoire du Foyer de Calcifère
     ├── index.html
-    ├── articles/
-    ├── images/
-    ├── vesemt-css/style.css
-    ├── README.md           ← Documentation détaillée du site vesemt.org
-    ├── RAPPORT_ANALYSE.md
-    └── ... (20 pages HTML)
+    ├── architecture.html
+    ├── securite.html
+    ├── poesie.html
+    ├── memoire.html
+    ├── script.js, styles.css
+    └── README.md           ← Documentation détaillée du Château Ambulant
 ```
 
 ---
@@ -47,11 +67,22 @@ Axxam/
 - Responsive design
 - Documentation complète dans `/vesemt.org/README.md`
 
+### boxingclubspdc (sous-dossier)
+- Site **Boxing Club SPDC** (Saint-Pierre-des-Corps), optimisé SEO et PWA
+- Mobile-first, dark mode, galerie filtrable, lightbox
+- Formulaire Formspree + intégration TikTok
+- Documentation complète dans `/boxingclubspdc/README.md`
+
+### chateauambulant (sous-dossier)
+- **Château Ambulant** : grimoire littéraire documentant le système multi-agents « Foyer de Calcifère »
+- Architecture multi-agents, sécurité (SSRF, cercles d'influence), poésie technique, mémoire
+- Documentation complète dans `/chateauambulant/README.md`
+
 ---
 
 ## 🔄 Workflow de synchronisation
 
-Le fichier `/vesemt.org/` est une **copie HTML+CSS** du site WordPress `vesemt.org`. Lorsque le site WordPress évolue (nouveaux articles, modifications de design), les changements sont **manuellement reflétés** dans cette version statique :
+Le dossier `/vesemt.org/` est une **copie HTML+CSS** du site WordPress `vesemt.org`. Lorsque le site WordPress évolue (nouveaux articles, modifications de design), les changements sont **manuellement reflétés** dans cette version statique :
 
 1. Vérifier les modifications sur le WordPress original
 2. Appliquer les changements dans les fichiers HTML/CSS du dossier `vesemt.org/`
@@ -75,14 +106,25 @@ Le fichier `/vesemt.org/` est une **copie HTML+CSS** du site WordPress `vesemt.o
 - Responsive design intégré
 - Aucun JavaScript (site purement statique)
 
+### boxingclubspdc
+- HTML5 sémantique + CSS3 (Flexbox, Grid, Variables CSS)
+- JavaScript Vanilla (ES6+) + PWA (Service Worker, manifest)
+- SEO (Schema.org, Open Graph, sitemap, robots)
+
+### chateauambulant
+- HTML5 + CSS3 (thème grimoire : parchemin/or, fontes UnifrakturMaguntia + Cinzel)
+- JavaScript Vanilla (mode nuit localStorage) + Mermaid.js (diagrammes)
+
 ---
 
 ## 🚀 Déploiement
 
-Les deux sites sont déployés via **GitHub Pages** :
+Les quatre sites sont déployés via **GitHub Pages** :
 
 1. **axxam.net** : Racine du dépôt → `https://hauuru.github.io/Axxam/`
 2. **vesemt.org** : Sous-dossier → `https://hauuru.github.io/Axxam/vesemt.org/`
+3. **boxingclubspdc** : Sous-dossier → `https://hauuru.github.io/Axxam/boxingclubspdc/`
+4. **chateauambulant** : Sous-dossier → `https://hauuru.github.io/Axxam/chateauambulant/`
 
 ### Activation GitHub Pages
 - Aller dans **Settings → Pages** du dépôt
@@ -106,6 +148,16 @@ Attendre 1-2 minutes, puis les sites sont accessibles.
 - Modifier `/vesemt.org/vesemt-css/style.css`
 - Voir le `/vesemt.org/README.md` pour la documentation complète
 
+### Pour **boxingclubspdc**
+- Éditer les fichiers HTML dans `/boxingclubspdc/`
+- Modifier `/boxingclubspdc/styles.css` et `/boxingclubspdc/js/main.js`
+- Voir le `/boxingclubspdc/README.md` pour la documentation complète
+
+### Pour **chateauambulant**
+- Éditer les fichiers HTML dans `/chateauambulant/`
+- Modifier `/chateauambulant/styles.css` et `/chateauambulant/script.js`
+- Voir le `/chateauambulant/README.md` pour la documentation complète
+
 ---
 
 ## 📚 Documentation
@@ -113,6 +165,8 @@ Attendre 1-2 minutes, puis les sites sont accessibles.
 - **`/vesemt.org/README.md`** – Documentation du site vesemt.org (installation, structure, déploiement)
 - **`/vesemt.org/RAPPORT_ANALYSE.md`** – Rapport d'analyse détaillé et recommandations
 - **`/vesemt.org/JOURNAL-MODIFICATIONS.md`** – Historique des modifications du site vesemt.org
+- **`/boxingclubspdc/README.md`** – Documentation du site Boxing Club SPDC
+- **`/chateauambulant/README.md`** – Documentation du site Château Ambulant
 
 ---
 
@@ -139,6 +193,8 @@ Pour modifier ces sites :
 
 - **axxam.net** : Contenu propriétaire de l'entrepreneur
 - **vesemt.org** : Basé sur le contenu original de VESEMT – respecter les droits d'auteur originaux
+- **boxingclubspdc** : Contenu du club – respecter les droits d'auteur originaux
+- **chateauambulant** : Contenu du Foyer de Calcifère
 
 ---
 
@@ -150,5 +206,5 @@ Pour toute question sur le dépôt ou les sites :
 
 ---
 
-**Dernière mise à jour** : 2 mai 2026
+**Dernière mise à jour** : 4 août 2026
 **Statut** : ✅ Opérationnel, déployé via GitHub Pages
