@@ -72,6 +72,16 @@
     font-size: 18px;
     line-height: 1.8;
     color: #444444;
+    overflow-wrap: break-word;
+}
+
+.article-content a {
+    overflow-wrap: break-word;
+}
+
+.article-content img {
+    max-width: 100%;
+    height: auto;
 }
 
 .article-content h2 {

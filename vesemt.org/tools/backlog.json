@@ -1,0 +1,390 @@
+{
+ "known": [
+  {
+   "p": 727,
+   "title": "Pourquoi VESEMT n’a pas appelé à voter pour la « Gauche Unie et Ecologique » aux Municipales 2026",
+   "date": "Wed, 24 Jun 2026 05:52:56 +0000",
+   "match": "Pourquoi VESEMT n’a pas appelé à voter pour la « Gauche Unie et Ecologique » aux Municipales 2026",
+   "score": 1.0
+  },
+  {
+   "p": 592,
+   "title": "Unité plurielle : quand sept font chœur… sauf un",
+   "date": "Wed, 15 Apr 2026 10:50:54 +0000",
+   "match": "Unité plurielle : quand sept font chœur… sauf un",
+   "score": 1.0
+  },
+  {
+   "p": 426,
+   "title": "Municipales : l’alternance sans l’alternative",
+   "date": "Wed, 11 Mar 2026 06:15:16 +0000",
+   "match": "Municipales : l'alternance sans l'alternative",
+   "score": 1.0
+  },
+  {
+   "p": 797,
+   "title": "L’intérêt général n’est pas à vendre",
+   "date": "Wed, 08 Jul 2026 02:55:49 +0000",
+   "match": "L’intérêt général n’est pas à vendre",
+   "score": 1.0
+  },
+  {
+   "p": 270,
+   "title": "« Le vote musulman n’existe pas : la citoyenneté, si ».",
+   "date": "Wed, 04 Mar 2026 03:36:48 +0000",
+   "match": "« Le vote musulman n’existe pas : la citoyenneté, si ».",
+   "score": 1.0
+  },
+  {
+   "p": 752,
+   "title": "# LE DOSSIER MAURICE THOREZ  ## Le mystère des documents disparus",
+   "date": "Wed, 01 Jul 2026 05:56:45 +0000",
+   "match": "LE DOSSIER MAURICE THOREZ Le mystère des documents disparus",
+   "score": 1.0
+  },
+  {
+   "p": 622,
+   "title": "8 mai 1945 : contre l’oubli colonial, pour la vérité et la justice",
+   "date": "Tue, 28 Apr 2026 04:43:08 +0000",
+   "match": "8 mai 1945 : contre l’oubli colonial, pour la vérité et la justice",
+   "score": 1.0
+  },
+  {
+   "p": 659,
+   "title": "Saint-Pierre-des-Corps : quand la culture populaire prend un aller simple pour la gentrification",
+   "date": "Tue, 26 May 2026 04:29:52 +0000",
+   "match": "Saint-Pierre-des-Corps : quand la culture populaire prend un aller simple pour la gentrification",
+   "score": 1.0
+  },
+  {
+   "p": 632,
+   "title": "Place Maurice-Thorez : quand la communication précède l’explication et nourrit la défiance.",
+   "date": "Tue, 19 May 2026 05:55:04 +0000",
+   "match": "Place Maurice-Thorez : quand la communication précède l’explication et nourrit la défiance.",
+   "score": 1.0
+  },
+  {
+   "p": 810,
+   "title": "Quand la politique s’efface, la gestion de droite triomphe",
+   "date": "Tue, 14 Jul 2026 05:29:33 +0000",
+   "match": "Quand la politique s’efface, la gestion de droite triomphe",
+   "score": 1.0
+  },
+  {
+   "p": 299,
+   "title": "« Ni gestion molle, ni faux-semblant de gauche : pour une vraie politique des quartiers populaires » à Saint-Pierre-des-Corps",
+   "date": "Tue, 10 Mar 2026 23:16:11 +0000",
+   "match": "« Ni gestion molle, ni faux-semblant de gauche : pour une vraie politique des quartiers populaires » à Saint-Pierre-des-Corps",
+   "score": 1.0
+  },
+  {
+   "p": 407,
+   "title": "Les choix budgétaires ne sont jamais neutres : une municipalité peut transformer une partie de la vie quotidienne si elle assume des priorités politiques claires.",
+   "date": "Tue, 10 Mar 2026 04:59:01 +0000",
+   "match": "Les choix budgétaires ne sont jamais neutres : une municipalité peut transformer une partie de la vie quotidienne si elle assume des priorités politiques claires.",
+   "score": 1.0
+  },
+  {
+   "p": 792,
+   "title": "Les travaux à la Galboisière arrivent … enfin, on commence à y croire !",
+   "date": "Tue, 07 Jul 2026 08:26:21 +0000",
+   "match": "Les travaux à la Galboisière arrivent … enfin, on commence à y croire !",
+   "score": 1.0
+  },
+  {
+   "p": 879,
+   "title": "DE RUGY DÉCOUVRE LA CHALEUR À Saint-Pierre-des-Corps en Métropole de Tours Val de Loire",
+   "date": "Tue, 04 Aug 2026 05:57:34 +0000",
+   "match": "DE RUGY DÉCOUVRE LA CHALEUR À Saint-Pierre-des-Corps en Métropole de Tours Val de Loire",
+   "score": 1.0
+  },
+  {
+   "p": 302,
+   "title": "Saint-Pierre-Autrement : Derrière le Masque le Népotisme en Action.",
+   "date": "Tue, 03 Mar 2026 05:52:22 +0000",
+   "match": "Saint-Pierre-Autrement : Derrière le Masque le Népotisme en Action.",
+   "score": 1.0
+  },
+  {
+   "p": 228,
+   "title": "2026 : Saint-Pierre Autrement , mais pas n’importe comment : Toujours à droite tou-te-s !",
+   "date": "Tue, 03 Mar 2026 00:00:16 +0000",
+   "match": "2026 : Saint-Pierre Autrement , mais pas n’importe comment : Toujours à droite tou-te-s !",
+   "score": 1.0
+  },
+  {
+   "p": 839,
+   "title": "« Le réchauffement climatique est devenu un problème… depuis qu’il touche les Blancs ? »",
+   "date": "Thu, 30 Jul 2026 06:20:42 +0000",
+   "match": "« Le réchauffement climatique est devenu un problème… depuis qu’il touche les Blancs ? »",
+   "score": 1.0
+  },
+  {
+   "p": 542,
+   "title": "Communiqué : Demande de clarification du positionnement politique d’Olivier Conte sur l’union des droites",
+   "date": "Thu, 26 Mar 2026 08:12:01 +0000",
+   "match": "Communiqué : Demande de clarification du positionnement politique d'Olivier Conte sur l'union des droites",
+   "score": 1.0
+  },
+  {
+   "p": 535,
+   "title": "COMMUNIQUÉ DE PRESSE – VESEMT  Fermetures de classes : moins d’école, mais plus d’économies… enfin surtout pour certains",
+   "date": "Thu, 26 Mar 2026 04:13:21 +0000",
+   "match": "COMMUNIQUÉ DE PRESSE – VESEMT Fermetures de classes : moins d'école, mais plus d'économies… enfin surtout pour certains",
+   "score": 1.0
+  },
+  {
+   "p": 530,
+   "title": "BILAN DE MANDAT 2020-2026  de Mme. Fatiha Kendri et M. Nabil Benzaït – Conseillers municipaux de Saint-Pierre-des-Corps",
+   "date": "Thu, 26 Mar 2026 03:58:20 +0000",
+   "match": "BILAN DE MANDAT 2020-2026 de Mme. Fatiha Kendri et M. Nabil Benzaït – Conseillers municipaux de Saint-Pierre-des-Corps",
+   "score": 1.0
+  },
+  {
+   "p": 733,
+   "title": "CONSEIL MUNICIPAL : LE VOYAGE IMMOBILE",
+   "date": "Thu, 25 Jun 2026 03:59:54 +0000",
+   "match": "CONSEIL MUNICIPAL : LE VOYAGE IMMOBILE",
+   "score": 1.0
+  },
+  {
+   "p": 640,
+   "title": "Union des droites Clarification d’Olivier Conte, maire de Saint-Pierre-des-Corps : Après le « pas de côté » politique, réponse promise le 18 juin",
+   "date": "Thu, 21 May 2026 05:19:49 +0000",
+   "match": "Union des droites Clarification d’Olivier Conte, maire de Saint-Pierre-des-Corps : Après le « pas de côté » politique, réponse promise le 18 juin",
+   "score": 1.0
+  },
+  {
+   "p": 510,
+   "title": "[Elections Municipales 2026]  Mise au point de Vivre Ensemble Solidaires en Métropole Tourangelle sur le Cimetière d’intérêt métropolitain",
+   "date": "Thu, 19 Mar 2026 16:06:09 +0000",
+   "match": "[Elections Municipales 2026] Mise au point de Vivre Ensemble Solidaires en Métropole Tourangelle sur le Cimetière d'intérêt métropolitain",
+   "score": 1.0
+  },
+  {
+   "p": 495,
+   "title": "[Premier tour élections municipales 2026] :  A SPDC : Anatomie d’un rapport de force… et autopsie d’une illusion",
+   "date": "Thu, 19 Mar 2026 03:26:44 +0000",
+   "match": "[Premier tour élections municipales 2026] : A SPDC : Anatomie d'un rapport de force… et autopsie d'une illusion",
+   "score": 1.0
+  },
+  {
+   "p": 823,
+   "title": "Le silence n’a jamais gagné une élection. Pourtant, il gouverne de plus en plus de réunions.",
+   "date": "Thu, 16 Jul 2026 05:41:46 +0000",
+   "match": "Le silence n’a jamais gagné une élection. Pourtant, il gouverne de plus en plus de réunions.",
+   "score": 1.0
+  },
+  {
+   "p": 436,
+   "title": "Municipales 2026 : Premier tour : voter blanc, ou comment refuser de choisir entre la cravate  et l’écharpe",
+   "date": "Thu, 12 Mar 2026 04:20:25 +0000",
+   "match": "Municipales 2026 : Premier tour : voter blanc, ou comment refuser de choisir entre la cravate et l'écharpe",
+   "score": 1.0
+  },
+  {
+   "p": 580,
+   "title": "NOUS, ON FAIT NOTRE BILAN. ET EUX ?",
+   "date": "Thu, 09 Apr 2026 06:24:04 +0000",
+   "match": "NOUS, ON FAIT NOTRE BILAN. ET EUX ?",
+   "score": 1.0
+  },
+  {
+   "p": 353,
+   "title": "Actions pour une réappropriation politique de la notion de « ville inclusive »",
+   "date": "Thu, 05 Mar 2026 05:12:32 +0000",
+   "match": "Actions pour une réappropriation politique de la notion de « ville inclusive »",
+   "score": 1.0
+  },
+  {
+   "p": 349,
+   "title": "La ville inclusive, ou l’art municipal d’inclure sans rien changer",
+   "date": "Thu, 05 Mar 2026 04:33:03 +0000",
+   "match": "La ville inclusive, ou l’art municipal d’inclure sans rien changer",
+   "score": 1.0
+  },
+  {
+   "p": 739,
+   "title": "« Job dating municipal : la transparence ne devrait jamais rester sur liste d’attente » : LETTRE OUVERTE À MONSIEUR LE MAIRE DE SAINT-PIERRE-DES-CORPS",
+   "date": "Sun, 28 Jun 2026 05:35:50 +0000",
+   "match": "« Job dating municipal : la transparence ne devrait jamais rester sur liste d’attente » : LETTRE OUVERTE À MONSIEUR LE MAIRE DE SAINT-PIERRE-DES-CORPS",
+   "score": 1.0
+  },
+  {
+   "p": 550,
+   "title": "Résultats 2026 (1er et 2nd Tour)",
+   "date": "Sun, 22 Mar 2026 23:59:26 +0000",
+   "match": "Résultats 2026 (1er et 2nd Tour)",
+   "score": 1.0
+  },
+  {
+   "p": 380,
+   "title": "Penser l’avenir communal à l’échelle de la métropole",
+   "date": "Sun, 08 Mar 2026 07:11:46 +0000",
+   "match": "Penser l’avenir communal à l’échelle de la métropole",
+   "score": 1.0
+  },
+  {
+   "p": 320,
+   "title": "Sous l’étiquette racoleuse de « La Gauche Unie et Écologistes » se cache un catalogue d’expert-comptables, dénué de la moindre ambition de bouleversement social.",
+   "date": "Sun, 08 Mar 2026 00:44:03 +0000",
+   "match": "Sous l’étiquette racoleuse de « La Gauche Unie et Écologistes » se cache un catalogue d’expert-comptables, dénué de la moindre ambition de bouleversement social.",
+   "score": 1.0
+  },
+  {
+   "p": 774,
+   "title": "« Cimetière multiconfessionnel »… Vraiment ?",
+   "date": "Sun, 05 Jul 2026 02:34:16 +0000",
+   "match": "« Cimetière multiconfessionnel »… Vraiment ?",
+   "score": 1.0
+  },
+  {
+   "p": 864,
+   "title": "QUAND LES ETATS JOUENT AUX ECHECS AVEC DES VIES HUMAINES",
+   "date": "Sun, 02 Aug 2026 03:43:45 +0000",
+   "match": "QUAND LES ETATS JOUENT AUX ECHECS AVEC DES VIES HUMAINES",
+   "score": 1.0
+  },
+  {
+   "p": 232,
+   "title": "Le Progrogramme de la GUES",
+   "date": "Sun, 01 Mar 2026 05:39:52 +0000",
+   "match": "Le Progrogramme de la GUES",
+   "score": 1.0
+  },
+  {
+   "p": 445,
+   "title": "Le Programme de SPA",
+   "date": "Sun, 01 Mar 2026 02:24:54 +0000",
+   "match": "Le Programme de SPA",
+   "score": 1.0
+  },
+  {
+   "p": 830,
+   "title": "Notre Gare – Porte Est Métropolitaine : 5 millions d’euros… et toujours pas un coin d’ombre",
+   "date": "Sat, 25 Jul 2026 06:16:36 +0000",
+   "match": "Notre Gare – Porte Est Métropolitaine : 5 millions d’euros… et toujours pas un coin d’ombre",
+   "score": 1.0
+  },
+  {
+   "p": 611,
+   "title": "« Révélation tardive et mémoire sélective : chronique d’un éblouissement collectif”",
+   "date": "Sat, 25 Apr 2026 04:00:28 +0000",
+   "match": "Révélation tardive et mémoire sélective : chronique d’un éblouissement collectif",
+   "score": 1.0
+  },
+  {
+   "p": 653,
+   "title": "Dynastie Conte : le mandat fantomatique !",
+   "date": "Sat, 23 May 2026 04:50:36 +0000",
+   "match": "Dynastie Conte : le mandat fantomatique !",
+   "score": 1.0
+  },
+  {
+   "p": 800,
+   "title": "TRANSPARENCE MUNICIPALE : LE GRAND TOUR DE PASSE-PASSE DES VOEUX",
+   "date": "Sat, 11 Jul 2026 03:50:49 +0000",
+   "match": "TRANSPARENCE MUNICIPALE : LE GRAND TOUR DE PASSE-PASSE DES VOEUX",
+   "score": 1.0
+  },
+  {
+   "p": 362,
+   "title": "#Les bâtisseurs de conférence de presse (1)",
+   "date": "Sat, 07 Mar 2026 02:55:42 +0000",
+   "match": "#Les bâtisseurs de conférence de presse (1)",
+   "score": 1.0
+  },
+  {
+   "p": 565,
+   "title": "Peut-on noyer le racisme dans un verre d’euphémismes, et appeler cela de l’hydrologie civique ?",
+   "date": "Sat, 04 Apr 2026 03:19:50 +0000",
+   "match": "Peut-on noyer le racisme dans un verre d'euphémismes, et appeler cela de l'hydrologie civique ?",
+   "score": 1.0
+  },
+  {
+   "p": 853,
+   "title": "« Ceuta : L’Europe panique, sa géographie coloniale prend l’eau. »",
+   "date": "Sat, 01 Aug 2026 05:36:39 +0000",
+   "match": "« Ceuta : L’Europe panique, sa géographie coloniale prend l’eau. »",
+   "score": 1.0
+  },
+  {
+   "p": 517,
+   "title": "[Elections Municipales 2026] Communiqué de VESEMT :  A Saint-Pierre-des-Corps :  “BRAVO DES DEUX CÔTÉS… ET DES INTERVALLES”",
+   "date": "Mon, 23 Mar 2026 04:34:24 +0000",
+   "match": "[Elections Municipales 2026] Communiqué de VESEMT : A Saint-Pierre-des-Corps : \"BRAVO DES DEUX CÔTÉS… ET DES INTERVALLES\"",
+   "score": 1.0
+  },
+  {
+   "p": 711,
+   "title": "Place Maurice Thorez : chronique d’une transparence invisible",
+   "date": "Mon, 15 Jun 2026 04:43:36 +0000",
+   "match": "Place Maurice Thorez : chronique d’une transparence invisible",
+   "score": 1.0
+  },
+  {
+   "p": 782,
+   "title": "LIDL, RECRUTEMENTS ET TRANSPARENCE : LA CADA VA SAVOIR CE QU’ON NOUS CACHE",
+   "date": "Mon, 06 Jul 2026 05:32:42 +0000",
+   "match": "LIDL, RECRUTEMENTS ET TRANSPARENCE : LA CADA VA SAVOIR CE QU’ON NOUS CACHE",
+   "score": 1.0
+  },
+  {
+   "p": 575,
+   "title": "On vous oblige, débrouillez-vous : la nouvelle règle du jeu",
+   "date": "Mon, 06 Apr 2026 05:02:44 +0000",
+   "match": "La nouvelle règle du jeu",
+   "score": 0.56
+  },
+  {
+   "p": 870,
+   "title": "Notre Gare :  Épisode 2 : Cinq  millions d’euros, un joli cadrage… et toujours pas beaucoup d’ombre",
+   "date": "Mon, 03 Aug 2026 04:54:27 +0000",
+   "match": "Notre Gare :  Épisode 2 : Cinq  millions d’euros, un joli cadrage… et toujours pas beaucoup d’ombre",
+   "score": 1.0
+  },
+  {
+   "p": 699,
+   "title": "CLARIFICATION : UNION DES DROITES (ACTE 3) Résister, oui. Mais à quoi exactement ?",
+   "date": "Mon, 01 Jun 2026 05:09:37 +0000",
+   "match": "CLARIFICATION : UNION DES DROITES (ACTE 3) Résister, oui. Mais à quoi exactement ?",
+   "score": 1.0
+  },
+  {
+   "p": 683,
+   "title": "Chronique allusive sur une étrange série d’incendies",
+   "date": "Fri, 29 May 2026 07:35:19 +0000",
+   "match": "Chronique allusive sur une étrange série d’incendies",
+   "score": 1.0
+  },
+  {
+   "p": 554,
+   "title": "[Municipales 2026 à SPDC] – Rapport VESEMT : Autopsie d’un vote discipliné dans le désordre",
+   "date": "Fri, 27 Mar 2026 06:08:35 +0000",
+   "match": "[Municipales 2026 à SPDC] – Rapport VESEMT : Autopsie d'un vote discipliné dans le désordre",
+   "score": 1.0
+  },
+  {
+   "p": 603,
+   "title": "Saint-Pierre-des-Corps : 64 % d’extérieurs au Centre Culturel Communal…. ou comment régler la question de “l’image négative portée” dès le point n°1 du Conseil (et se dispenser du reste)",
+   "date": "Fri, 24 Apr 2026 03:39:30 +0000",
+   "match": "64 % d'extérieurs au Centre Culturel Communal…. ou comment régler la question de « l'image négative portée » dès le point n°1 du Conseil (et se dispenser du reste)",
+   "score": 0.9
+  },
+  {
+   "p": 721,
+   "title": "Dynastie Conte : Épilogue… ou presque !",
+   "date": "Fri, 19 Jun 2026 04:20:00 +0000",
+   "match": "Dynastie Conte : Épilogue… ou presque !",
+   "score": 1.0
+  },
+  {
+   "p": 760,
+   "title": "Un quartier c’est comme une ville….. pas un puzzle en kit !",
+   "date": "Fri, 03 Jul 2026 04:57:55 +0000",
+   "match": "Un quartier c’est comme une ville….. pas un puzzle en kit !",
+   "score": 1.0
+  }
+ ],
+ "pending": []
+}

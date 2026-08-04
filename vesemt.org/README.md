@@ -19,24 +19,33 @@ python3 -m http.server 8000
 ```
 vesemt.org/
 ├── vesemt-css/                  # 3 feuilles de style
-│   ├── style.css                # Styles principaux (nav, hero, grille, footer)
+│   ├── style.css                # Styles principaux (nav, hero, accueil, footer)
 │   ├── article.css              # Styles des articles
 │   └── dossiers.css             # Styles des dossiers métropolitains
-├── images/                      # 28 images (JPEG, compressées ~3,5 Mo)
-├── articles/                    # 20 articles
-├── index.html                   # Accueil (15 cartes d'articles)
+├── images/                      # 57 images (JPEG, ≤ 800 px, q85)
+├── articles/                    # 58 articles (dates : 01/03 → 04/08/2026)
+├── tools/                       # Outils de conversion WordPress → statique
+│   ├── build_registry.py        # inventaire des articles → registry.json
+│   ├── backlog.py               # RSS → backlog.json (known / pending)
+│   ├── convert.py               # ?p=ID → article HTML + images + slugmap.json
+│   ├── wire.py                  # index, nav, prev/next, placeholders, sitemap
+│   └── slugmap.json             # correspondance p:N → slug
+├── documentation/
+│   ├── PROPOSITION-METHODE.md   # proposition validée (structure + pipeline)
+│   └── CONVERSION-METHODE.md    # playbook de conversion (à suivre pour chaque nouvel article)
+├── index.html                   # Accueil : bandeau + liste de tous les articles
 ├── qui-sommes-nous.html         # Page "Qui sommes nous ?"
 ├── elections-municipales-2026.html  # Élections Municipales 2026
-├── dossiers-metropolitains.html # Dossiers métropolitains
 ├── contacter-reseaux.html       # Contact et réseaux
 ├── politique-confidentialite.html  # Politique de confidentialité
-├── vesemt-localement.html       # Page VESEMT LOCALEMENT
-├── saint-pierre-des-corps.html  # Catégorie
-├── le-quotidien-le-vrai.html    # Catégorie
-├── author-le-plombier.html      # Page auteur
-├── sitemap.xml                  # Sitemap (30 URLs)
+├── sitemap.xml                  # Sitemap (63 URLs : 5 pages + 58 articles)
 └── robots.txt
 ```
+
+> Pages supprimées en août 2026 : catégories `dossiers-metropolitains.html`,
+> `saint-pierre-des-corps.html`, `le-quotidien-le-vrai.html`,
+> `vesemt-localement.html` et page auteur `author-le-plombier.html`
+> (présentation simplifiée, sans catégories).
 
 ## 🌐 Déploiement
 
@@ -44,19 +53,28 @@ Le site est publié via GitHub Pages sur `https://axxam.net/vesemt.org/` (domain
 
 ## 📊 Statistiques
 
-- **Total de fichiers HTML** : 30 (10 pages + 20 articles)
-- **Total d'images** : 28 (3,5 Mo, toutes en JPEG)
+- **Total de fichiers HTML** : 63 (5 pages + 58 articles)
+- **Total d'images** : 57 (toutes en JPEG, ≤ 800 px)
 - **Total de fichiers CSS** : 3
-- **Taille du projet** : ~4 Mo
-- **Liens internes** : 0 cassé (vérifié)
+- **Liens internes** : 0 cassé (vérifié) ; **placeholders** : 0 restant
+- **Rendu** : 0 erreur JS, 0 image cassée, 0 overflow (desktop + mobile, Playwright)
 
 ## 🛠️ Maintenance (août 2026)
 
+### Étape 5 (précédente)
 - **Liens réparés** : article résiduel du clone WordPress reconstruit (header, CSS, catégorie, tags, image) ; les 5 archives `articles/archives/*` promues vers `articles/` avec chemins corrigés ; 0 fichier cassé (check automatique)
 - **Fragments supprimés** : `template-article.html`, `new_posts_grid.html`, `page-2.html`, scripts obsolètes (`deploy.sh`, `add-footer-credits.sh`, `documentation/optimize-images.sh`)
 - **Métadonnées unifiées** : tous les `og:*`/`twitter:*` pointent vers `https://axxam.net/vesemt.org/...` (231 références) ; seuls les liens `https://www.vesemt.org/?p=N` vers l'article WordPress d'origine sont conservés
 - **Sitemap + robots** créés pour `https://axxam.net/vesemt.org/`
 - **Images allégées** : 17 PNG convertis en JPEG (qualité 85), Gemini redimensionnée 1408×752 → 800×427 : 8,8 Mo → 3,5 Mo (−60 %)
+
+### Étape 6 (simplification + conversion du backlog)
+- **Présentation simplifiée** (décisions validées 04/08/2026) : accueil = bandeau conservé + liste de **tous** les articles (date, titre cliquable, résumé bref) ; navigation réduite à 5 liens (Accueil, Qui sommes-nous, Élections 2026, Contacter-réseaux, Politique de confidentialité) ; tags conservés non cliquables
+- **Pages supprimées** : les 4 pages de catégories + la page auteur (plus de catégories sur le site)
+- **38 articles WordPress convertis** (outils `tools/`) : 22 → 58 articles (01/03 → 04/08/2026) ; contenu nettoyé (tracking Facebook, embeds emoji, widgets, markdown `##`, placeholders `[[p:N]]` résolus)
+- **Images converties** en JPEG ≤ 800 px (nommage `.jpg`), images orphelines supprimées
+- **Corrections** : urls unicode (`×`), large URLs débordantes (`overflow-wrap`), images en débordement (`max-width: 100%`)
+- **Méthode reproductible** : `documentation/CONVERSION-METHODE.md` — pipeline découverte RSS → conversion `?p=ID` → intégration `wire.py` → validation → publication (à suivre pour chaque nouvel article du WordPress)
 
 ## 📄 Licence
 
