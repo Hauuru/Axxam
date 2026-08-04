@@ -2,9 +2,9 @@
 
 Bienvenue dans le dépôt **Axxam**, qui contient quatre projets web distincts :
 
-1. **`/`** – Site **axxam.net** : site professionnel d'entrepreneur
+1. **`/`** – Site **axxam.net** : site professionnel d'entrepreneur (services en catalogue, page tarifs)
 2. **`/vesemt.org/`** – Site **vesemt.org** : conversion HTML+CSS du site WordPress politique
-3. **`/boxingclubspdc/`** – Site **Boxing Club SPDC** : site PWA optimisé du club de boxe
+3. **`/boxingclubspdc/`** – Site **Boxing Club SPDC** : one-page du club de boxe (refondu août 2026)
 4. **`/chateauambulant/`** – Site **Château Ambulant** : grimoire documentant le système multi-agents « Foyer de Calcifère »
 
 ---
@@ -16,7 +16,8 @@ Axxam/
 ├── index.html              ← Page d'accueil axxam.net
 ├── a-propos.html           ← À propos (axxam.net)
 ├── contact.html            ← Contact (axxam.net)
-├── services.html           ← Services (axxam.net)
+├── services.html           ← Services en catalogue (axxam.net)
+├── tarifs.html             ← Page tarifs (axxam.net)
 ├── gobelet.html            ← Page Gobelet (axxam.net)
 ├── style.css               ← Feuille de style principale (axxam.net)
 ├── favicon.png, logo.jpg   ← Ressources (axxam.net)
@@ -55,8 +56,10 @@ Axxam/
 ## 🌐 Sites hébergés
 
 ### axxam.net (racine)
-- Site vitrine d'entrepreneur
-- HTML+CSS simple et léger
+- Site vitrine d'entrepreneur — **Axxam, animations créatives et durables**
+- Services présentés en **catalogue** avec prix (Dès 50 €/heure)
+- **Page tarifs** : 50€/h, 100€/2h, 150€/demi-journée, 250€/journée, forfait travail régulier ; matériel facturé en plus
+- HTML+CSS simple et léger, sans framework
 - Déployé via GitHub Pages sur `https://hauuru.github.io/Axxam/`
 - Domaine personnalisé : `https://axxam.net` (via fichier CNAME)
 
@@ -68,9 +71,12 @@ Axxam/
 - Documentation complète dans `/vesemt.org/README.md`
 
 ### boxingclubspdc (sous-dossier)
-- Site **Boxing Club SPDC** (Saint-Pierre-des-Corps), optimisé SEO et PWA
-- Mobile-first, dark mode, galerie filtrable, lightbox
-- Formulaire Formspree + intégration TikTok
+- Site **Boxing Club SPDC** (Saint-Pierre-des-Corps), refondu en août 2026
+- One-page : disciplines, offres (45€/55€/mois), équipe, événements, horaires 2026-2027, galerie filtrable + lightbox, TikTok, témoignages, contact
+- Thème unifié noir/rouge (Oswald + Roboto), responsive, animations au scroll
+- Photos réelles (Unsplash) + favicons/icônes PWA générées
+- PWA opérationnelle : manifest + service-worker en chemins relatifs (déploiement sous-sous-dossier)
+- Formulaire : envoi réel par email pré-rempli (mailto), plus de Formspree fictif
 - Documentation complète dans `/boxingclubspdc/README.md`
 
 ### chateauambulant (sous-dossier)
@@ -99,6 +105,7 @@ Le dossier `/vesemt.org/` est une **copie HTML+CSS** du site WordPress `vesemt.o
 - CSS3
 - Aucun framework
 - Responsive design (media queries)
+- Catalogue de services avec prix + page tarifs dédiée
 
 ### vesemt.org
 - HTML5 sémantique
@@ -107,8 +114,9 @@ Le dossier `/vesemt.org/` est une **copie HTML+CSS** du site WordPress `vesemt.o
 - Aucun JavaScript (site purement statique)
 
 ### boxingclubspdc
-- HTML5 sémantique + CSS3 (Flexbox, Grid, Variables CSS)
-- JavaScript Vanilla (ES6+) + PWA (Service Worker, manifest)
+- HTML5 sémantique + CSS3 (Flexbox, Grid, Variables CSS, animations)
+- JavaScript Vanilla (ES6+) + PWA (Service Worker v2, manifest relatif)
+- Galerie filtrable + lightbox, formulaire mailto
 - SEO (Schema.org, Open Graph, sitemap, robots)
 
 ### chateauambulant
@@ -149,8 +157,9 @@ Attendre 1-2 minutes, puis les sites sont accessibles.
 - Voir le `/vesemt.org/README.md` pour la documentation complète
 
 ### Pour **boxingclubspdc**
-- Éditer les fichiers HTML dans `/boxingclubspdc/`
+- Éditer les fichiers HTML dans `/boxingclubspdc/` (one-page `index.html`)
 - Modifier `/boxingclubspdc/styles.css` et `/boxingclubspdc/js/main.js`
+- Ajouter les photos dans `/boxingclubspdc/images/`
 - Voir le `/boxingclubspdc/README.md` pour la documentation complète
 
 ### Pour **chateauambulant**
@@ -162,10 +171,10 @@ Attendre 1-2 minutes, puis les sites sont accessibles.
 
 ## 📚 Documentation
 
+- **`/boxingclubspdc/README.md`** – Documentation du site Boxing Club SPDC (structure, formulaire, maintenance)
 - **`/vesemt.org/README.md`** – Documentation du site vesemt.org (installation, structure, déploiement)
 - **`/vesemt.org/RAPPORT_ANALYSE.md`** – Rapport d'analyse détaillé et recommandations
 - **`/vesemt.org/JOURNAL-MODIFICATIONS.md`** – Historique des modifications du site vesemt.org
-- **`/boxingclubspdc/README.md`** – Documentation du site Boxing Club SPDC
 - **`/chateauambulant/README.md`** – Documentation du site Château Ambulant
 
 ---
@@ -207,4 +216,4 @@ Pour toute question sur le dépôt ou les sites :
 ---
 
 **Dernière mise à jour** : 4 août 2026
-**Statut** : ✅ Opérationnel, déployé via GitHub Pages
+**Statut** : ✅ Opérationnel, déployé via GitHub Pages — axxam.net (catalogue + tarifs) et boxingclubspdc (one-page refondu) en ligne
