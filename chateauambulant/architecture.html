@@ -8,7 +8,22 @@
     <link rel="stylesheet" href="styles.css">
     <script src="script.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script>mermaid.initialize({startOnLoad:true});</script>
+    <script>mermaid.initialize({startOnLoad:false});</script>
+    <script>document.addEventListener('DOMContentLoaded', async function(){
+  await document.fonts.ready;
+  await Promise.all([document.fonts.load('400 16px Cinzel'), document.fonts.load('500 16px Cinzel')]);
+  mermaid.initialize({startOnLoad:false, fontFamily:"Cinzel", flowchart:{htmlLabels:false}});
+  var pres = Array.prototype.slice.call(document.querySelectorAll('.mermaid'));
+  for (var i=0;i<pres.length;i++){
+    var pre = pres[i];
+    if (pre.dataset.processed) continue;
+    try {
+      var res = await mermaid.render('mmd'+(i+1), pre.textContent);
+      pre.innerHTML = res.svg;
+      pre.setAttribute('data-processed','true');
+    } catch(e){ pre.innerHTML = '<p style="color:#8b4513;padding:10px;text-align:center;">Diagramme indisponible</p>'; }
+  }
+});</script>
 </head>
 <body>
     <div class="parchemin">

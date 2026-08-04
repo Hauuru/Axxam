@@ -247,13 +247,16 @@ body.mode-nuit {
     stroke-width: 1.5px !important;
 }
 
-.mermaid .nodeLabel {
-    color: #3a2c1a !important;
+.mermaid .node text {
+    fill: #3a2c1a !important;
     font-family: 'Cinzel', serif !important;
     font-weight: 500 !important;
 }
 
-.mermaid .edgeLabel {
-    color: var(--couleur-texte) !important;
-    background-color: var(--couleur-parchemin) !important;
+.mermaid .edgeLabel text {
+    fill: var(--couleur-texte) !important;
+}
+
+.mermaid .edgeLabel rect {
+    fill: var(--couleur-parchemin) !important;
 }
