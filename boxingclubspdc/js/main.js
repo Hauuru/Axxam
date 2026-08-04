@@ -1,304 +1,175 @@
-// Simplified Main Script with Error Handling
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
     'use strict';
 
-    // Check if elements exist before using them
-    function safeQuery(selector) {
-        try {
-            return document.querySelector(selector);
-        } catch (e) {
-            console.warn('Element not found:', selector);
-            return null;
-        }
-    }
+    /* ===== NAVIGATION MOBILE ===== */
+    const navToggle = document.querySelector('.nav-toggle');
+    const mainNav = document.querySelector('.main-nav');
 
-    // Sticky Navigation
-    const nav = safeQuery('nav');
-    const scrollIndicator = safeQuery('.scroll-indicator');
-    const menuToggle = safeQuery('.menu-toggle');
-    const navLinks = document.querySelectorAll('nav ul li a');
-
-    let lastScrollTop = 0;
-
-    // Simplified scroll event handler
-    function handleScroll() {
-        try {
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            
-            // Update scroll indicator if it exists
-            if (scrollIndicator) {
-                const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-                const scrollPercent = (scrollTop / scrollHeight) * 100;
-                scrollIndicator.style.transform = `scaleX(${scrollPercent / 100})`;
-            }
-
-            // Sticky navigation logic
-            if (nav && scrollTop > 100) {
-                nav.classList.add('sticky', 'scrolled');
-                if (scrollIndicator) scrollIndicator.classList.add('active');
-            } else if (nav) {
-                nav.classList.remove('sticky', 'scrolled');
-                if (scrollIndicator) scrollIndicator.classList.remove('active');
-            }
-
-        } catch (e) {
-            console.warn('Scroll error:', e);
-        }
-    }
-
-    // Debounced scroll event
-    let scrollTimeout;
-    window.addEventListener('scroll', function() {
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(handleScroll, 16); // ~60fps
-    });
-
-    // Initial scroll setup
-    handleScroll();
-
-    // Mobile menu toggle
-    if (menuToggle && nav) {
-        menuToggle.addEventListener('click', function() {
-            nav.classList.toggle('active');
-            menuToggle.classList.toggle('active');
+    if (navToggle && mainNav) {
+        navToggle.addEventListener('click', function() {
+            mainNav.classList.toggle('open');
+            navToggle.setAttribute('aria-expanded', mainNav.classList.contains('open'));
         });
 
-        // Close mobile menu when clicking links
-        navLinks.forEach(link => {
+        mainNav.querySelectorAll('a').forEach(function(link) {
             link.addEventListener('click', function() {
-                nav.classList.remove('active');
-                menuToggle.classList.remove('active');
+                mainNav.classList.remove('open');
             });
         });
+    }
 
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', function(event) {
-            const isClickInsideNav = nav.contains(event.target);
-            const isClickOnToggle = menuToggle.contains(event.target);
-
-            if (!isClickInsideNav && !isClickOnToggle && nav.classList.contains('active')) {
-                nav.classList.remove('active');
-                menuToggle.classList.remove('active');
-            }
+    /* ===== APPARITION AU SCROLL ===== */
+    const sections = document.querySelectorAll('.section');
+    if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.08 });
+        sections.forEach(function(section) {
+            observer.observe(section);
+        });
+    } else {
+        sections.forEach(function(section) {
+            section.classList.add('visible');
         });
     }
 
-    // Smooth scroll for navigation links
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href');
-            const targetSection = document.querySelector(targetId);
-
-            if (targetSection) {
-                const offsetTop = targetSection.offsetTop - 80; // Account for sticky nav
-                window.scrollTo({
-                    top: offsetTop,
-                    behavior: 'smooth'
-                });
-            }
-        });
-    });
-
-    // Simple scroll animations
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-
-    const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
-    }, observerOptions);
-
-    // Observe all sections
-    document.querySelectorAll('section').forEach(section => {
-        section.classList.add('fade-in');
-        observer.observe(section);
-    });
-
-    // Gallery Filter
-    const categoryBtns = document.querySelectorAll('.category-btn');
+    /* ===== FILTRES GALERIE ===== */
+    const filterBtns = document.querySelectorAll('.filter-btn');
     const galleryItems = document.querySelectorAll('.gallery-item');
 
-    if (categoryBtns.length > 0 && galleryItems.length > 0) {
-        categoryBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                // Remove active class from all buttons
-                categoryBtns.forEach(b => b.classList.remove('active'));
-                // Add active class to clicked button
-                this.classList.add('active');
+    filterBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            filterBtns.forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
 
-                const category = this.getAttribute('data-category');
-
-                galleryItems.forEach(item => {
-                    if (category === 'all' || item.getAttribute('data-category') === category) {
-                        item.style.display = 'block';
-                        setTimeout(() => {
-                            item.style.opacity = '1';
-                            item.style.transform = 'scale(1)';
-                        }, 10);
-                    } else {
-                        item.style.opacity = '0';
-                        item.style.transform = 'scale(0.8)';
-                        setTimeout(() => {
-                            item.style.display = 'none';
-                        }, 300);
-                    }
-                });
-            });
-        });
-    }
-
-    // Events Tabs
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-
-    if (tabBtns.length > 0 && tabContents.length > 0) {
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const targetTab = this.getAttribute('data-tab');
-
-                // Remove active class from all buttons and contents
-                tabBtns.forEach(b => b.classList.remove('active'));
-                tabContents.forEach(content => content.classList.remove('active'));
-
-                // Add active class to clicked button and corresponding content
-                this.classList.add('active');
-                document.getElementById(targetTab).classList.add('active');
-            });
-        });
-    }
-
-    // Simple Lightbox Functionality
-    const lightbox = safeQuery('#lightbox');
-    const lightboxImage = safeQuery('#lightbox-image');
-    const lightboxClose = safeQuery('#lightbox-close');
-
-    if (lightbox && lightboxImage) {
-        // Simple lightbox open
-        galleryItems.forEach((item, index) => {
-            item.addEventListener('click', function() {
-                const imageSrc = item.getAttribute('data-image') || item.querySelector('img')?.src;
-                const imageTitle = item.getAttribute('data-title') || item.querySelector('img')?.alt;
-                
-                if (imageSrc) {
-                    lightboxImage.src = imageSrc;
-                    lightboxImage.alt = imageTitle || 'Image';
-                    lightbox.classList.add('active');
-                    document.body.style.overflow = 'hidden';
+            const filter = btn.getAttribute('data-filter');
+            galleryItems.forEach(function(item) {
+                const category = item.getAttribute('data-category');
+                if (filter === 'all' || category === filter) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
                 }
             });
         });
+    });
 
-        // Close lightbox
-        if (lightboxClose) {
-            lightboxClose.addEventListener('click', function() {
-                lightbox.classList.remove('active');
-                document.body.style.overflow = '';
-            });
-        }
+    /* ===== LIGHTBOX ===== */
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImage = document.getElementById('lightbox-image');
+    const lightboxCaption = document.getElementById('lightbox-caption');
+    const lightboxClose = document.querySelector('.lightbox-close');
 
-        // Click outside to close
+    function openLightbox(src, caption) {
+        if (!lightbox) return;
+        lightboxImage.src = src;
+        lightboxCaption.textContent = caption || '';
+        lightbox.classList.add('active');
+        lightbox.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+        if (!lightbox) return;
+        lightbox.classList.remove('active');
+        lightbox.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    galleryItems.forEach(function(item) {
+        item.addEventListener('click', function() {
+            const img = item.querySelector('img');
+            const caption = item.querySelector('figcaption');
+            if (img) {
+                openLightbox(img.src, caption ? caption.textContent : '');
+            }
+        });
+    });
+
+    if (lightboxClose) {
+        lightboxClose.addEventListener('click', closeLightbox);
+    }
+    if (lightbox) {
         lightbox.addEventListener('click', function(e) {
-            if (e.target === lightbox) {
-                lightbox.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        });
-
-        // Keyboard navigation
-        document.addEventListener('keydown', function(e) {
-            if (lightbox.classList.contains('active')) {
-                if (e.key === 'Escape') {
-                    lightbox.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            }
+            if (e.target === lightbox) closeLightbox();
         });
     }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeLightbox();
+    });
 
-    // Formspree Form Handler
-    const form = safeQuery('#inscription-form');
-    const formSuccess = safeQuery('#form-success');
-    
-    if (form) {
+    /* ===== FORMULAIRE D'INSCRIPTION ===== */
+    const form = document.getElementById('inscription-form');
+    const formSuccess = document.getElementById('form-success');
+
+    function buildMailto(data) {
+        const subject = encodeURIComponent('Inscription Boxing Club SPDC - ' + (data.get('nom') || ''));
+        const body = [
+            'Nom : ' + (data.get('nom') || ''),
+            'Email : ' + (data.get('email') || ''),
+            'Téléphone : ' + (data.get('telephone') || ''),
+            'Tranche d\'âge : ' + (data.get('age') || ''),
+            'Niveau : ' + (data.get('niveau') || ''),
+            'Objectif : ' + (data.get('objectif') || ''),
+            '',
+            'Message :',
+            (data.get('message') || '')
+        ].join('\n');
+        return 'mailto:boxingclubspdc@gmail.com?subject=' + subject + '&body=' + encodeURIComponent(body);
+    }
+
+    if (form && formSuccess) {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            // Basic validation
+
             const nom = document.getElementById('nom').value.trim();
             const email = document.getElementById('email').value.trim();
             const age = document.getElementById('age').value;
-            
+
             if (!nom || !email || !age) {
                 alert('Veuillez remplir tous les champs obligatoires (*)');
                 return;
             }
-            
-            // Email validation
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 alert('Veuillez entrer une adresse email valide');
                 return;
             }
-            
-            // Show loading state
-            const submitButton = form.querySelector('.btn-primary');
-            const originalText = submitButton.textContent;
-            submitButton.textContent = 'Envoi en cours...';
-            submitButton.disabled = true;
-            
-            // Simulate form submission
+
+            const data = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Ouverture de votre messagerie...';
+            submitBtn.disabled = true;
+
+            window.location.href = buildMailto(data);
+
             setTimeout(function() {
-                // Hide form and show success message
                 form.style.display = 'none';
                 formSuccess.style.display = 'block';
-                
-                // Scroll to success message
                 formSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                
-                // Reset button
-                submitButton.textContent = originalText;
-                submitButton.disabled = false;
-                
-                // Reset form after showing success
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+
                 setTimeout(function() {
                     form.reset();
                     form.style.display = 'block';
                     formSuccess.style.display = 'none';
-                }, 5000);
-                
-            }, 2000);
+                }, 6000);
+            }, 1000);
         });
     }
 
-    // Check for internet connectivity
-    window.addEventListener('online', function() {
-        console.log('Application is online');
-        document.body.classList.remove('offline');
-        document.body.classList.add('online');
-    });
-
-    window.addEventListener('offline', function() {
-        console.log('Application is offline');
-        document.body.classList.remove('online');
-        document.body.classList.add('offline');
-    });
-
-    // Register service worker for PWA functionality
-    if ('serviceWorker' in navigator) {
+    /* ===== SERVICE WORKER (PWA) ===== */
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
         window.addEventListener('load', function() {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(function(registration) {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                })
-                .catch(function(error) {
-                    console.log('ServiceWorker registration failed: ', error);
-                });
+            navigator.serviceWorker.register('service-worker.js').catch(function() {
+                /* PWA optionnelle : pas bloquant */
+            });
         });
     }
-});
+})();

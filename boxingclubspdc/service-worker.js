@@ -1,18 +1,17 @@
-const CACHE_NAME = 'boxing-club-spdc-v1';
+const CACHE_NAME = 'boxing-club-spdc-v2';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/js/main.js',
-    '/manifest.json',
-    '/browserconfig.xml',
-    '/sitemap.xml',
-    '/robots.txt',
-    '/images/logo.png',
-    '/images/favicon-32x32.png',
-    '/images/favicon-16x16.png',
-    '/images/apple-touch-icon.png',
-    '/images/safari-pinned-tab.svg'
+    './',
+    './index.html',
+    './styles.css',
+    './js/main.js',
+    './manifest.json',
+    './sitemap.xml',
+    './robots.txt',
+    './images/logo.png',
+    './images/favicon-16.png',
+    './images/favicon-32.png',
+    './images/apple-touch-icon.png',
+    './images/safari-pinned-tab.svg'
 ];
 
 // Install event - cache resources
@@ -24,6 +23,7 @@ self.addEventListener('install', event => {
                 return cache.addAll(urlsToCache);
             })
     );
+    self.skipWaiting();
 });
 
 // Fetch event - serve cached content when offline
@@ -73,46 +73,13 @@ self.addEventListener('activate', event => {
             );
         })
     );
-});
-
-// Handle background sync
-self.addEventListener('sync', event => {
-    if (event.tag === 'post-form-data') {
-        event.waitUntil(
-            // Sync form data when back online
-            syncFormData()
-        );
-    }
-});
-
-// Handle push notifications
-self.addEventListener('push', event => {
-    const options = {
-        body: event.data.text(),
-        icon: '/images/logo.png',
-        badge: '/images/badge.png',
-        vibrate: [100, 50, 100],
-        data: {
-            dateOfArrival: Date.now(),
-            primaryKey: 1
-        }
-    };
-    
-    event.waitUntil(
-        self.registration.showNotification('Boxing Club SPDC', options)
-    );
+    self.clients.claim();
 });
 
 // Handle notification clicks
 self.addEventListener('notificationclick', event => {
     event.notification.close();
     event.waitUntil(
-        clients.openWindow('/')
+        clients.openWindow('./index.html')
     );
 });
-
-// Helper function for form data sync
-function syncFormData() {
-    // Implementation for syncing form data when back online
-    return Promise.resolve();
-}

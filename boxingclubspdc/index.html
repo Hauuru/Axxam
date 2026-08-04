@@ -2,46 +2,43 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Boxing Club SPDC - Saint-Pierre-des-Corps | Devenez Champion de Votre Vie</title>
-    <meta name="description" content="Club de boxe affilié FFB à Saint-Pierre-des-Corps. Cours pour jeunes et adultes. Entraîneurs certifiés, équipements professionnels. Rejoignez-nous !">
-    <meta name="keywords" content="boxe, club boxe, SPDC, Saint-Pierre-des-Corps, FFB, boxe française, cours boxe, entraînement boxe, gym boxe">
+    <meta name="description" content="Club de boxe affilié FFB à Saint-Pierre-des-Corps. Boxe anglaise pour jeunes et adultes, remise en forme, coaching personnalisé. Entraîneurs diplômés, équipements professionnels. Rejoignez-nous !">
+    <meta name="keywords" content="boxe, club boxe, SPDC, Saint-Pierre-des-Corps, FFB, boxe française, boxe anglaise, cours boxe, entraînement boxe, remise en forme">
     <meta name="author" content="Boxing Club SPDC">
     <meta name="robots" content="index, follow">
-    <meta name="language" content="fr">
-    <meta name="geo.region" content="FR">
+    <meta name="geo.region" content="FR-37">
     <meta name="geo.placename" content="Saint-Pierre-des-Corps">
     <meta name="geo.position" content="47.4736;-0.6941">
     <meta name="ICBM" content="47.4736, -0.6941">
     <meta name="theme-color" content="#e74c3c">
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="images/favicon-32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="images/favicon-16.png" sizes="16x16">
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+    <link rel="mask-icon" href="images/safari-pinned-tab.svg" color="#e74c3c">
     <meta name="msapplication-TileColor" content="#e74c3c">
-    <meta name="msapplication-config" content="/browserconfig.xml">
-
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
-    <link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
-    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
-    <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#e74c3c">
+    <meta name="msapplication-config" content="browserconfig.xml">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Boxing Club SPDC - Saint-Pierre-des-Corps">
-    <meta property="og:description" content="Club de boxe affilié FFB à Saint-Pierre-des-Corps. Cours pour jeunes et adultes. Entraîneurs certifiés, équipements professionnels.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://axxam.net/boxingclubspdc/">
-    <meta property="og:image" content="https://axxam.net/boxingclubspdc/images/logo.png">
-    <meta property="og:site_name" content="Boxing Club SPDC">
     <meta property="og:locale" content="fr_FR">
+    <meta property="og:title" content="Boxing Club SPDC - Saint-Pierre-des-Corps">
+    <meta property="og:description" content="Club de boxe affilié FFB à Saint-Pierre-des-Corps. Cours pour jeunes et adultes, entraîneurs certifiés, équipements professionnels.">
+    <meta property="og:url" content="https://axxam.net/boxingclubspdc/">
+    <meta property="og:image" content="https://axxam.net/boxingclubspdc/images/hero.jpg">
+    <meta property="og:site_name" content="Boxing Club SPDC">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@boxespdc">
     <meta name="twitter:title" content="Boxing Club SPDC - Saint-Pierre-des-Corps">
-    <meta name="twitter:description" content="Club de boxe affilié FFB à Saint-Pierre-des-Corps. Cours pour jeunes et adultes. Entraîneurs certifiés, équipements professionnels.">
-    <meta name="twitter:image" content="https://axxam.net/boxingclubspdc/images/logo.png">
+    <meta name="twitter:description" content="Club de boxe affilié FFB à Saint-Pierre-des-Corps. Cours pour jeunes et adultes, entraîneurs certifiés.">
+    <meta name="twitter:image" content="https://axxam.net/boxingclubspdc/images/hero.jpg">
 
     <!-- Schema.org -->
     <script type="application/ld+json">
@@ -49,6 +46,7 @@
         "@context": "https://schema.org",
         "@type": "SportsClub",
         "name": "Boxing Club SPDC",
+        "alternateName": "Boxing Club Saint-Pierre-des-Corps",
         "description": "Club de boxe affilié FFB à Saint-Pierre-des-Corps",
         "image": "https://axxam.net/boxingclubspdc/images/logo.png",
         "address": {
@@ -69,908 +67,619 @@
         "email": "boxingclubspdc@gmail.com",
         "openingHours": "Mo, Tu, We, Th, Fr 18:00-21:00; Sa 09:00-12:00",
         "priceRange": "€€",
-        "sameAs": [
-            "https://www.tiktok.com/@boxespdc",
-            "https://axxam.net/boxingclubspdc/"
-        ]
+        "sameAs": ["https://www.tiktok.com/@boxespdc"]
     }
     </script>
 
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Header Principal -->
-    <div class="header-main">
-        <div class="container">
-            <div class="header-top">
-                <div class="logo">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjRkZGIi8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMwMDAiPuKAljwvdGV4dD4KPC9zdmc+" alt="Boxing Club SPDC Logo">
-                    <div>
-                        <h1>Boxing Club SPDC</h1>
-                        <p class="subtitle">Saint-Pierre-des-Corps</p>
-                    </div>
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="#accueil" class="logo">
+                <img src="images/logo.png" alt="Logo Boxing Club SPDC">
+                <div class="logo-text">
+                    <span class="logo-title">Boxing Club SPDC</span>
+                    <span class="logo-subtitle">Saint-Pierre-des-Corps</span>
                 </div>
-            </div>
+            </a>
+            <button class="nav-toggle" aria-label="Ouvrir le menu">☰</button>
+            <nav class="main-nav" id="main-nav">
+                <ul>
+                    <li><a href="#accueil">Accueil</a></li>
+                    <li><a href="#disciplines">Disciplines</a></li>
+                    <li><a href="#club">Le Club</a></li>
+                    <li><a href="#offres">Offres</a></li>
+                    <li><a href="#equipe">Équipe</a></li>
+                    <li><a href="#evenements">Événements</a></li>
+                    <li><a href="#horaires">Horaires</a></li>
+                    <li><a href="#galerie">Galerie</a></li>
+                    <li><a href="#temoignages">Témoignages</a></li>
+                    <li><a href="#contact" class="nav-cta">Inscription</a></li>
+                </ul>
+            </nav>
         </div>
-    </div>
+    </header>
 
-    <!-- Navigation -->
-    <nav>
-        <div class="container">
-            <ul>
-                <li><a href="#accueil">Accueil</a></li>
-                <li><a href="#club">Le Club</a></li>
-                <li><a href="#offres">Nos Offres</a></li>
-                <li><a href="#equipe">L'Équipe</a></li>
-                <li><a href="#evenements">Événements</a></li>
-                <li><a href="#horaires">Horaires</a></li>
-                <li><a href="#galerie">Galerie</a></li>
-                <li><a href="#temoignages">Témoignages</a></li>
-                <li><a href="#contact">Inscription</a></li>
-            </ul>
-        </div>
-    </nav>
-
-    <section id="accueil" class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <h2>Boxing Club SPDC</h2>
-                <p>Devenez Champion de Votre Vie</p>
-                <div class="cta-buttons">
+    <main>
+        <!-- ===== HERO ===== -->
+        <section id="accueil" class="hero">
+            <div class="hero-overlay"></div>
+            <div class="container hero-content">
+                <h1>Boxing Club SPDC</h1>
+                <p class="hero-tagline">Devenez Champion de Votre Vie</p>
+                <p class="hero-text">Boxe anglaise, remise en forme et coaching personnalisé pour tous les âges, à Saint-Pierre-des-Corps. Club affilié à la Fédération Française de Boxe.</p>
+                <div class="hero-buttons">
                     <a href="#offres" class="btn btn-primary">Découvrir nos offres</a>
-                    <a href="#contact" class="btn btn-secondary">S'inscrire maintenant</a>
+                    <a href="#contact" class="btn btn-outline">S'inscrire maintenant</a>
                 </div>
                 <div class="trust-badges">
-                    <div class="badge">
-                        <span class="badge-icon">🏆</span>
-                        <span>Club affilié FFB</span>
-                    </div>
-                    <div class="badge">
-                        <span class="badge-icon">👨‍🏫</span>
-                        <span>Entraîneurs certifiés</span>
-                    </div>
-                    <div class="badge">
-                        <span class="badge-icon">🏋️</span>
-                        <span>Équipements professionnels</span>
-                    </div>
+                    <div class="badge"><span class="badge-icon">🏆</span>Club affilié FFB</div>
+                    <div class="badge"><span class="badge-icon">👨‍🏫</span>Entraîneurs diplômés</div>
+                    <div class="badge"><span class="badge-icon">🏋️</span>Équipements pro</div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Services Grid -->
-    <section class="services-section">
-        <div class="container">
-            <div class="services-grid">
-                <div class="service-card">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRkZGIi8+Cjwvc3ZnPg==" alt="Cours de Boxe">
-                    <div class="service-card-content">
-                        <h3>Boxe Anglaise</h3>
-                        <p>Techniques fondamentales et avancées de boxe anglaise pour tous niveaux</p>
-                    </div>
-                </div>
-                <div class="service-card">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRkZGIi8+Cjwvc3ZnPg==" alt="Fitness">
-                    <div class="service-card-content">
-                        <h3>Remise en Forme</h3>
-                        <p>Programmes de fitness et conditionnement physique adaptés à vos objectifs</p>
-                    </div>
-                </div>
-                <div class="service-card">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRkZGIi8+Cjwvc3ZnPg==" alt="Jeunes">
-                    <div class="service-card-content">
-                        <h3>Cours Jeunes</h3>
-                        <p>Enseignement de la boxe pour enfants et adolescents dans une ambiance sécurisée</p>
-                    </div>
-                </div>
-                <div class="service-card">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRkZGIi8+Cjwvc3ZnPg==" alt="Spécial">
-                    <div class="service-card-content">
-                        <h3>Cours Particuliers</h3>
-                        <p>Coaching individuel sur mesure pour une progression rapide et efficace</p>
-                    </div>
+        <!-- ===== DISCIPLINES ===== -->
+        <section id="disciplines" class="section">
+            <div class="container">
+                <h2 class="section-title">Nos disciplines</h2>
+                <p class="section-intro">Des programmes adaptés à tous les âges et tous les objectifs</p>
+                <div class="disciplines-grid">
+                    <article class="discipline-card">
+                        <div class="discipline-image">
+                            <img src="images/discipline-boxe.jpg" alt="Boxe anglaise" loading="lazy">
+                        </div>
+                        <div class="discipline-body">
+                            <h3>Boxe anglaise</h3>
+                            <p>Techniques fondamentales et avancées pour tous les niveaux, du débutant au compétiteur.</p>
+                        </div>
+                    </article>
+                    <article class="discipline-card">
+                        <div class="discipline-image">
+                            <img src="images/discipline-fitness.jpg" alt="Remise en forme" loading="lazy">
+                        </div>
+                        <div class="discipline-body">
+                            <h3>Remise en forme</h3>
+                            <p>Programmes de fitness et conditionnement physique adaptés à vos objectifs personnels.</p>
+                        </div>
+                    </article>
+                    <article class="discipline-card">
+                        <div class="discipline-image">
+                            <img src="images/discipline-jeunes.jpg" alt="Cours jeunes" loading="lazy">
+                        </div>
+                        <div class="discipline-body">
+                            <h3>Cours jeunes</h3>
+                            <p>Enseignement de la boxe pour enfants et adolescents dans une ambiance sécurisée.</p>
+                        </div>
+                    </article>
+                    <article class="discipline-card">
+                        <div class="discipline-image">
+                            <img src="images/discipline-coaching.jpg" alt="Cours particuliers" loading="lazy">
+                        </div>
+                        <div class="discipline-body">
+                            <h3>Cours particuliers</h3>
+                            <p>Coaching individuel sur mesure pour une progression rapide et efficace.</p>
+                        </div>
+                    </article>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="club" class="club">
-        <div class="container">
-            <h2>🏆 Le Boxing Club SPDC</h2>
-            <div class="club-intro">
-                <p>Nous sommes une association sportive dynamique, dédiée à l'enseignement de la boxe à tous les niveaux. Que vous soyez débutant ou pratiquant confirmé, notre équipe d'experts vous accompagne dans votre progression.</p>
+        <!-- ===== LE CLUB ===== -->
+        <section id="club" class="section section-dark">
+            <div class="container">
+                <h2 class="section-title">🏆 Le Boxing Club SPDC</h2>
+                <p class="section-intro">Nous sommes une association sportive dynamique, dédiée à l'enseignement de la boxe à tous les niveaux. Que vous soyez débutant ou pratiquant confirmé, notre équipe d'experts vous accompagne dans votre progression.</p>
+                <div class="features-grid">
+                    <div class="feature">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Approche personnalisée</h3>
+                        <p>Programmes adaptés à votre niveau et à vos objectifs.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">👥</div>
+                        <h3>Atmosphère conviviale</h3>
+                        <p>Un club où chacun se sent comme chez lui.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">🏅</div>
+                        <h3>Excellence sportive</h3>
+                        <p>Formation de qualité pour tous les niveaux de compétition.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">♻️</div>
+                        <h3>Boxe éducative</h3>
+                        <p>Des valeurs de respect, de discipline et d'entraide transmises à chaque séance.</p>
+                    </div>
+                </div>
             </div>
-            <div class="club-features">
-                <div class="feature">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Approche personnalisée</h3>
-                    <p>Programmes adaptés à votre niveau et à vos objectifs</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">👥</div>
-                    <h3>Atmosphère conviviale</h3>
-                    <p>Un club où chacun se sent comme chez lui</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">🏅</div>
-                    <h3>Excellence sportive</h3>
-                    <p>Formation de qualité pour tous les niveaux de compétition</p>
-                </div>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="offres" class="offres">
-        <div class="container">
-            <h2>📋 Nos Offres</h2>
-            <div class="offres-grid">
-                <div class="offre-card">
-                    <div class="offre-icon">👦</div>
-                    <h3>Jeunes (8-15 ans)</h3>
-                    <div class="offre-price">45€/mois</div>
-                    <div class="offre-details">
+        <!-- ===== OFFRES ===== -->
+        <section id="offres" class="section">
+            <div class="container">
+                <h2 class="section-title">📋 Nos offres</h2>
+                <p class="section-intro">Deux formules mensuelles, assurance sportive et équipement inclus</p>
+                <div class="offres-grid">
+                    <article class="offre-card">
+                        <div class="offre-icon">👦</div>
+                        <h3>Jeunes (8-15 ans)</h3>
+                        <div class="offre-price">45€<span>/mois</span></div>
                         <div class="offre-schedule">
                             <strong>Horaires :</strong><br>
-                            Lundi & Mercredi : 17h30-19h00<br>
-                            Vendredi : 17h00-18h30
+                            Lundi & Mercredi : 17h30 - 19h00<br>
+                            Vendredi : 17h00 - 18h30
                         </div>
+                        <ul class="offre-list">
+                            <li>Initiation à la boxe</li>
+                            <li>Développement moteur</li>
+                            <li>Éducation sportive</li>
+                            <li>Compétitions scolaires</li>
+                            <li>Stage annuel gratuit</li>
+                        </ul>
                         <div class="offre-conditions">
-                            <strong>Conditions :</strong><br>
                             ✓ Assurance sportive incluse<br>
                             ✓ Équipement fourni<br>
-                            ✓ Médical obligatoire
+                            ✓ Certificat médical obligatoire
                         </div>
-                    </div>
-                    <ul>
-                        <li>Initiation à la boxe</li>
-                        <li>Développement moteur</li>
-                        <li>Éducation sportive</li>
-                        <li>Compétitions scolaires</li>
-                        <li>Stage annuel gratuit</li>
-                    </ul>
-                    <a href="#contact" class="btn btn-outline">Contactez-nous</a>
-                </div>
-                <div class="offre-card featured">
-                    <div class="offre-icon">👨‍💼</div>
-                    <h3>Adultes (16+ ans)</h3>
-                    <div class="offre-price">55€/mois</div>
-                    <div class="offre-details">
+                        <a href="#contact" class="btn btn-outline">Contactez-nous</a>
+                    </article>
+
+                    <article class="offre-card featured">
+                        <div class="offre-icon">👨‍💼</div>
+                        <h3>Adultes (16+ ans)</h3>
+                        <div class="offre-price">55€<span>/mois</span></div>
                         <div class="offre-schedule">
                             <strong>Horaires :</strong><br>
-                            Lundi, Mardi, Jeudi : 18h00-20h00<br>
-                            Mercredi : 19h00-21h00<br>
-                            Vendredi : 18h30-20h30
+                            Lundi, Mardi, Jeudi : 18h00 - 20h00<br>
+                            Mercredi : 19h00 - 21h00<br>
+                            Vendredi : 18h30 - 20h30
                         </div>
+                        <ul class="offre-list">
+                            <li>Boxe loisir &amp; compétition</li>
+                            <li>Remise en forme</li>
+                            <li>Self-défense</li>
+                            <li>Compétitions régionales</li>
+                            <li>Accès aux entraînements spéciaux</li>
+                        </ul>
                         <div class="offre-conditions">
-                            <strong>Conditions :</strong><br>
                             ✓ Assurance sportive incluse<br>
                             ✓ Équipement fourni<br>
-                            ✓ Médical obligatoire
+                            ✓ Certificat médical obligatoire
                         </div>
-                    </div>
-                    <ul>
-                        <li>Boxe loisir & compétition</li>
-                        <li>Remise en forme</li>
-                        <li>Self-défense</li>
-                        <li>Compétitions régionales</li>
-                        <li>Accès aux entraînements spéciaux</li>
-                    </ul>
-                    <a href="#contact" class="btn btn-primary">Contactez-nous</a>
+                        <a href="#contact" class="btn btn-primary">Contactez-nous</a>
+                    </article>
                 </div>
-            </div>
-            <div class="offre-benefits">
-                <h3>🎁 Avantages membres</h3>
-                <div class="benefits-grid">
-                    <div class="benefit">
-                        <span class="benefit-icon">🎯</span>
-                        <span>Accès illimité aux entraînements</span>
-                    </div>
-                    <div class="benefit">
-                        <span class="benefit-icon">👕</span>
-                        <span>Équipement fourni</span>
-                    </div>
-                    <div class="benefit">
-                        <span class="benefit-icon">📅</span>
-                        <span>Événements exclusifs</span>
-                    </div>
-                    <div class="benefit">
-                        <span class="benefit-icon">🏆</span>
-                        <span>Coaching individuel</span>
-                    </div>
-                    <div class="benefit">
-                        <span class="benefit-icon">🏋️</span>
-                        <span>Accès à la salle de musculation</span>
-                    </div>
-                    <div class="benefit">
-                        <span class="benefit-icon">🎁</span>
-                        <span>Stage annuel gratuit</span>
+                <div class="benefits-box">
+                    <h3>🎁 Avantages membres</h3>
+                    <div class="benefits-grid">
+                        <div class="benefit"><span>🎯</span>Accès illimité aux entraînements</div>
+                        <div class="benefit"><span>👕</span>Équipement fourni</div>
+                        <div class="benefit"><span>📅</span>Événements exclusifs</div>
+                        <div class="benefit"><span>🏆</span>Coaching individuel</div>
+                        <div class="benefit"><span>🏋️</span>Salle de musculation</div>
+                        <div class="benefit"><span>🎁</span>Stage annuel gratuit</div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="equipe" class="equipe">
-        <div class="container">
-            <h2>👨‍🏫 L'Équipe d'Entraîneurs</h2>
-            <div class="equipe-grid">
-                <div class="coach-card">
-                    <div class="coach-avatar">👨‍💼</div>
-                    <h3>Cassius - Coach Principal</h3>
-                    <div class="coach-qualifications">
-                        <span class="qualification">🏆 Champion régional 2024</span>
-                        <span class="qualification">🎖️ Diplôme d'État BEES 1</span>
-                        <span class="qualification">📅 20 ans d'expérience</span>
-                    </div>
-                    <p>Spécialisé : Boxe anglaise, préparation compétition</p>
-                    <div class="coach-contact">
-                        <strong>Disponibilité :</strong> Lundi, Mardi, Jeudi, Vendredi
-                    </div>
+        <!-- ===== ÉQUIPE ===== -->
+        <section id="equipe" class="section section-dark">
+            <div class="container">
+                <h2 class="section-title">👨‍🏫 L'équipe d'entraîneurs</h2>
+                <p class="section-intro">Des professionnels diplômés et passionnés à vos côtés</p>
+                <div class="equipe-grid">
+                    <article class="coach-card">
+                        <div class="coach-avatar">👨‍💼</div>
+                        <h3>Cassius</h3>
+                        <span class="coach-role">Coach principal</span>
+                        <div class="coach-qualifications">
+                            <span>🏆 Champion régional 2024</span>
+                            <span>🎖️ Diplôme d'État BEES 1</span>
+                            <span>📅 20 ans d'expérience</span>
+                        </div>
+                        <p>Spécialisé : boxe anglaise, préparation compétition</p>
+                        <div class="coach-contact"><strong>Disponibilité :</strong> Lundi, Mardi, Jeudi, Vendredi</div>
+                    </article>
+                    <article class="coach-card">
+                        <div class="coach-avatar">👩‍💼</div>
+                        <h3>Marie</h3>
+                        <span class="coach-role">Coach adjointe</span>
+                        <div class="coach-qualifications">
+                            <span>🎓 Éducatrice sportive diplômée</span>
+                            <span>👶 Spécialiste jeunes</span>
+                            <span>📅 10 ans d'expérience</span>
+                        </div>
+                        <p>Spécialisée : boxe éducative, développement moteur</p>
+                        <div class="coach-contact"><strong>Disponibilité :</strong> Mercredi, Vendredi</div>
+                    </article>
+                    <article class="coach-card">
+                        <div class="coach-avatar">👨‍🎓</div>
+                        <h3>Thomas</h3>
+                        <span class="coach-role">Préparateur physique</span>
+                        <div class="coach-qualifications">
+                            <span>💪 Expert conditionnement</span>
+                            <span>🥗 Nutritionniste sportif</span>
+                            <span>📅 8 ans d'expérience</span>
+                        </div>
+                        <p>Spécialisé : préparation physique, nutrition sportive</p>
+                        <div class="coach-contact"><strong>Disponibilité :</strong> Mardi, Jeudi</div>
+                    </article>
                 </div>
-                <div class="coach-card">
-                    <div class="coach-avatar">👩‍💼</div>
-                    <h3>Marie - Coach Adjoint</h3>
-                    <div class="coach-qualifications">
-                        <span class="qualification">🎓 Éducateur sportif diplômé</span>
-                        <span class="qualification">👶 Spécialiste jeunes</span>
-                        <span class="qualification">📅 10 ans d'expérience</span>
-                    </div>
-                    <p>Spécialisé : Boxe éducative, développement moteur</p>
-                    <div class="coach-contact">
-                        <strong>Disponibilité :</strong> Mercredi, Vendredi
-                    </div>
+                <div class="equipe-stats">
+                    <div class="stat"><span class="stat-number">15+</span><span class="stat-label">Années d'expérience</span></div>
+                    <div class="stat"><span class="stat-number">50+</span><span class="stat-label">Champions formés</span></div>
+                    <div class="stat"><span class="stat-number">100%</span><span class="stat-label">Certifiés FFB</span></div>
+                    <div class="stat"><span class="stat-number">3</span><span class="stat-label">Entraîneurs dédiés</span></div>
                 </div>
-                <div class="coach-card">
-                    <div class="coach-avatar">👨‍🎓</div>
-                    <h3>Thomas - Préparateur Physique</h3>
-                    <div class="coach-qualifications">
-                        <span class="qualification">💪 Expert conditionnement</span>
-                        <span class="qualification">🥗 Nutritionniste sportif</span>
-                        <span class="qualification">📅 8 ans d'expérience</span>
-                    </div>
-                    <p>Spécialisé : Préparation physique, nutrition sportive</p>
-                    <div class="coach-contact">
-                        <strong>Disponibilité :</strong> Mardi, Jeudi
+            </div>
+        </section>
+
+        <!-- ===== ÉVÉNEMENTS ===== -->
+        <section id="evenements" class="section">
+            <div class="container">
+                <h2 class="section-title">🎪 Nos événements</h2>
+                <p class="section-intro">Les temps forts du club</p>
+                <div class="evenements-grid">
+                    <article class="evenement-card past">
+                        <div class="evenement-date">12 avril 2026</div>
+                        <div class="evenement-icon">🥊</div>
+                        <h3>Gala de Boxe</h3>
+                        <p>Soirée de compétitions internes avec 12 combats et plus de 100 spectateurs.</p>
+                        <div class="evenement-status">✅ Terminé</div>
+                    </article>
+                    <article class="evenement-card past">
+                        <div class="evenement-date">8 mars 2026</div>
+                        <div class="evenement-icon">👩</div>
+                        <h3>Journée des droits des femmes</h3>
+                        <p>Démonstration de boxe féminine et atelier d'initiation.</p>
+                        <div class="evenement-status">✅ Terminé</div>
+                    </article>
+                </div>
+                <div class="presse-box">
+                    <h3>📰 Presse &amp; médias</h3>
+                    <div class="presse-grid">
+                        <div class="presse-item"><span class="presse-icon">📰</span>INFOBOXE - Bulletin officiel de la Fédération Française de Boxe</div>
+                        <div class="presse-item"><span class="presse-icon">📰</span>La Nouvelle République - Couverture locale</div>
+                        <div class="presse-item"><span class="presse-icon">📰</span>France 3 Centre - Reportage TV</div>
                     </div>
                 </div>
             </div>
-            <div class="equipe-stats">
-                <div class="stat">
-                    <span class="stat-number">15+</span>
-                    <span class="stat-label">Années d'expérience</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number">50+</span>
-                    <span class="stat-label">Champions formés</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number">100%</span>
-                    <span class="stat-label">Certifiés FFB</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number">3</span>
-                    <span class="stat-label">Entraîneurs dédiés</span>
-                </div>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="evenements" class="evenements">
-        <div class="container">
-            <h2>🎪 Événements Passés</h2>
-            <div class="evenements-grid">
-                <div class="evenement-card past">
-                    <div class="evenement-date">12 avril 2026</div>
-                    <div class="evenement-icon">🥊</div>
-                    <h3>Gala de Boxe</h3>
-                    <p>Soirée de compétitions internes avec 12 combats et plus de 100 spectateurs.</p>
-                    <div class="evenement-status">✅ Terminé</div>
-                </div>
-                <div class="evenement-card past">
-                    <div class="evenement-date">8 mars 2026</div>
-                    <div class="evenement-icon">👩</div>
-                    <h3>Journée Internationale des Droits des Femmes</h3>
-                    <p>Démonstration de boxe féminine et atelier d'initiation.</p>
-                    <div class="evenement-status">✅ Terminé</div>
-                </div>
-            </div>
-
-            <div class="evenements-presse">
-                <h3>📰 Presse & Médias</h3>
-                <div class="presse-grid">
-                    <div class="presse-item">
-                        <span class="presse-icon">📰</span>
-                        <span>INFOBOXE - Bulletin officiel de la Fédération Française de Boxe</span>
-                    </div>
-                    <div class="presse-item">
-                        <span class="presse-icon">📰</span>
-                        <span>La Nouvelle République - Couverture locale</span>
-                    </div>
-                    <div class="presse-item">
-                        <span class="presse-icon">📰</span>
-                        <span>France 3 Centre - Reportage TV</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="galerie" class="galerie">
-        <div class="container">
-            <h2>📸 Galerie Photos</h2>
-            <p class="galerie-intro">Découvrez notre club à travers nos moments forts</p>
-
-            <div class="galerie-grid">
-                <!-- Entraînement -->
-                <div class="gallery-item" data-category="entraînement" data-image="https://via.placeholder.com/800x600/2c3e50/ffffff?text=Entraînement+1" data-title="Entraînement Technique" data-description="Travail des bases et perfectionnement">
-                    <div class="gallery-image">
-                        <img src="https://via.placeholder.com/400x300/2c3e50/ffffff?text=Entraînement+1" alt="Entraînement technique">
-                        <div class="gallery-overlay">
-                            <span class="gallery-icon">🥊</span>
-                            <h3>Entraînement Technique</h3>
-                            <p>Travail des bases et perfectionnement</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="gallery-item" data-category="entraînement" data-image="https://via.placeholder.com/800x600/34495e/ffffff?text=Entraînement+2" data-title="Conditionnement" data-description="Préparation physique intensive">
-                    <div class="gallery-image">
-                        <img src="https://via.placeholder.com/400x300/34495e/ffffff?text=Entraînement+2" alt="Séance conditionnement">
-                        <div class="gallery-overlay">
-                            <span class="gallery-icon">💪</span>
-                            <h3>Conditionnement</h3>
-                            <p>Préparation physique intensive</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Compétition -->
-                <div class="gallery-item" data-category="competition" data-image="https://via.placeholder.com/800x600/e74c3c/ffffff?text=Compétition+1" data-title="Tournoi Régional" data-description="Compétition inter-clubs">
-                    <div class="gallery-image">
-                        <img src="https://via.placeholder.com/400x300/e74c3c/ffffff?text=Compétition+1" alt="Tournoi régional">
-                        <div class="gallery-overlay">
-                            <span class="gallery-icon">🏆</span>
-                            <h3>Tournoi Régional</h3>
-                            <p>Compétition inter-clubs</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="gallery-item" data-category="competition" data-image="https://via.placeholder.com/800x600/c0392b/ffffff?text=Compétition+2" data-title="Championnat Départemental" data-description="Excellence sportive">
-                    <div class="gallery-image">
-                        <img src="https://via.placeholder.com/400x300/c0392b/ffffff?text=Compétition+2" alt="Championnat départemental">
-                        <div class="gallery-overlay">
-                            <span class="gallery-icon">🥇</span>
-                            <h3>Championnat Départemental</h3>
-                            <p>Excellence sportive</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Événements -->
-                <div class="gallery-item" data-category="evenement" data-image="https://via.placeholder.com/800x600/3498db/ffffff?text=Événement+1" data-title="Forum des Associations" data-description="Présentation du club">
-                    <div class="gallery-image">
-                        <img src="https://via.placeholder.com/400x300/3498db/ffffff?text=Événement+1" alt="Forum des Associations">
-                        <div class="gallery-overlay">
-                            <span class="gallery-icon">🎪</span>
-                            <h3>Forum des Associations</h3>
-                            <p>Présentation du club</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="gallery-item" data-category="evenement" data-image="https://via.placeholder.com/800x600/2980b9/ffffff?text=Événement+2" data-title="Chess Boxing" data-description="Événement exceptionnel">
-                    <div class="gallery-image">
-                        <img src="https://via.placeholder.com/400x300/2980b9/ffffff?text=Événement+2" alt="Chess Boxing">
-                        <div class="gallery-overlay">
-                            <span class="gallery-icon">♟️</span>
-                            <h3>Chess Boxing</h3>
-                            <p>Événement exceptionnel</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Membres -->
-                <div class="gallery-item" data-category="membres" data-image="https://via.placeholder.com/800x600/27ae60/ffffff?text=Membres+1" data-title="Équipe d'Entraîneurs" data-description="Professionnels passionnés">
-                    <div class="gallery-image">
-                        <img src="https://via.placeholder.com/400x300/27ae60/ffffff?text=Membres+1" alt="Équipe d'entraîneurs">
-                        <div class="gallery-overlay">
-                            <span class="gallery-icon">👨‍🏫</span>
-                            <h3>Équipe d'Entraîneurs</h3>
-                            <p>Professionnels passionnés</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="gallery-item" data-category="membres" data-image="https://via.placeholder.com/800x600/229954/ffffff?text=Membres+2" data-title="Jeunes Boxeurs" data-description="Nouvelle génération">
-                    <div class="gallery-image">
-                        <img src="https://via.placeholder.com/400x300/229954/ffffff?text=Membres+2" alt="Jeunes boxeurs">
-                        <div class="gallery-overlay">
-                            <span class="gallery-icon">👶</span>
-                            <h3>Jeunes Boxeurs</h3>
-                            <p>Nouvelle génération</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="gallery-item" data-category="membres" data-image="https://via.placeholder.com/800x600/1e8449/ffffff?text=Membres+3" data-title="Vétérans" data-description="Expérience et savoir-faire">
-                    <div class="gallery-image">
-                        <img src="https://via.placeholder.com/400x300/1e8449/ffffff?text=Membres+3" alt="Vétérans">
-                        <div class="gallery-overlay">
-                            <span class="gallery-icon">👴</span>
-                            <h3>Vétérans</h3>
-                            <p>Expérience et savoir-faire</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="galerie-cta">
-                <h3>🎯 Vous voulez figurer dans notre galerie ?</h3>
-                <p>Rejoignez notre club et partagez vos moments de gloire !</p>
-                <a href="#contact" class="btn btn-primary">Devenir membre</a>
-            </div>
-        </div>
-    </section>
-
-    <section id="tiktok" class="tiktok">
-        <div class="container">
-            <h2>📱 Suivez-nous sur TikTok</h2>
-            <p class="tiktok-intro">@boxespdc - 21 vidéos disponibles de notre club de boxe</p>
-            <div class="tiktok-content">
-                <div class="tiktok-description">
-                    <h3>🎬 Notre contenu TikTok</h3>
-                    <p>Découvrez l'énergie de notre club à travers nos vidéos ! Entraînements intensifs, compétitions, événements et moments de convivialité. Rejoignez notre communauté de plus de 500 abonnés !</p>
-                    <div class="tiktok-stats">
-                        <div class="stat-item">
-                            <span class="stat-number">21</span>
-                            <span class="stat-label">Vidéos</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">500+</span>
-                            <span class="stat-label">Abonnés</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">15K+</span>
-                            <span class="stat-label">Vues</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="tiktok-videos">
-                    <h3>🎥 Vidéos populaires</h3>
-                    <div class="video-grid">
-                        <div class="video-card">
-                            <div class="video-thumbnail">
-                                <img src="images/tiktok/thumb1.jpg" alt="Entraînement intensif" class="lazy">
-                                <div class="play-overlay">▶</div>
-                            </div>
-                            <div class="video-info">
-                                <h4>Entraînement intensif</h4>
-                                <p>2.3K vues • 3 jours</p>
-                            </div>
-                        </div>
-                        <div class="video-card">
-                            <div class="video-thumbnail">
-                                <img src="images/tiktok/thumb2.jpg" alt="Compétition régionale" class="lazy">
-                                <div class="play-overlay">▶</div>
-                            </div>
-                            <div class="video-info">
-                                <h4>Compétition régionale</h4>
-                                <p>1.8K vues • 1 semaine</p>
-                            </div>
-                        </div>
-                        <div class="video-card">
-                            <div class="video-thumbnail">
-                                <img src="images/tiktok/thumb3.jpg" alt="Événement Chess Boxing" class="lazy">
-                                <div class="play-overlay">▶</div>
-                            </div>
-                            <div class="video-info">
-                                <h4>Chess Boxing 2026</h4>
-                                <p>3.1K vues • 2 semaines</p>
-                            </div>
-                        </div>
-                        <div class="video-card">
-                            <div class="video-thumbnail">
-                                <img src="images/tiktok/thumb4.jpg" alt="Entraînement jeunes" class="lazy">
-                                <div class="play-overlay">▶</div>
-                            </div>
-                            <div class="video-info">
-                                <h4>Entraînement jeunes</h4>
-                                <p>1.2K vues • 1 semaine</p>
-                            </div>
-                        </div>
-                        <div class="video-card">
-                            <div class="video-thumbnail">
-                                <img src="images/tiktok/thumb5.jpg" alt="Célébration victoire" class="lazy">
-                                <div class="play-overlay">▶</div>
-                            </div>
-                            <div class="video-info">
-                                <h4>Célébration victoire</h4>
-                                <p>2.7K vues • 5 jours</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="tiktok-cta">
-                        <a href="https://tiktok.com/@boxespdc" target="_blank" class="btn btn-primary">Voir toutes les vidéos →</a>
-                        <p class="tiktok-follow">Suivez-nous pour ne rien manquer !</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="horaires" class="horaires">
-        <div class="container">
-            <h2>🕐 Horaires d'Entraînement</h2>
-            <p class="horaires-intro">Planning complet de nos séances d'entraînement</p>
-
-            <div class="horaires-content">
-                <div class="horaires-description">
-                    <h3>🎯 Nos Horaires</h3>
-                    <p>Nous proposons des créneaux adaptés à tous les niveaux et âges. Nos entraînements ont lieu au gymnase de la Morinerie avec équipements professionnels.</p>
-
+        <!-- ===== HORAIRES ===== -->
+        <section id="horaires" class="section section-dark">
+            <div class="container">
+                <h2 class="section-title">🕐 Horaires d'entraînement</h2>
+                <p class="section-intro">Planning complet de nos séances, saison 2026-2027</p>
+                <div class="horaires-content">
                     <div class="horaires-info">
                         <div class="info-item">
                             <span class="info-icon">📍</span>
-                            <div>
-                                <strong>Lieu:</strong><br>
-                                Gymnase de la Morinerie<br>
-                                Saint-Pierre-des-Corps
-                            </div>
+                            <div><strong>Lieu :</strong><br>Gymnase de la Morinerie<br>Saint-Pierre-des-Corps (37300)</div>
                         </div>
                         <div class="info-item">
                             <span class="info-icon">📅</span>
-                            <div>
-                                <strong>Période:</strong><br>
-                                Septembre 2025 - Juin 2026<br>
-                                (Vacances scolaires incluses)
-                            </div>
+                            <div><strong>Période :</strong><br>Septembre 2026 - Juin 2027<br>(vacances scolaires incluses)</div>
                         </div>
                         <div class="info-item">
                             <span class="info-icon">🎒</span>
-                            <div>
-                                <strong>Équipement:</strong><br>
-                                Gants fournis<br>
-                                Vêtements de sport personnels
-                            </div>
+                            <div><strong>Équipement :</strong><br>Gants fournis<br>Vêtements de sport personnels</div>
                         </div>
                     </div>
-                </div>
-
-                <div class="horaires-grid">
-                    <div class="horaires-day">
-                        <h3>🌅 Lundi - Vendredi</h3>
-                        <div class="time-slot">
-                            <div class="time">18:00 - 19:30</div>
-                            <div class="activity">Jeunes (8-15 ans)</div>
-                            <div class="level">Débutants à intermédiaires</div>
+                    <div class="horaires-grid">
+                        <div class="horaires-day">
+                            <h3>Lundi - Vendredi</h3>
+                            <div class="time-slot"><div class="time">18h00 - 19h30</div><div class="activity">Jeunes (8-15 ans)</div><div class="level">Débutants à intermédiaires</div></div>
+                            <div class="time-slot"><div class="time">19h30 - 21h00</div><div class="activity">Adultes (16+ ans)</div><div class="level">Loisir &amp; compétition</div></div>
                         </div>
-                        <div class="time-slot">
-                            <div class="time">19:30 - 21:00</div>
-                            <div class="activity">Adultes (16+ ans)</div>
-                            <div class="level">Loisir & compétition</div>
+                        <div class="horaires-day">
+                            <h3>Samedi</h3>
+                            <div class="time-slot"><div class="time">10h00 - 12h00</div><div class="activity">Tous niveaux</div><div class="level">Technique &amp; conditionnement</div></div>
+                            <div class="time-slot"><div class="time">14h00 - 16h00</div><div class="activity">Compétition</div><div class="level">Préparation aux tournois</div></div>
                         </div>
-                    </div>
-
-                    <div class="horaires-day">
-                        <h3>🌅 Samedi</h3>
-                        <div class="time-slot">
-                            <div class="time">10:00 - 12:00</div>
-                            <div class="activity">Tous niveaux</div>
-                            <div class="level">Technique & conditionnement</div>
-                        </div>
-                        <div class="time-slot">
-                            <div class="time">14:00 - 16:00</div>
-                            <div class="activity">Compétition</div>
-                            <div class="level">Préparation aux tournois</div>
-                        </div>
-                    </div>
-
-                    <div class="horaires-day">
-                        <h3>🌅 Dimanche</h3>
-                        <div class="time-slot">
-                            <div class="time">10:00 - 12:00</div>
-                            <div class="activity">Séance libre</div>
-                            <div class="level">Pratique libre & sparring</div>
+                        <div class="horaires-day">
+                            <h3>Dimanche</h3>
+                            <div class="time-slot"><div class="time">10h00 - 12h00</div><div class="activity">Séance libre</div><div class="level">Pratique libre &amp; sparring</div></div>
                         </div>
                     </div>
                 </div>
             </div>
+        </section>
 
-            <div class="horaires-cta">
-                <h3>🎯 Pourquoi choisir nos horaires ?</h3>
-                <div class="benefits-grid">
-                    <div class="benefit-item">
-                        <span class="benefit-icon">⏰</span>
-                        <div>
-                            <strong>Horaires flexibles</strong>
-                            <p>Créneaux adaptés à vos disponibilités</p>
-                        </div>
-                    </div>
-                    <div class="benefit-item">
-                        <span class="benefit-icon">👥</span>
-                        <div>
-                            <strong>Groupes par niveau</strong>
-                            <p>Entraînements adaptés à votre niveau</p>
-                        </div>
-                    </div>
-                    <div class="benefit-item">
-                        <span class="benefit-icon">🏆</span>
-                        <div>
-                            <strong>Compétition intégrée</strong>
-                            <p>Préparation aux tournois inclus</p>
-                        </div>
-                    </div>
+        <!-- ===== GALERIE ===== -->
+        <section id="galerie" class="section">
+            <div class="container">
+                <h2 class="section-title">📸 Galerie photos</h2>
+                <p class="section-intro">Découvrez notre club à travers nos moments forts</p>
+                <div class="gallery-filters">
+                    <button class="filter-btn active" data-filter="all">Tous</button>
+                    <button class="filter-btn" data-filter="entrainement">Entraînement</button>
+                    <button class="filter-btn" data-filter="competition">Compétition</button>
+                    <button class="filter-btn" data-filter="evenement">Événements</button>
+                    <button class="filter-btn" data-filter="membres">Membres</button>
+                </div>
+                <div class="galerie-grid">
+                    <figure class="gallery-item" data-category="entrainement">
+                        <img src="images/gallery-1.jpg" alt="Entraînement technique" loading="lazy">
+                        <figcaption>Entraînement technique</figcaption>
+                    </figure>
+                    <figure class="gallery-item" data-category="entrainement">
+                        <img src="images/gallery-2.jpg" alt="Conditionnement physique" loading="lazy">
+                        <figcaption>Conditionnement</figcaption>
+                    </figure>
+                    <figure class="gallery-item" data-category="competition">
+                        <img src="images/gallery-3.jpg" alt="Tournoi régional" loading="lazy">
+                        <figcaption>Tournoi régional</figcaption>
+                    </figure>
+                    <figure class="gallery-item" data-category="competition">
+                        <img src="images/gallery-4.jpg" alt="Préparation compétition" loading="lazy">
+                        <figcaption>Préparation compétition</figcaption>
+                    </figure>
+                    <figure class="gallery-item" data-category="entrainement">
+                        <img src="images/gallery-5.jpg" alt="Séance intensité" loading="lazy">
+                        <figcaption>Séance intensité</figcaption>
+                    </figure>
+                    <figure class="gallery-item" data-category="evenement">
+                        <img src="images/gallery-6.jpg" alt="Événement du club" loading="lazy">
+                        <figcaption>Événement du club</figcaption>
+                    </figure>
+                    <figure class="gallery-item" data-category="membres">
+                        <img src="images/gallery-7.jpg" alt="Membres du club" loading="lazy">
+                        <figcaption>Membres du club</figcaption>
+                    </figure>
+                    <figure class="gallery-item" data-category="membres">
+                        <img src="images/gallery-8.jpg" alt="Jeunes boxeurs" loading="lazy">
+                        <figcaption>Jeunes boxeurs</figcaption>
+                    </figure>
+                    <figure class="gallery-item" data-category="evenement">
+                        <img src="images/gallery-9.jpg" alt="Sparring entre membres" loading="lazy">
+                        <figcaption>Sparring entre membres</figcaption>
+                    </figure>
+                </div>
+                <div class="galerie-cta">
+                    <h3>🎯 Vous voulez figurer dans notre galerie ?</h3>
+                    <p>Rejoignez notre club et partagez vos moments de gloire !</p>
+                    <a href="#contact" class="btn btn-primary">Devenir membre</a>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="temoignages" class="temoignages">
-        <div class="container">
-            <h2>🗣️ Témoignages de Membres</h2>
-            <p class="temoignages-intro">Ce que nos membres disent de notre club</p>
+        <!-- ===== TIKTOK ===== -->
+        <section id="tiktok" class="section section-dark">
+            <div class="container">
+                <h2 class="section-title">📱 Suivez-nous sur TikTok</h2>
+                <p class="section-intro">@boxespdc - 21 vidéos disponibles de notre club de boxe</p>
+                <div class="tiktok-stats">
+                    <div class="stat"><span class="stat-number">21</span><span class="stat-label">Vidéos</span></div>
+                    <div class="stat"><span class="stat-number">500+</span><span class="stat-label">Abonnés</span></div>
+                    <div class="stat"><span class="stat-number">15K+</span><span class="stat-label">Vues</span></div>
+                </div>
+                <div class="video-grid">
+                    <div class="video-card">
+                        <img src="images/tiktok/thumb1.jpg" alt="Entraînement intensif" loading="lazy">
+                        <div class="video-info"><h4>Entraînement intensif</h4><p>2.3K vues</p></div>
+                    </div>
+                    <div class="video-card">
+                        <img src="images/tiktok/thumb2.jpg" alt="Compétition régionale" loading="lazy">
+                        <div class="video-info"><h4>Compétition régionale</h4><p>1.8K vues</p></div>
+                    </div>
+                    <div class="video-card">
+                        <img src="images/tiktok/thumb3.jpg" alt="Chess Boxing 2026" loading="lazy">
+                        <div class="video-info"><h4>Chess Boxing 2026</h4><p>3.1K vues</p></div>
+                    </div>
+                    <div class="video-card">
+                        <img src="images/tiktok/thumb4.jpg" alt="Entraînement jeunes" loading="lazy">
+                        <div class="video-info"><h4>Entraînement jeunes</h4><p>1.2K vues</p></div>
+                    </div>
+                    <div class="video-card">
+                        <img src="images/tiktok/thumb5.jpg" alt="Célébration victoire" loading="lazy">
+                        <div class="video-info"><h4>Célébration victoire</h4><p>2.7K vues</p></div>
+                    </div>
+                </div>
+                <div class="tiktok-cta">
+                    <a href="https://www.tiktok.com/@boxespdc" target="_blank" rel="noopener" class="btn btn-primary">Voir toutes les vidéos →</a>
+                    <p>Suivez-nous pour ne rien manquer !</p>
+                </div>
+            </div>
+        </section>
 
-            <div class="temoignages-grid">
-                <!-- Témoignage 1 -->
-                <div class="temoignage-card">
-                    <div class="temoignage-header">
-                        <div class="temoignage-avatar">👨</div>
-                        <div class="temoignage-info">
-                            <h4>Jean Dupont</h4>
-                            <p class="temoignage-role">Adulte - Compétition</p>
-                            <div class="temoignage-rating">
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
+        <!-- ===== TÉMOIGNAGES ===== -->
+        <section id="temoignages" class="section">
+            <div class="container">
+                <h2 class="section-title">🗣️ Témoignages de membres</h2>
+                <p class="section-intro">Ce que nos membres disent de notre club</p>
+                <div class="temoignages-grid">
+                    <article class="temoignage-card">
+                        <div class="temoignage-header">
+                            <div class="temoignage-avatar">👨</div>
+                            <div class="temoignage-info">
+                                <h4>Jean Dupont</h4>
+                                <p>Adulte - Compétition</p>
                             </div>
                         </div>
-                    </div>
-                    <div class="temoignage-content">
-                        <p>"J'ai rejoint le club il y a 2 ans et je ne regrette rien ! L'encadrement est professionnel, l'ambiance est excellente et j'ai progressé énormément. Les entraînements sont intenses mais adaptés à tous les niveaux."</p>
+                        <div class="temoignage-rating">⭐⭐⭐⭐⭐</div>
+                        <p class="temoignage-content">"J'ai rejoint le club il y a 2 ans et je ne regrette rien ! L'encadrement est professionnel, l'ambiance est excellente et j'ai progressé énormément."</p>
                         <div class="temoignage-date">Depuis 2 ans</div>
-                    </div>
-                </div>
-
-                <!-- Témoignage 2 -->
-                <div class="temoignage-card">
-                    <div class="temoignage-header">
-                        <div class="temoignage-avatar">👩</div>
-                        <div class="temoignage-info">
-                            <h4>Sophie Martin</h4>
-                            <p class="temoignage-role">Jeune - Loisir</p>
-                            <div class="temoignage-rating">
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
+                    </article>
+                    <article class="temoignage-card">
+                        <div class="temoignage-header">
+                            <div class="temoignage-avatar">👩</div>
+                            <div class="temoignage-info">
+                                <h4>Sophie Martin</h4>
+                                <p>Jeune - Loisir</p>
                             </div>
                         </div>
-                    </div>
-                    <div class="temoignage-content">
-                        <p>"Mon fils de 12 ans adore le club ! Les entraîneurs sont patients et pédagogiques. C'est super pour sa confiance en lui et sa discipline. Je recommande vivement pour les jeunes."</p>
+                        <div class="temoignage-rating">⭐⭐⭐⭐⭐</div>
+                        <p class="temoignage-content">"Mon fils de 12 ans adore le club ! Les entraîneurs sont patients et pédagogiques. C'est super pour sa confiance en lui et sa discipline."</p>
                         <div class="temoignage-date">Depuis 1 an</div>
-                    </div>
-                </div>
-
-                <!-- Témoignage 3 -->
-                <div class="temoignage-card">
-                    <div class="temoignage-header">
-                        <div class="temoignage-avatar">
-                            <img src="https://via.placeholder.com/80x80/27ae60/ffffff?text=PC" alt="Pierre Caron">
-                        </div>
-                        <div class="temoignage-info">
-                            <h3>Pierre Caron</h3>
-                            <p class="temoignage-category">Vétéran - Remise en forme</p>
-                            <div class="temoignage-rating">
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
+                    </article>
+                    <article class="temoignage-card">
+                        <div class="temoignage-header">
+                            <div class="temoignage-avatar">👴</div>
+                            <div class="temoignage-info">
+                                <h4>Pierre Caron</h4>
+                                <p>Vétéran - Remise en forme</p>
                             </div>
                         </div>
-                    </div>
-                    <div class="temoignage-content">
-                        <p>"À 55 ans, j'ai trouvé le club parfait pour ma remise en forme. Les séances sont adaptées à mon âge et à mes objectifs. L'équipe est très accueillante et encourageante."</p>
+                        <div class="temoignage-rating">⭐⭐⭐⭐⭐</div>
+                        <p class="temoignage-content">"À 55 ans, j'ai trouvé le club parfait pour ma remise en forme. Les séances sont adaptées à mon âge et à mes objectifs. L'équipe est très accueillante."</p>
                         <div class="temoignage-date">Depuis 6 mois</div>
-                    </div>
-                </div>
-
-                <!-- Témoignage 4 -->
-                <div class="temoignage-card">
-                    <div class="temoignage-header">
-                        <div class="temoignage-avatar">👩</div>
-                        <div class="temoignage-info">
-                            <h4>Lucie Garcia</h4>
-                            <p class="temoignage-role">Adulte - Auto-défense</p>
-                            <div class="temoignage-rating">
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
-                                <span class="star">⭐</span>
+                    </article>
+                    <article class="temoignage-card">
+                        <div class="temoignage-header">
+                            <div class="temoignage-avatar">👩</div>
+                            <div class="temoignage-info">
+                                <h4>Lucie Garcia</h4>
+                                <p>Adulte - Auto-défense</p>
                             </div>
                         </div>
-                    </div>
-                    <div class="temoignage-content">
-                        <p>"J'ai choisi le club pour l'auto-défense et je suis ravie ! Les cours sont très bien structurés, les techniques sont efficaces et l'ambiance est sécurisante. Très bonne expérience !"</p>
+                        <div class="temoignage-rating">⭐⭐⭐⭐⭐</div>
+                        <p class="temoignage-content">"J'ai choisi le club pour l'auto-défense et je suis ravie ! Les cours sont très bien structurés, les techniques sont efficaces et l'ambiance est sécurisante."</p>
                         <div class="temoignage-date">Depuis 3 mois</div>
-                    </div>
+                    </article>
+                </div>
+                <div class="temoignages-stats">
+                    <div class="stat"><span class="stat-number">98%</span><span class="stat-label">de satisfaction</span></div>
+                    <div class="stat"><span class="stat-number">45+</span><span class="stat-label">membres actifs</span></div>
+                    <div class="stat"><span class="stat-number">5</span><span class="stat-label">années d'expérience</span></div>
                 </div>
             </div>
+        </section>
 
-            <div class="temoignages-stats">
-                <div class="stat-item">
-                    <span class="stat-number">98%</span>
-                    <span class="stat-label">de satisfaction</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">45+</span>
-                    <span class="stat-label">membres actifs</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">5</span>
-                    <span class="stat-label">années d'expérience</span>
-                </div>
-            </div>
-
-            <div class="temoignages-cta">
-                <h3>🎯 Vous aussi, partagez votre histoire</h3>
-                <p>Rejoignez notre communauté et devenez un champion de votre vie !</p>
-                <a href="#contact" class="btn btn-primary">Devenir membre</a>
-            </div>
-        </div>
-    </section>
-
-
-    <section id="contact" class="contact">
-        <div class="container">
-            <h2>📝 Inscrivez-vous au Boxing Club SPDC</h2>
-            <div class="contact-content">
-                <div class="contact-info">
-                    <h3>Informations pratiques</h3>
-                    <div class="info-item">
-                        <span class="info-icon">📍</span>
-                        <div>
-                            <strong>Adresse:</strong><br>
-                            Gymnase de la Morinerie<br>
-                            Saint-Pierre-des-Corps (37300)
+        <!-- ===== CONTACT ===== -->
+        <section id="contact" class="section section-dark">
+            <div class="container">
+                <h2 class="section-title">📝 Inscrivez-vous au Boxing Club SPDC</h2>
+                <p class="section-intro">Remplissez le formulaire, nous vous répondons sous 48h</p>
+                <div class="contact-content">
+                    <div class="contact-info">
+                        <h3>Informations pratiques</h3>
+                        <div class="info-item">
+                            <span class="info-icon">📍</span>
+                            <div><strong>Adresse :</strong><br>Gymnase de la Morinerie<br>Saint-Pierre-des-Corps (37300)</div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-icon">🕐</span>
+                            <div><strong>Horaires :</strong><br>Lundi - Vendredi : 18h - 21h<br>Samedi : 9h - 12h</div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-icon">📧</span>
+                            <div><strong>Email :</strong><br><a href="mailto:boxingclubspdc@gmail.com">boxingclubspdc@gmail.com</a></div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-icon">📱</span>
+                            <div><strong>Téléphone :</strong><br><a href="tel:+33649098080">06 49 09 80 80</a></div>
                         </div>
                     </div>
-                    <div class="info-item">
-                        <span class="info-icon">🕐</span>
-                        <div>
-                            <strong>Horaires:</strong><br>
-                            Lundi-Vendredi: 18h-21h<br>
-                            Samedi: 9h-12h
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-icon">📧</span>
-                        <div>
-                            <strong>Email:</strong><br>
-                            boxingclubspdc@gmail.com
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-icon">📱</span>
-                        <div>
-                            <strong>Téléphone:</strong><br>
-                            06 49 09 80 80
-                        </div>
-                    </div>
-                </div>
-                <div class="contact-form">
-                    <h3>Formulaire d'inscription</h3>
-                    <p>Remplissez ce formulaire et nous vous contacterons sous 48h pour confirmer votre inscription.</p>
-
-                    <form id="inscription-form" action="https://formspree.io/f/boxingclubspdc@gmail.com" method="POST">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="nom">Nom complet *</label>
-                                <input type="text" id="nom" name="nom" required>
+                    <div class="contact-form">
+                        <h3>Formulaire d'inscription</h3>
+                        <form id="inscription-form" method="POST">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="nom">Nom complet *</label>
+                                    <input type="text" id="nom" name="nom" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Email *</label>
+                                    <input type="email" id="email" name="email" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="telephone">Téléphone</label>
+                                    <input type="tel" id="telephone" name="telephone" placeholder="06 XX XX XX XX">
+                                </div>
+                                <div class="form-group">
+                                    <label for="age">Tranche d'âge *</label>
+                                    <select id="age" name="age" required>
+                                        <option value="">Sélectionnez votre âge</option>
+                                        <option value="8-12">8-12 ans</option>
+                                        <option value="13-15">13-15 ans</option>
+                                        <option value="16-18">16-18 ans</option>
+                                        <option value="19-25">19-25 ans</option>
+                                        <option value="26-35">26-35 ans</option>
+                                        <option value="36-50">36-50 ans</option>
+                                        <option value="50+">50+ ans</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="form-group">
-                                <label for="email">Email *</label>
-                                <input type="email" id="email" name="email" required>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="telephone">Téléphone</label>
-                                <input type="tel" id="telephone" name="telephone" placeholder="06 XX XX XX XX">
-                            </div>
-                            <div class="form-group">
-                                <label for="age">Tranche d'âge *</label>
-                                <select id="age" name="age" required>
-                                    <option value="">Sélectionnez votre âge</option>
-                                    <option value="8-12">8-12 ans</option>
-                                    <option value="13-15">13-15 ans</option>
-                                    <option value="16-18">16-18 ans</option>
-                                    <option value="19-25">19-25 ans</option>
-                                    <option value="26-35">26-35 ans</option>
-                                    <option value="36-50">36-50 ans</option>
-                                    <option value="50+">50+ ans</option>
+                                <label for="niveau">Niveau actuel</label>
+                                <select id="niveau" name="niveau">
+                                    <option value="debutant">Débutant</option>
+                                    <option value="loisir">Loisir</option>
+                                    <option value="competition">Compétition</option>
+                                    <option value="veteran">Vétéran</option>
                                 </select>
                             </div>
+                            <div class="form-group">
+                                <label for="objectif">Objectif principal</label>
+                                <select id="objectif" name="objectif">
+                                    <option value="remise-forme">Remise en forme</option>
+                                    <option value="self-defense">Auto-défense</option>
+                                    <option value="competition">Compétition</option>
+                                    <option value="loisir">Loisir</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="message">Message / Questions</label>
+                                <textarea id="message" name="message" rows="4" placeholder="Dites-nous pourquoi vous souhaitez rejoindre le club..."></textarea>
+                            </div>
+                            <div class="form-submit">
+                                <button type="submit" class="btn btn-primary">Envoyer mon inscription</button>
+                                <p class="form-note">* Champs obligatoires</p>
+                            </div>
+                        </form>
+                        <div id="form-success" class="form-success" style="display:none;">
+                            <h3>✅ Merci pour votre inscription !</h3>
+                            <p>Nous avons bien reçu votre demande et vous contacterons sous 48h pour confirmer votre inscription.</p>
                         </div>
-
-                        <div class="form-group">
-                            <label for="niveau">Niveau actuel</label>
-                            <select id="niveau" name="niveau">
-                                <option value="debutant">Débutant</option>
-                                <option value="loisir">Loisir</option>
-                                <option value="competition">Compétition</option>
-                                <option value="veteran">Vétéran</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="objectif">Objectif principal</label>
-                            <select id="objectif" name="objectif">
-                                <option value="remise-forme">Remise en forme</option>
-                                <option value="self-defense">Auto-défense</option>
-                                <option value="competition">Compétition</option>
-                                <option value="loisir">Loisir</option>
-                                <option value="detente">Décontraction</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="message">Message / Questions</label>
-                            <textarea id="message" name="message" rows="4" placeholder="N'hésitez pas à nous poser des questions ou à nous dire pourquoi vous souhaitez rejoindre notre club..."></textarea>
-                        </div>
-
-                        <div class="form-submit">
-                            <button type="submit" class="btn btn-primary">Envoyer mon inscription</button>
-                            <p class="form-note">* Champs obligatoires</p>
-                        </div>
-                    </form>
-
-                    <div id="form-success" class="form-success" style="display: none;">
-                        <h3>✅ Merci pour votre inscription !</h3>
-                        <p>Nous avons bien reçu votre demande et vous contacterons sous 48h pour confirmer votre inscription.</p>
-                        <p>Pendant ce temps, vous pouvez nous suivre sur <a href="https://tiktok.com/@boxespdc" target="_blank">TikTok @boxespdc</a> !</p>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
+    </main>
 
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Boxing Club SPDC</h3>
-                    <p>Devenez Champion de Votre Vie</p>
-                    <p>🏆 Affilié FFB</p>
-                    <p>© 2026 Tous droits réservés</p>
-                </div>
-                <div class="footer-section">
-                    <h3>Contact</h3>
-                    <p>📍 Gymnase de la Morinerie</p>
-                    <p>📧 boxingclubspdc@gmail.com</p>
-                    <p>📞 06 49 09 80 80</p>
-                </div>
-                <div class="footer-section">
-                    <h3>Suivez-nous</h3>
-                    <p>📱 TikTok: @boxespdc</p>
-                    <p>🎥 21 vidéos disponibles</p>
-                    <p>📅 Prochain événement: 14 juin 2026</p>
-                </div>
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div class="footer-section">
+                <h3>Boxing Club SPDC</h3>
+                <p>Devenez Champion de Votre Vie</p>
+                <p>🏆 Affilié FFB</p>
+                <p>© 2026 Boxing Club SPDC. Tous droits réservés.</p>
             </div>
-            <div class="footer-bottom">
-                <hr>
-                <p class="text-center">© 2026 Boxing Club SPDC - Saint-Pierre-des-Corps | Modifié par Cassius</p>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>📍 Gymnase de la Morinerie</p>
+                <p>Saint-Pierre-des-Corps</p>
+                <p>📧 boxingclubspdc@gmail.com</p>
+                <p>📞 06 49 09 80 80</p>
             </div>
+            <div class="footer-section">
+                <h3>Suivez-nous</h3>
+                <p>📱 TikTok : @boxespdc</p>
+                <p>🎥 21 vidéos disponibles</p>
+                <p><a href="https://www.tiktok.com/@boxespdc" target="_blank" rel="noopener">Voir notre TikTok →</a></p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 Boxing Club SPDC - Saint-Pierre-des-Corps</p>
         </div>
     </footer>
 
+    <div id="lightbox" class="lightbox" aria-hidden="true">
+        <button class="lightbox-close" aria-label="Fermer">✕</button>
+        <img id="lightbox-image" src="" alt="Agrandissement photo">
+        <p id="lightbox-caption"></p>
+    </div>
+
+    <script src="js/main.js"></script>
 </body>
 </html>

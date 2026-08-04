@@ -1,10 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /admin/
-Disallow: /private/
-Disallow: /temp/
 
 Sitemap: https://axxam.net/boxingclubspdc/sitemap.xml
-
-# Crawl delay for respectful scraping
-Crawl-delay: 1
