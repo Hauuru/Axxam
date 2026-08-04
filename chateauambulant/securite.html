@@ -25,37 +25,37 @@
                 </tr>
             </thead>
             <tbody>
-                <tr><td>8901</td><td>Calcifère</td><td>API Orchestrateur</td></tr>
-                <tr><td>8902</td><td>Sophie</td><td>API Stratège</td></tr>
-                <tr><td>8903</td><td>Marco</td><td>API Créatif</td></tr>
-                <tr><td>8904</td><td>Hinn</td><td>API Système</td></tr>
-                <tr><td>4000</td><td>LiteLLM</td><td>Proxy Modèles</td></tr>
-                <tr><td>8766–8770</td><td>Sen, Calcifère, Sophie, Marco, Hinn</td><td>WebSocket Gateway</td></tr>
+                <tr><td>89**</td><td>Calcifère</td><td>API Orchestrateur</td></tr>
+                <tr><td>89**</td><td>Sophie</td><td>API Stratège</td></tr>
+                <tr><td>89**</td><td>Marco</td><td>API Créatif</td></tr>
+                <tr><td>89**</td><td>Hinn</td><td>API Système</td></tr>
+                <tr><td>40**</td><td>LiteLLM</td><td>Proxy Modèles</td></tr>
+                <tr><td>87**–87**</td><td>Sen, Calcifère, Sophie, Marco, Hinn</td><td>WebSocket Gateway</td></tr>
             </tbody>
         </table>
 
         <div class="diagramme-grimoire">
             <pre class="mermaid">
             graph LR
-                A[Utilisateur] -->|WebSocket| B[Sen:8766]
-                B -->|Handoff| C[Calcifère:8901]
-                C -->|Route| D[Sophie:8902]
-                C -->|Route| E[Marco:8903]
-                C -->|Route| F[Hinn:8904]
-                F -->|MCP| G[Gateway:5000]
+                A[Utilisateur] -->|WebSocket| B[Sen:87**]
+                B -->|Handoff| C[Calcifère:89**]
+                C -->|Route| D[Sophie:89**]
+                C -->|Route| E[Marco:89**]
+                C -->|Route| F[Hinn:89**]
+                F -->|MCP| G[Gateway:50**]
             </pre>
         </div>
 
         <p class="texte-grimoire">
             <strong>Incantation de vérification</strong> :<br>
-            <code>ss -tulnp | grep -E '8901|8902|8903|8904|4000|8766|8770'</code><br>
+            <code>ss -tulnp | grep -E '89**|89**|89**|89**|40**|87**|87**'</code><br>
             <strong>Sortilège de protection</strong> (dans <code>config.json</code>) :
         </p>
         <pre class="code-grimoire">
 "tools": {
   "ssrfWhitelist": [
-    "127.0.0.1:8901", "127.0.0.1:8902", "127.0.0.1:8903",
-    "127.0.0.1:8904", "127.0.0.1:4000", "localhost:4000"
+    "127.0.0.1:89**", "127.0.0.1:89**", "127.0.0.1:89**",
+    "127.0.0.1:89**", "127.0.0.1:40**", "localhost:40**"
   ]
 }
         </pre>
@@ -232,11 +232,11 @@ model_list:
         <div class="diagramme-grimoire">
             <pre class="mermaid">
             graph TD
-                A[Sen] -->|WebSocket:8766| B[Calcifère]
-                B -->|API:8901| C[Sophie]
-                B -->|API:8901| D[Marco]
-                B -->|API:8901| E[Hinn]
-                E -->|MCP:5000| F[Gateway]
+                A[Sen] -->|WebSocket:87**| B[Calcifère]
+                B -->|API:89**| C[Sophie]
+                B -->|API:89**| D[Marco]
+                B -->|API:89**| E[Hinn]
+                E -->|MCP:50**| F[Gateway]
                 style A fill:#f9d71c,stroke:#333
                 style F fill:#d4af37,stroke:#333
             </pre>
@@ -251,13 +251,13 @@ model_list:
                 <tr>
                     <td>Sen</td>
                     <td><code>~/.nanobot-sen/workspace/**</code></td>
-                    <td>WebSocket seulement (8766)</td>
+                    <td>WebSocket seulement (87**)</td>
                     <td><code>exec</code> (handoff)</td>
                 </tr>
                 <tr>
                     <td>Hinn</td>
                     <td><code>/home/hauuru/logs/</code> (lecture)</td>
-                    <td>SSRF whitelist (8904, 5000)</td>
+                    <td>SSRF whitelist (89**, 50**)</td>
                     <td><code>mcp_ls</code>, <code>shell</code></td>
                 </tr>
                 <tr>
@@ -366,9 +366,6 @@ Tous les 28 jours, je :
                 style D fill:#f9d71c,stroke:#333
             </pre>
         </div>
-
-        <p class="texte-grimoire">
-        </div>
     </footer>
 
     <footer class="porte-grimoire">
@@ -381,11 +378,3 @@ Tous les 28 jours, je :
     </script>
 </body>
 </html>
-    <div class="footer">
-        <a href="index.html">Accueil</a> |
-        <a href="architecture.html">Architecture</a> |
-        <a href="memoire.html">Mémoire</a> |
-        <a href="poesie.html">Poésie</a> |
-        <a href="securite.html">Sécurité</a>
-    </div>
-</body>

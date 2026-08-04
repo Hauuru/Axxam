@@ -41,7 +41,7 @@
             </li>
             <li>
                 <span class="timestamp">20/07/2026</span> :
-                Intégration de <strong>LiteLLM</strong> (port 4000) et configuration des modèles (Nemotron, Llama 3.3, GLM-4.7, GPT-OSS 120B).
+                Intégration de <strong>LiteLLM</strong> (port 40**) et configuration des modèles (Nemotron, Llama 3.3, GLM-4.7, GPT-OSS 120B).
                 Mise en place des <em>fallbacks</em> pour Cerebras.
             </li>
             <li>
@@ -70,7 +70,7 @@
                 généraient une <em>surface d'attaque élargie</em> et une <em>consommation excessive de tokens</em>
                 (chaque commande était encapsulée dans un prompt LLM).
             </p>
-            <p>
+            <div>
                 <strong>Solution</strong> :
                 Un <strong>gateway MCP unique</strong> (Python, socket Unix) centralise tous les appels outils.
                 Avantages :
@@ -79,7 +79,7 @@
                     <li>Traçabilité complète via <code>dossier utilisateur/logs/mcp_audit.log</code>.</li>
                     <li>Contrôle granulaire des permissions (ex: <code>servers.json</code> restreint <code>rm</code> à Calcifère).</li>
                 </ul>
-            </p>
+            </div>
             <pre>
 # Exemple de configuration dans servers.json
 {
@@ -97,11 +97,11 @@
             <h3>2. Utilisation d'un Socket Unix</h3>
             <p>
                 <strong>Problème</strong> :
-                Les ports TCP (ex: 5000) étaient déjà saturés par LiteLLM (4000), llama.cpp (8080),
+                Les ports TCP (ex: 50**) étaient déjà saturés par LiteLLM (40**), llama.cpp (80**),
                 et les APIs des agents (port dédié-port dédié). Ajouter un nouveau service HTTP aurait nécessité une
                 reconfiguration complexe du pare-feu et des règles SSRF.
             </p>
-            <p>
+            <div>
                 <strong>Solution</strong> :
                 Le socket Unix (<code>/tmp/nanobot_gateway.sock</code>) élimine les conflits de ports
                 et est nativement compatible avec le protocole <code>stdio</code> de MCP.
@@ -111,7 +111,7 @@
                     <li>Latence réduite (communication inter-processus locale).</li>
                     <li>Sécurité renforcée (accès limité à l'utilisateur <code>hauuru</code>).</li>
                 </ul>
-            </p>
+            </div>
             <pre>
 # Commande de test du socket
 echo '{"jsonrpc": "2.0", "method": "ls", "params": {"path": "/home/hauuru"}, "id": 1}' | \
@@ -147,7 +147,7 @@ socat - UNIX-CONNECT:/tmp/nanobot_gateway.sock
                 pour tous les agents, sans logs. Risque critique identifié lors d'un test :
                 <pre>hinn$ rm -rf dossier utilisateur/Desktop/</pre>
             </p>
-            <p>
+            <div>
                 <strong>Solution</strong> :
                 <ul>
                     <li>Restriction de <code>rm</code> et <code>mv</code> à <strong>Calcifère uniquement</strong>.</li>
@@ -158,7 +158,7 @@ socat - UNIX-CONNECT:/tmp/nanobot_gateway.sock
                     </li>
                     <li>Validation des permissions via <code>check_permission()</code> dans le gateway.</li>
                 </ul>
-            </p>
+            </div>
         </div>
         <div>
             <h3>3. Fallbacks LiteLLM pour Cerebras</h3>
@@ -193,22 +193,22 @@ providers:
                 <strong>Rôle</strong> :
                 Script principal pour démarrer l'ensemble des services du Foyer (LiteLLM, agents Nanobot, MCP Gateway).
             </p>
-            <p>
+            <div>
                 <strong>Ports gérés</strong> :
                 <ul>
-                    <li><strong>4000</strong> : LiteLLM (proxy pour les modèles)</li>
+                    <li><strong>40**</strong> : LiteLLM (proxy pour les modèles)</li>
                     <li><strong>port dédié-port dédié</strong> : APIs des agents (Calcifère, Sophie, Marco, Hinn)</li>
                     <li><strong>port dédié</strong> : Sen (WebSocket gateway)</li>
                 </ul>
-            </p>
-            <p>
+            </div>
+            <div>
                 <strong>Mécanismes de sécurité</strong> :
                 <ul>
                     <li>Libération forcée des ports avant redémarrage : <code>pkill -9 -f 'nanobot'</code>.</li>
                     <li>Redirection des logs vers <code>dossier utilisateur/logs/</code> (ex: <code>nohup ... > "$LOG_DIR/litellm.log" 2>&1 &</code>).</li>
-                    <li>Vérification de l'état des services via <code>ss -tulnp | grep -E 'port dédié|port dédié|port dédié|port dédié|port dédié|4000'</code>.</li>
+                    <li>Vérification de l'état des services via <code>ss -tulnp | grep -E 'port dédié|port dédié|port dédié|port dédié|port dédié|40**'</code>.</li>
                 </ul>
-            </p>
+            </div>
             <pre>
 # Exemple de commande de démarrage
 nohup nanobot serve --config ~/.nanobot-calcifere/config.json \
@@ -223,22 +223,22 @@ nohup nanobot serve --config ~/.nanobot-calcifere/config.json \
                 Utilise un <strong>socket Unix</strong> (<code>/tmp/nanobot_gateway.sock</code>) pour
                 communiquer avec les agents Nanobot.
             </p>
-            <p>
+            <div>
                 <strong>Outils exposés</strong> :
                 <ul>
                     <li><strong>Lecture seule</strong> : <code>ls</code>, <code>cat</code>, <code>grep</code>, <code>df</code>, <code>du</code> (accessibles par Sen, Hinn, Marco).</li>
                     <li><strong>Écriture restreinte</strong> : <code>rm</code>, <code>mv</code> (uniquement Calcifère, avec logs).</li>
                     <li><strong>Métatools</strong> : <code>list_servers</code>, <code>discover_tools</code>, <code>execute_tool</code>.</li>
                 </ul>
-            </p>
-            <p>
+            </div>
+            <div>
                 <strong>Mécanismes de sécurité</strong> :
                 <ul>
                     <li>Validation des permissions via <code>check_permission(agent, tool)</code> avant exécution.</li>
                     <li>Logs centralisés dans <code>dossier utilisateur/logs/mcp_nanobot_gateway.log</code> (format : <code>[TIMESTAMP] [AGENT] [TOOL] [PARAMS]</code>).</li>
                     <li>Utilisation de <code>subprocess</code> pour encapsuler les appels système (isolation).</li>
                 </ul>
-            </p>
+            </div>
             <pre>
 # Exemple de configuration dans servers.json
 {
@@ -301,7 +301,7 @@ nohup nanobot serve --config ~/.nanobot-calcifere/config.json \
                     <td>Stratège (projets, mémoire vectorielle)</td>
                     <td><code>llama-3.3-70b</code></td>
                     <td>port dédié</td>
-                    <td>8768</td>
+                    <td>87**</td>
                     <td>Aucun (définit les règles, n'exécute pas)</td>
                 </tr>
                 <tr>
@@ -309,7 +309,7 @@ nohup nanobot serve --config ~/.nanobot-calcifere/config.json \
                     <td>Créatif (code, emails, prompts)</td>
                     <td><code>glm-4.7-flash</code></td>
                     <td>port dédié</td>
-                    <td>8769</td>
+                    <td>87**</td>
                     <td>Lecture seule (<code>cat</code> pour références)</td>
                 </tr>
                 <tr>
@@ -317,7 +317,7 @@ nohup nanobot serve --config ~/.nanobot-calcifere/config.json \
                     <td>Exécutant système (shell, SQL, web)</td>
                     <td><code>gpt-oss-120b</code></td>
                     <td>port dédié</td>
-                    <td>8770</td>
+                    <td>87**</td>
                     <td>Lecture seule (<code>ls</code>, <code>df</code>, <code>grep</code>)</td>
                 </tr>
             </tbody>
@@ -327,7 +327,7 @@ nohup nanobot serve --config ~/.nanobot-calcifere/config.json \
             <pre>
 Utilisateur → Sen (WS port dédié) → Calcifère (API port dédié) → [Sophie|Marco|Hinn]
             </pre>
-            <p>
+            <div>
                 <strong>Règles de routage</strong> :
                 <ul>
                     <li>Sen clarifie l'intention avant de router vers Calcifère.</li>
@@ -339,7 +339,7 @@ Utilisateur → Sen (WS port dédié) → Calcifère (API port dédié) → [Sop
                         </ul>
                     </li>
                 </ul>
-            </p>
+            </div>
         </div>
     </section>
 
@@ -358,19 +358,19 @@ Utilisateur → Sen (WS port dédié) → Calcifère (API port dédié) → [Sop
   ├─→ Marco (API port dédié) — Code, emails, prompts créatifs
   └─→ Hinn (API port dédié) — Exécution système (shell, SQL, web, MCP Gateway)
             </pre>
-            <p>
+            <div>
                 <strong>Protocoles</strong> :
                 <ul>
                     <li>Sen ↔ Calcifère : <code>HTTP POST</code> via <code>sen_handoff.sh</code> (port port dédié).</li>
                     <li>Calcifère ↔ [Sophie/Marco/Hinn] : <code>HTTP POST</code> via <code>calcifere_handoff.sh</code> (ports port dédié-port dédié).</li>
                     <li>Hinn ↔ MCP Gateway : <code>Socket Unix</code> (<code>/tmp/nanobot_gateway.sock</code>, protocole JSON-RPC 2.0).</li>
                 </ul>
-            </p>
+            </div>
         </div>
         <div>
             <h3>2. Composants Techniques</h3>
             <div>
-                <h4>LiteLLM (Port 4000)</h4>
+                <h4>LiteLLM (Port 40**)</h4>
                 <p>
                     <strong>Rôle</strong> : Proxy unifié pour les appels aux modèles (Nemotron, Llama, GLM, Cerebras).
                     Gère les <em>fallbacks</em> et la charge des clés API.
@@ -391,13 +391,13 @@ model_list:
       api_key: "*****"
     </pre>
                 </p>
-                <p>
+                <div>
                     <strong>Fallbacks</strong> :
                     <ul>
                         <li><code>nvidia-nemotron-ultra</code> → <code>gpt-oss-120b</code> → <code>mistral-medium-2508</code></li>
                         <li><code>llama-3.3-70b</code> → <code>mistral-medium-2508</code></li>
                     </ul>
-                </p>
+                </div>
             </div>
             <div>
                 <h4>MCP Nanobot Gateway</h4>
@@ -406,7 +406,7 @@ model_list:
                     Centralise les appels aux outils système (<code>ls</code>, <code>cat</code>, <code>rm</code>, etc.)
                     via un socket Unix pour réduire la consommation de tokens et sécuriser les accès.
                 </p>
-                <p>
+                <div>
                     <strong>Détails techniques</strong> :
                     <ul>
                         <li>
@@ -433,7 +433,7 @@ model_list:
                             (format : <code>[TIMESTAMP] [AGENT] [TOOL] [PARAMS]</code>).
                         </li>
                     </ul>
-                </p>
+                </div>
                 <p>
                     <strong>Exemple d'intégration avec Hinn</strong> :
                     <pre>
@@ -478,11 +478,3 @@ model_list:
     </script>
 </body>
 </html>
-    <div class="footer">
-        <a href="index.html">Accueil</a> |
-        <a href="architecture.html">Architecture</a> |
-        <a href="memoire.html">Mémoire</a> |
-        <a href="poesie.html">Poésie</a> |
-        <a href="securite.html">Sécurité</a>
-    </div>
-</body>

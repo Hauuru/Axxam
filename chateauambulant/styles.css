@@ -18,8 +18,8 @@ body {
     max-width: 1000px;
     margin: 0 auto;
     padding: 20px;
-    background-color: var(--parchment);
-    color: var(--ink);
+    background-color: var(--couleur-fond);
+    color: var(--couleur-texte);
 }
 
 h1, h2, h3 {
@@ -77,33 +77,6 @@ nav li a:hover {
     background-color: var(--gold);
     color: white;
 }
-/* Pied de page */
-.footer {
-    background-color: #2c3e50;
-    color: #d4af37;
-    text-align: center;
-    padding: 15px;
-    position: fixed;
-    bottom: 0;
-    width: 100vw;
-    margin-left: -50vw;
-    left: 50%;
-    font-family: monospace;
-    border-top: 1px solid #d4af37;
-}
-
-.footer a {
-    color: #f9f9f9;
-    text-decoration: none;
-    margin: 0 10px;
-    font-weight: bold;
-}
-
-.footer a:hover {
-    text-decoration: underline;
-    color: #d4af37;
-}
-
 /* ----- Effets Magiques ----- */
 
 /* Poussière d'étoiles (fond animé) */
@@ -168,23 +141,10 @@ body::before {
 }
 
 /* Variables pour le mode nuit */
-:root {
-    --couleur-fond: #f5e7d3;
-    --couleur-texte: #3a2c1a;
-    --couleur-or: #d4af37;
-    --couleur-parchemin: #e8d5b5;
-}
-
 body.mode-nuit {
     --couleur-fond: #1a120b;
     --couleur-texte: #d4af37;
     --couleur-parchemin: #2a1e0f;
-}
-
-/* Appliquer les variables aux éléments existants */
-body {
-    background-color: var(--couleur-fond);
-    color: var(--couleur-texte);
 }
 
 .parchemin {
@@ -290,26 +250,10 @@ body {
 .mermaid .node text {
     fill: var(--couleur-texte) !important;
     font-family: 'Cinzel', serif !important;
-    font-size: 14px !important;
     font-weight: 500 !important;
 }
 
 .mermaid .edgeLabel text {
     fill: var(--couleur-texte) !important;
     background-color: var(--couleur-parchemin) !important;
-}
-
-/* Animation des bordures (sans overflow: hidden) */
-.grimoire-table::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border: 2px solid var(--couleur-or);
-    pointer-events: none;
-    animation: inkDry 3s ease-in-out infinite;
-    opacity: 0.7;
-    z-index: -1; /* Place l'animation derrière le contenu */
 }
