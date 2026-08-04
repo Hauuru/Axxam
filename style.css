@@ -489,3 +489,208 @@ p {
         padding: var(--space-md);
     }
 }
+
+/* ===== STYLES CATALOGUE SERVICES ===== */
+.catalog-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.catalog-card .service-points {
+    list-style: none;
+    margin: 0 0 var(--space-lg);
+    padding: 0;
+    flex: 1;
+}
+
+.catalog-card .service-points li {
+    padding: var(--space-xs) 0 var(--space-xs) 1.6rem;
+    position: relative;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+    color: var(--text-light);
+}
+
+.catalog-card .service-points li:last-child {
+    border-bottom: none;
+}
+
+.catalog-card .service-points li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+    font-weight: bold;
+}
+
+.service-price {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--primary-dark);
+    padding: var(--space-sm);
+    margin-bottom: var(--space-md);
+    background: linear-gradient(135deg, var(--primary-light), white);
+    border-radius: var(--border-radius);
+}
+
+.service-price small {
+    display: block;
+    font-weight: normal;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: var(--space-xs);
+}
+
+.service-cta {
+    display: block;
+    text-align: center;
+    background-color: var(--primary);
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: var(--space-sm);
+    border-radius: var(--border-radius);
+    transition: background-color 0.3s ease;
+}
+
+.service-cta:hover {
+    background-color: var(--primary-dark);
+}
+
+/* ===== STYLES PAGE TARIFS ===== */
+.tarif-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: var(--space-lg);
+    background: white;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.tarif-table th,
+.tarif-table td {
+    padding: var(--space-md);
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+}
+
+.tarif-table th {
+    background-color: var(--primary);
+    color: white;
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+}
+
+.tarif-table tr:last-child td {
+    border-bottom: none;
+}
+
+.tarif-table tbody tr:nth-child(even) {
+    background: var(--bg-light);
+}
+
+.tarif-table td:first-child {
+    text-align: left;
+    font-weight: 600;
+    color: var(--primary-dark);
+}
+
+.tarif-table .tarif-prix {
+    font-weight: bold;
+    font-size: 1.15rem;
+    color: var(--primary-dark);
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .tarif-table th,
+    .tarif-table td {
+        padding: var(--space-sm);
+    }
+    
+    .tarif-table th {
+        font-size: 1rem;
+    }
+    
+    .tarif-table .tarif-prix {
+        font-size: 1rem;
+    }
+}
+
+.tarif-note {
+    background: var(--bg-light);
+    border-left: 4px solid var(--primary);
+}
+
+.tarif-cta {
+    display: inline-block;
+    background-color: var(--primary);
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--border-radius);
+    transition: background-color 0.3s ease;
+}
+
+.tarif-cta:hover {
+    background-color: var(--primary-dark);
+}
+
+/* ===== APERÇU PRESTATIONS ACCUEIL ===== */
+.presta-grid {
+    display: grid;
+    gap: var(--space-lg);
+}
+
+@media (min-width: 768px) {
+    .presta-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.presta-card {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: var(--space-lg);
+    text-align: center;
+    box-shadow: 0 4px 6px var(--shadow);
+    display: flex;
+    flex-direction: column;
+}
+
+.presta-card .presta-emoji {
+    font-size: 2.5rem;
+    margin-bottom: var(--space-md);
+}
+
+.presta-card h3 {
+    color: var(--primary);
+    margin-bottom: var(--space-sm);
+}
+
+.presta-card p {
+    flex: 1;
+}
+
+.presta-card .presta-price {
+    font-weight: bold;
+    color: var(--primary-dark);
+    margin-bottom: var(--space-md);
+}
+
+.presta-link {
+    display: inline-block;
+    background-color: var(--primary);
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--border-radius);
+    transition: background-color 0.3s ease;
+}
+
+.presta-link:hover {
+    background-color: var(--primary-dark);
+}
