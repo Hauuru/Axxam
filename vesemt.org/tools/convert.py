@@ -135,7 +135,11 @@ def render(node, downloads, slug):
         return [f"<{tag}>{inner}</{tag}>"] if inner else []
     if node.tag == "blockquote":
         inner = concat(render_children(node, downloads, slug))
-        return [f"<blockquote><p>{inner}</p></blockquote>"] if inner else []
+        if not inner.strip():
+            return []
+        if re.match(r"^\s*<(p|h[1-6]|ul|ol|blockquote|div|table|figure|pre)\b", inner):
+            return [f"<blockquote>{inner}</blockquote>"]
+        return [f"<blockquote><p>{inner}</p></blockquote>"]
     if node.tag in ("ul", "ol"):
         lis = []
         for c in node.children:
@@ -572,10 +576,15 @@ def main():
             print(f"  image contenu : {key}")
             download_image(url, dl)
 
-    # nettoyage final : paragraphes vides, retournés
+    # nettoyage final : paragraphes vides, retournés, balises imbriquées identiques
     body_html = re.sub(r"<p>\s*</p>", "", body_html)
     body_html = re.sub(r"<p><p>", "<p>", body_html)
     body_html = re.sub(r"</p></p>", "</p>", body_html)
+    for _ in range(3):
+        body_html = re.sub(r"<(strong|em)>\s*<\1>", r"<\1>", body_html)
+        body_html = re.sub(r"</(strong|em)>\s*</\1>", r"</\1>", body_html)
+        body_html = re.sub(r"<blockquote>\s*<p>\s*<(h[1-6]|ul|ol|p|blockquote)", r"<blockquote><\1", body_html)
+        body_html = re.sub(r"</(h[1-6]|ul|ol|p|blockquote)>\s*</p>\s*</blockquote>", r"</\1></blockquote>", body_html)
     body_html = re.sub(r"\n{3,}", "\n\n", body_html).strip()
 
     # écriture
