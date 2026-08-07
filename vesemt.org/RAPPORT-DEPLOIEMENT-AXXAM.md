@@ -104,7 +104,8 @@ axxam.net/
 ├── a-propos.html
 ├── contact.html
 ├── services.html
-├── gobelet.html
+├── gobelet/
+│   └── index.html
 ├── vesemt.org/ (VESEMT)
 │   ├── index.html
 │   ├── qui-sommes-nous.html

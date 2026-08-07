@@ -18,7 +18,8 @@ Axxam/
 ├── contact.html            ← Contact (axxam.net)
 ├── services.html           ← Services en catalogue (axxam.net)
 ├── tarifs.html             ← Page tarifs (axxam.net)
-├── gobelet.html            ← Page Gobelet (axxam.net)
+├── gobelet/                ← Générateur de gobelets paramétrique (axxam.net/gobelet/)
+│   └── index.html
 ├── style.css               ← Feuille de style principale (axxam.net)
 ├── favicon.png, logo.jpg   ← Ressources (axxam.net)
 ├── CNAME, robots.txt, sitemap.xml  ← Configuration
