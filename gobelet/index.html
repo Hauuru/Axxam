@@ -1118,11 +1118,12 @@
                 };
                 const originalControlTarget = controls ? controls.target.clone() : null;
                 
+                // Boîte englobante SANS réparenter les meshes (un add() les
+                // retirerait de la scène : le gobelet et une partie des anneaux
+                // disparaîtraient après l'export)
                 const frameBox = new THREE.Box3();
-                const frameGroup = new THREE.Group();
-                if (gobeletMesh) frameGroup.add(gobeletMesh);
-                if (ringsGroup && ringsGroup.visible) ringsGroup.children.forEach(r => frameGroup.add(r));
-                frameBox.setFromObject(frameGroup);
+                frameBox.expandByObject(gobeletMesh);
+                if (ringsGroup && ringsGroup.visible) ringsGroup.children.forEach(r => frameBox.expandByObject(r));
                 
                 const boxSize = frameBox.getSize(new THREE.Vector3());
                 const boxCenter = frameBox.getCenter(new THREE.Vector3());
@@ -1130,7 +1131,11 @@
                 const fitWidth = (boxSize.x / 2) / Math.tan((camera.fov * Math.PI) / 360 * camera.aspect);
                 const distance = Math.max(fitHeight, fitWidth) * 1.4;
                 
-                camera.position.set(boxCenter.x, boxCenter.y, boxCenter.z + distance);
+                // Conserver la direction de vue courante de l'utilisateur
+                const viewDir = controls && controls.target
+                    ? new THREE.Vector3().subVectors(camera.position, controls.target).normalize()
+                    : new THREE.Vector3(0, 0, 1);
+                camera.position.copy(boxCenter).addScaledVector(viewDir, distance);
                 camera.near = distance / 100;
                 camera.far = distance * 10;
                 camera.updateProjectionMatrix();

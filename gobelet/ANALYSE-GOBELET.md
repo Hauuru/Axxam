@@ -246,7 +246,14 @@ Décision utilisateur : **« B puis A »** — retrait de l'ébauche/comparaison
 - F4 : case « Afficher section » supprimée (l'indicateur de coupe ne mentionne
   plus d'option sans effet).
 - B4 : `captureJPG` calcule un **cadrage automatique** (boîte englobante
-  gobelet ± anneaux, `camera.position` recentrée, near/far ajustés).
+  gobelet ± anneaux via `Box3.expandByObject`, `camera.position` recentrée,
+  near/far ajustés, angle de vue courant conservé). ⚠️ Correctif post-refactor :
+  le premier cadrage utilisait `frameGroup.add(...)`, qui **réparente** les meshes
+  hors de la scène en Three.js → le gobelet et une partie des anneaux (l'`add()`
+  pendant le `forEach` sur `ringsGroup.children` fait sauter une maille sur deux)
+  disparaissaient de la vue après l'export. Désormais la boîte est calculée sans
+  déplacer les objets ; vérifié par test : gobelet et 4/4 anneaux restent dans la
+  scène après export JPG (seul / avec anneaux) et STL.
 - B5/B6 : le bandeau « VUE EN COUPE » est dessiné sur un bloc blanc opaque en
   haut à gauche (le bloc paramètres conserve son emplacement) ; le gobelet est
   maintenant centré par le cadrage auto → plus de recouvrement.
