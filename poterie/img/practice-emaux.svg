@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#f7f5f1"/>
+  <rect x="80" y="60" width="240" height="180" rx="10" fill="#6f4e37"/>
+  <rect x="80" y="60" width="240" height="180" rx="10" fill="none" stroke="#cfb9a4" stroke-width="3"/>
+  <ellipse cx="200" cy="150" rx="70" ry="50" fill="rgba(255,255,255,0.18)"/>
+  <text x="200" y="278" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#8a8177" letter-spacing="2">Émaux</text>
+</svg>

@@ -1,12 +1,13 @@
 # Axxam – Dépôt Multi-Sites
 
-Bienvenue dans le dépôt **Axxam**, qui contient quatre projets web distincts :
+Bienvenue dans le dépôt **Axxam**, qui contient plusieurs projets web distincts :
 
 1. **`/`** – **Portail Axxam** : page hub unifiée donnant accès à tous les sites de l'univers Axxam
 2. **`/animation/`** – Site **axxam.net/animation** : site professionnel d'entrepreneur (services en catalogue, page tarifs)
-3. **`/vesemt.org/`** – Site **vesemt.org** : conversion HTML+CSS du site WordPress politique
-4. **`/boxingclubspdc/`** – Site **Boxing Club SPDC** : one-page du club de boxe (refondu août 2026)
-5. **`/chateauambulant/`** – Site **Château Ambulant** : grimoire documentant le système multi-agents « Foyer de Calcifère »
+3. **`/poterie/`** – Site **Poterie Axxam Touraine** : tourneur potier, gobelets, cuisson et émaux + générateur de gobelets 3D
+4. **`/vesemt.org/`** – Site **vesemt.org** : conversion HTML+CSS du site WordPress politique
+5. **`/boxingclubspdc/`** – Site **Boxing Club SPDC** : one-page du club de boxe (refondu août 2026)
+6. **`/chateauambulant/`** – Site **Château Ambulant** : grimoire documentant le système multi-agents « Foyer de Calcifère »
 
 ---
 
@@ -26,8 +27,14 @@ Axxam/
 │   ├── style.css           ← Feuille de style principale
 │   └── favicon.png, logo.jpg  ← Ressources
 ├── a-propos.html, services.html, tarifs.html, contact.html  ← Redirections vers /animation/
-├── gobelet/                ← Générateur de gobelets paramétrique (axxam.net/gobelet/)
-│   └── index.html
+├── poterie/                ← Site Poterie Axxam Touraine (axxam.net/poterie/)
+│   ├── index.html          ← Accueil : présentation + pièces + encart générateur
+│   ├── pratique.html       ← Tournage, cuisson, émaux
+│   ├── galerie.html        ← Grille filtrable + lightbox
+│   ├── gobelet/            ← Générateur de gobelets paramétrique (axxam.net/poterie/gobelet/)
+│   ├── style.css           ← Thème graphite/terracotta
+│   ├── js/galerie.js       ← Filtres + lightbox
+│   └── img/                ← Placeholders SVG (à remplacer par photos Instagram)
 ├── CNAME, robots.txt, sitemap.xml  ← Configuration
 │
 ├── vesemt.org/             ← Site HTML+CSS de vesemt.org
@@ -76,6 +83,14 @@ Axxam/
 - HTML+CSS simple et léger, sans framework
 - Accessible sur `https://axxam.net/animation/`
 
+### poterie (sous-dossier) — Axxam Touraine
+- Site **Poterie Axxam Touraine** : tourneur potier (gobelets, ergonomie, cuisson, émaux)
+- Multi-pages : accueil, la pratique (tournage/cuisson/émaux), galerie filtrable + lightbox
+- **Générateur de gobelets 3D** intégré dans le site (`/poterie/gobelet/`, ex-`/gobelet/`)
+- Thème graphite/terracotta, titres Cormorant Garamond, JS vanilla
+- Images : placeholders SVG — à remplacer par les photos Instagram `@axxamtouraine`
+- Accessible sur `https://axxam.net/poterie/`
+
 ### vesemt.org (sous-dossier)
 - Conversion statique du site WordPress politique **VESEMT** (Vivre Surtout Ensemble et Si Possible Solidaires en Métropole Tourangelle)
 - 20 pages HTML + 20 images + 1 feuille CSS
@@ -120,6 +135,13 @@ Le dossier `/vesemt.org/` est une **copie HTML+CSS** du site WordPress `vesemt.o
 - Responsive design (media queries)
 - Catalogue de services avec prix + page tarifs dédiée
 
+### poterie
+- HTML5 + CSS3 (Flexbox, Grid, Variables CSS, animations)
+- JavaScript Vanilla (filtres galerie + lightbox)
+- Génome paramétrique : gobelets 3D (Three.js via CDN), exports JPG/STL
+- Responsive design, SEO (Open Graph, sitemap)
+- Google Fonts (Cormorant Garamond)
+
 ### vesemt.org
 - HTML5 sémantique
 - CSS3 (dossier `vesemt-css/`)
@@ -144,9 +166,10 @@ Les sites sont déployés via **GitHub Pages** :
 
 1. **Portail Axxam** : Racine du dépôt → `https://hauuru.github.io/Axxam/`
 2. **axxam.net/animation** : Sous-dossier → `https://hauuru.github.io/Axxam/animation/`
-3. **vesemt.org** : Sous-dossier → `https://hauuru.github.io/Axxam/vesemt.org/`
-4. **boxingclubspdc** : Sous-dossier → `https://hauuru.github.io/Axxam/boxingclubspdc/`
-5. **chateauambulant** : Sous-dossier → `https://hauuru.github.io/Axxam/chateauambulant/`
+3. **poterie** : Sous-dossier → `https://hauuru.github.io/Axxam/poterie/`
+4. **vesemt.org** : Sous-dossier → `https://hauuru.github.io/Axxam/vesemt.org/`
+5. **boxingclubspdc** : Sous-dossier → `https://hauuru.github.io/Axxam/boxingclubspdc/`
+6. **chateauambulant** : Sous-dossier → `https://hauuru.github.io/Axxam/chateauambulant/`
 
 ### Activation GitHub Pages
 - Aller dans **Settings → Pages** du dépôt
@@ -164,6 +187,13 @@ Attendre 1-2 minutes, puis les sites sont accessibles.
 - Le **portail** : éditer `index.html` (racine) et `hub.css`
 - Le **site animation** : éditer `animation/index.html`, `animation/services.html`, etc.
 - Modifier `animation/style.css` pour le style global du site animation
+- Commit & push
+
+### Pour **poterie**
+- Éditer les fichiers HTML dans `/poterie/` (index, pratique, galerie)
+- Modifier `/poterie/style.css` et `/poterie/js/galerie.js`
+- Remplacer les placeholders `/poterie/img/*.svg` par les photos réelles (Instagram @axxamtouraine)
+- Le générateur vit dans `/poterie/gobelet/` (bouton « ← Retour » déjà intégré)
 - Commit & push
 
 ### Pour **vesemt.org**
@@ -231,4 +261,4 @@ Pour toute question sur le dépôt ou les sites :
 ---
 
 **Dernière mise à jour** : 8 août 2026
-**Statut** : ✅ Opérationnel, déployé via GitHub Pages — portail axxam.net, site animation/ (catalogue + tarifs) et boxingclubspdc (one-page refondu) en ligne
+**Statut** : ✅ Opérationnel, déployé via GitHub Pages — portail axxam.net, site animation/, poterie (avec générateur de gobelets) et boxingclubspdc en ligne

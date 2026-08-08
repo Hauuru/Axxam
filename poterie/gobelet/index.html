@@ -169,6 +169,24 @@
         /* ============ ANIMATIONS ============ */
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         .pulse { animation: pulse 2s infinite; }
+        /* ============ LIEN RETOUR (intégration site poterie) ============ */
+        .poterie-back {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            z-index: 9999;
+            background: #b0452f;
+            color: #fff;
+            font-family: system-ui, sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 999px;
+            box-shadow: 0 2px 10px rgba(31, 41, 51, 0.35);
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .poterie-back:hover { background: #8f3624; transform: translateX(-2px); }
     </style>
     
     <!-- Bibliothèques Three.js -->
@@ -178,6 +196,7 @@
 </head>
 
 <body>
+    <a class="poterie-back" href="../index.html" title="Retour à l'atelier poterie">← Retour</a>
     <!-- Conteneur principal -->
     <div class="container">
         <!-- Panneau de contrôle -->

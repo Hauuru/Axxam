@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#f7f5f1"/>
+  <ellipse cx="200" cy="250" rx="130" ry="12" fill="rgba(31,41,51,0.10)"/>
+  <path d="M120 130 C120 95 150 80 200 80 C250 80 280 95 280 130 C280 160 268 200 258 232 L250 248 L150 248 L142 232 C132 200 120 160 120 130 Z" fill="#586e6e"/>
+  <ellipse cx="200" cy="80" rx="80" ry="14" fill="#bfd0d0"/>
+  <ellipse cx="200" cy="80" rx="80" ry="14" fill="none" stroke="#586e6e" stroke-width="2"/>
+  <ellipse cx="200" cy="80" rx="62" ry="9" fill="#f7f5f1" opacity="0.5"/>
+  <text x="200" y="285" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#8a8177" letter-spacing="2">Cuisson</text>
+</svg>

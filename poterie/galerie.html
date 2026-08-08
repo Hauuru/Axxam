@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galerie — Axxam Touraine</title>
+    <meta name="description" content="Galerie de poteries d'Axxam Touraine : gobelets tournés main, émaux réalisés à l'atelier, cuissons. Photos issues de l'atelier et d'Instagram.">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://axxam.net/poterie/galerie.html">
+    <meta property="og:title" content="Galerie — Axxam Touraine">
+    <meta property="og:description" content="Gobelets, émaux et cuissons : la galerie de l'atelier.">
+    <meta property="og:image" content="https://axxam.net/poterie/img/gallery-1.svg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://axxam.net/poterie/galerie.html">
+    <meta property="twitter:title" content="Galerie — Axxam Touraine">
+    <meta property="twitter:description" content="Gobelets, émaux et cuissons : la galerie de l'atelier.">
+    <meta property="twitter:image" content="https://axxam.net/poterie/img/gallery-1.svg">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="../favicon.png">
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="index.html" class="brand">
+                <span class="brand-name">Axxam Touraine</span>
+                <span class="brand-tag">Tourneur potier</span>
+            </a>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="pratique.html">La pratique</a></li>
+                    <li><a href="galerie.html" class="active">Galerie</a></li>
+                    <li><a href="gobelet/">L'outil gobelet</a></li>
+                </ul>
+            </nav>
+            <a class="header-instagram btn-ghost btn" href="https://instagram.com/axxamtouraine" target="_blank" rel="noopener" style="padding:0.4rem 0.9rem; font-size:0.85rem;">📷 @axxamtouraine</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero" style="padding:var(--space-xl) 0;">
+            <div class="container">
+                <p class="hero-kicker">L'atelier en images</p>
+                <h1>Galerie</h1>
+                <p>Gobelets, essais d'émaux et cuissons. Les photos de l'atelier sont régulièrement partagées sur Instagram — la galerie sera bientôt alimentée par les dernières pièces.</p>
+            </div>
+        </section>
+
+        <section class="section" style="padding-top:var(--space-lg);">
+            <div class="container">
+                <div class="filters" id="filters">
+                    <button class="filter-btn active" data-filter="all">Tous</button>
+                    <button class="filter-btn" data-filter="gobelets">Gobelets</button>
+                    <button class="filter-btn" data-filter="emaux">Émaux</button>
+                    <button class="filter-btn" data-filter="cuisson">Cuisson</button>
+                    <button class="filter-btn" data-filter="divers">Divers</button>
+                </div>
+
+                <div class="gallery-grid" id="gallery">
+
+                    <figure class="gallery-item" data-category="gobelets">
+                        <img src="img/gallery-1.svg" alt="Gobelet Sillon, émail terracotta">
+                        <figcaption class="gallery-caption"><span class="cat">Gobelets</span>Gobelet « Sillon » — émail terracotta</figcaption>
+                    </figure>
+
+                    <figure class="gallery-item" data-category="gobelets">
+                        <img src="img/gallery-2.svg" alt="Gobelet Tourbillon, émail rouge brûlé">
+                        <figcaption class="gallery-caption"><span class="cat">Gobelets</span>Gobelet « Tourbillon » — rouge brûlé</figcaption>
+                    </figure>
+
+                    <figure class="gallery-item" data-category="emaux">
+                        <img src="img/gallery-3.svg" alt="Échantillon d'émail brun cuir">
+                        <figcaption class="gallery-caption"><span class="cat">Émaux</span>Essai d'émail brun cuir — tuile n°12</figcaption>
+                    </figure>
+
+                    <figure class="gallery-item" data-category="emaux">
+                        <img src="img/gallery-4.svg" alt="Échantillon d'émail ocre">
+                        <figcaption class="gallery-caption"><span class="cat">Émaux</span>Essai d'émail ocre — cendre de vigne</figcaption>
+                    </figure>
+
+                    <figure class="gallery-item" data-category="cuisson">
+                        <img src="img/gallery-5.svg" alt="Jarre sortie de cuisson">
+                        <figcaption class="gallery-caption"><span class="cat">Cuisson</span>Jarre biscuit — sortie du four</figcaption>
+                    </figure>
+
+                    <figure class="gallery-item" data-category="cuisson">
+                        <img src="img/gallery-6.svg" alt="Four pendant la cuisson">
+                        <figcaption class="gallery-caption"><span class="cat">Cuisson</span>Montée à 1240 °C — courbe surveillée</figcaption>
+                    </figure>
+
+                    <figure class="gallery-item" data-category="divers">
+                        <img src="img/gallery-7.svg" alt="Bol émaillé bleu ardoise">
+                        <figcaption class="gallery-caption"><span class="cat">Divers</span>Bol — émail bleu ardoise</figcaption>
+                    </figure>
+
+                    <figure class="gallery-item" data-category="divers">
+                        <img src="img/gallery-8.svg" alt="Vase chocolat">
+                        <figcaption class="gallery-caption"><span class="cat">Divers</span>Vase — émail chocolat</figcaption>
+                    </figure>
+
+                    <figure class="gallery-item" data-category="gobelets">
+                        <img src="img/gallery-9.svg" alt="Gobelet brique, paroi fine">
+                        <figcaption class="gallery-caption"><span class="cat">Gobelets</span>Gobelet « Rive » — paroi fine</figcaption>
+                    </figure>
+
+                    <figure class="gallery-item" data-category="emaux">
+                        <img src="img/gallery-10.svg" alt="Échantillon d'émail ardoise">
+                        <figcaption class="gallery-caption"><span class="cat">Émaux</span>Essai d'émail ardoise — mat</figcaption>
+                    </figure>
+
+                    <figure class="gallery-item" data-category="cuisson">
+                        <img src="img/gallery-11.svg" alt="Série émaillée sienne">
+                        <figcaption class="gallery-caption"><span class="cat">Cuisson</span>Série sienne — fournée d'août</figcaption>
+                    </figure>
+
+                    <figure class="gallery-item" data-category="gobelets">
+                        <img src="img/gallery-12.svg" alt="Gobelet émaillé sienne brûlée">
+                        <figcaption class="gallery-caption"><span class="cat">Gobelets</span>Gobelet — émail sienne brûlée</figcaption>
+                    </figure>
+
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <section class="contact-band">
+        <div class="container">
+            <h2>Plus d'images sur Instagram</h2>
+            <p>Les dernières pièces et les coulisses de l'atelier sont publiées régulièrement.</p>
+            <p>
+                <a class="btn btn-ghost" href="https://instagram.com/axxamtouraine" target="_blank" rel="noopener" style="padding:0.7rem 1.4rem;">📷 @axxamtouraine</a>
+            </p>
+            <p style="margin-top:var(--space-md);">Ou écrivez-moi : <a href="mailto:contact@axxam.net">contact@axxam.net</a></p>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p class="footer-links"><a href="../index.html">← Retour au portail Axxam</a> · <a href="https://instagram.com/axxamtouraine" target="_blank" rel="noopener">Instagram</a> · <a href="mailto:contact@axxam.net">Contact</a></p>
+            <p>© 2026 Axxam Touraine — Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <div class="lightbox" id="lightbox" aria-hidden="true">
+        <button class="lightbox-close" id="lightbox-close" aria-label="Fermer">×</button>
+        <div>
+            <img id="lightbox-img" src="" alt="">
+            <p class="lightbox-caption" id="lightbox-caption"></p>
+        </div>
+    </div>
+
+    <script src="js/galerie.js"></script>
+</body>
+</html>
