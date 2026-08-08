@@ -95,12 +95,24 @@ a { color: var(--terracotta); }
     margin-bottom: var(--space-sm);
 }
 
+.hero-portrait {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--terracotta);
+    margin: 0 auto var(--space-md);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
 .hero h1 {
     font-family: var(--font-serif);
     font-size: clamp(2.2rem, 6vw, 3.6rem);
     font-weight: 600;
     margin-bottom: var(--space-sm);
 }
+
+.hero .hero-kicker { margin-bottom: var(--space-sm); }
 
 .hero p {
     max-width: 680px;
