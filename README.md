@@ -2,10 +2,11 @@
 
 Bienvenue dans le dépôt **Axxam**, qui contient quatre projets web distincts :
 
-1. **`/`** – Site **axxam.net** : site professionnel d'entrepreneur (services en catalogue, page tarifs)
-2. **`/vesemt.org/`** – Site **vesemt.org** : conversion HTML+CSS du site WordPress politique
-3. **`/boxingclubspdc/`** – Site **Boxing Club SPDC** : one-page du club de boxe (refondu août 2026)
-4. **`/chateauambulant/`** – Site **Château Ambulant** : grimoire documentant le système multi-agents « Foyer de Calcifère »
+1. **`/`** – **Portail Axxam** : page hub unifiée donnant accès à tous les sites de l'univers Axxam
+2. **`/animation/`** – Site **axxam.net/animation** : site professionnel d'entrepreneur (services en catalogue, page tarifs)
+3. **`/vesemt.org/`** – Site **vesemt.org** : conversion HTML+CSS du site WordPress politique
+4. **`/boxingclubspdc/`** – Site **Boxing Club SPDC** : one-page du club de boxe (refondu août 2026)
+5. **`/chateauambulant/`** – Site **Château Ambulant** : grimoire documentant le système multi-agents « Foyer de Calcifère »
 
 ---
 
@@ -13,15 +14,20 @@ Bienvenue dans le dépôt **Axxam**, qui contient quatre projets web distincts :
 
 ```
 Axxam/
-├── index.html              ← Page d'accueil axxam.net
-├── a-propos.html           ← À propos (axxam.net)
-├── contact.html            ← Contact (axxam.net)
-├── services.html           ← Services en catalogue (axxam.net)
-├── tarifs.html             ← Page tarifs (axxam.net)
+├── index.html              ← Page hub : portail vers tous les sites
+├── hub.css                 ← Feuille de style du portail
+├── animation/              ← Site axxam.net/animation
+│   ├── index.html          ← Page d'accueil (animations créatives)
+│   ├── a-propos.html       ← À propos
+│   ├── contact.html        ← Contact
+│   ├── services.html       ← Services en catalogue (axxam.net/animation)
+│   ├── tarifs.html         ← Page tarifs (axxam.net/animation)
+│   ├── gobelet/            ← Générateur de gobelets paramétrique (dans services)
+│   ├── style.css           ← Feuille de style principale
+│   └── favicon.png, logo.jpg  ← Ressources
+├── a-propos.html, services.html, tarifs.html, contact.html  ← Redirections vers /animation/
 ├── gobelet/                ← Générateur de gobelets paramétrique (axxam.net/gobelet/)
 │   └── index.html
-├── style.css               ← Feuille de style principale (axxam.net)
-├── favicon.png, logo.jpg   ← Ressources (axxam.net)
 ├── CNAME, robots.txt, sitemap.xml  ← Configuration
 │
 ├── vesemt.org/             ← Site HTML+CSS de vesemt.org
@@ -56,13 +62,19 @@ Axxam/
 
 ## 🌐 Sites hébergés
 
-### axxam.net (racine)
+### Portail Axxam (racine)
+- **Page hub** : donne accès à tous les sites de l'univers Axxam via une grille de cartes
+- HTML+CSS simple et léger, sans framework
+- Les anciennes URLs (`/a-propos.html`, `/services.html`, `/tarifs.html`, `/contact.html`) redirigent vers `/animation/`
+- Déployé via GitHub Pages sur `https://hauuru.github.io/Axxam/`
+- Domaine personnalisé : `https://axxam.net` (via fichier CNAME)
+
+### axxam.net/animation (sous-dossier)
 - Site vitrine d'entrepreneur — **Axxam, animations créatives et durables**
 - Services présentés en **catalogue** avec prix (Dès 50 €/heure)
 - **Page tarifs** : 50€/h, 100€/2h, 150€/demi-journée, 250€/journée, forfait travail régulier ; matériel facturé en plus
 - HTML+CSS simple et léger, sans framework
-- Déployé via GitHub Pages sur `https://hauuru.github.io/Axxam/`
-- Domaine personnalisé : `https://axxam.net` (via fichier CNAME)
+- Accessible sur `https://axxam.net/animation/`
 
 ### vesemt.org (sous-dossier)
 - Conversion statique du site WordPress politique **VESEMT** (Vivre Surtout Ensemble et Si Possible Solidaires en Métropole Tourangelle)
@@ -101,7 +113,7 @@ Le dossier `/vesemt.org/` est une **copie HTML+CSS** du site WordPress `vesemt.o
 
 ## 🛠️ Technologies utilisées
 
-### axxam.net
+### axxam.net/animation
 - HTML5
 - CSS3
 - Aucun framework
@@ -128,12 +140,13 @@ Le dossier `/vesemt.org/` est une **copie HTML+CSS** du site WordPress `vesemt.o
 
 ## 🚀 Déploiement
 
-Les quatre sites sont déployés via **GitHub Pages** :
+Les sites sont déployés via **GitHub Pages** :
 
-1. **axxam.net** : Racine du dépôt → `https://hauuru.github.io/Axxam/`
-2. **vesemt.org** : Sous-dossier → `https://hauuru.github.io/Axxam/vesemt.org/`
-3. **boxingclubspdc** : Sous-dossier → `https://hauuru.github.io/Axxam/boxingclubspdc/`
-4. **chateauambulant** : Sous-dossier → `https://hauuru.github.io/Axxam/chateauambulant/`
+1. **Portail Axxam** : Racine du dépôt → `https://hauuru.github.io/Axxam/`
+2. **axxam.net/animation** : Sous-dossier → `https://hauuru.github.io/Axxam/animation/`
+3. **vesemt.org** : Sous-dossier → `https://hauuru.github.io/Axxam/vesemt.org/`
+4. **boxingclubspdc** : Sous-dossier → `https://hauuru.github.io/Axxam/boxingclubspdc/`
+5. **chateauambulant** : Sous-dossier → `https://hauuru.github.io/Axxam/chateauambulant/`
 
 ### Activation GitHub Pages
 - Aller dans **Settings → Pages** du dépôt
@@ -147,9 +160,10 @@ Attendre 1-2 minutes, puis les sites sont accessibles.
 
 ## 📝 Modification des sites
 
-### Pour **axxam.net** (racine)
-- Éditer `index.html`, `services.html`, etc.
-- Modifier `style.css` pour le style global
+### Pour **axxam.net** (racine et sous-dossier `animation/`)
+- Le **portail** : éditer `index.html` (racine) et `hub.css`
+- Le **site animation** : éditer `animation/index.html`, `animation/services.html`, etc.
+- Modifier `animation/style.css` pour le style global du site animation
 - Commit & push
 
 ### Pour **vesemt.org**
@@ -216,5 +230,5 @@ Pour toute question sur le dépôt ou les sites :
 
 ---
 
-**Dernière mise à jour** : 4 août 2026
-**Statut** : ✅ Opérationnel, déployé via GitHub Pages — axxam.net (catalogue + tarifs) et boxingclubspdc (one-page refondu) en ligne
+**Dernière mise à jour** : 8 août 2026
+**Statut** : ✅ Opérationnel, déployé via GitHub Pages — portail axxam.net, site animation/ (catalogue + tarifs) et boxingclubspdc (one-page refondu) en ligne
