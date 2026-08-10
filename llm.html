@@ -186,6 +186,17 @@
             cursor: pointer;
         }
 
+        .config-area .model-chip {
+            padding: 9px 14px;
+            border: 1px solid rgba(215, 231, 240, 0.22);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--pale);
+            background: rgba(7, 17, 31, 0.5);
+            white-space: nowrap;
+        }
+
         /* ===== BOUTONS ===== */
         .btn {
             padding: 10px 18px;
@@ -538,15 +549,7 @@
             <label for="apiKeyInput">🔑 Clé API GLM :</label>
             <input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx" />
 
-            <label for="modelSelect">🧠 Modèle :</label>
-            <select id="modelSelect">
-                <option value="glm-4.7-flash" selected>⭐ GLM-4.7 Flash (gratuit, recommandé)</option>
-                <option value="glm-4-flash">GLM-4 Flash (rapide)</option>
-                <option value="glm-4-air">GLM-4 Air (équilibré)</option>
-                <option value="glm-4-plus">GLM-4 Plus (meilleure qualité)</option>
-                <option value="glm-4">GLM-4 (standard)</option>
-                <option value="glm-3-turbo">GLM-3 Turbo (économique)</option>
-            </select>
+            <span class="model-chip">🧠 GLM-4.7 Flash</span>
 
             <button class="btn btn-primary" id="saveKeyBtn">🔓 Démarrer</button>
             <button class="btn btn-danger" id="resetKeyBtn" style="display:none;">🔄 Changer de clé</button>
@@ -555,7 +558,7 @@
 
         <!-- ZONE DE CHAT -->
         <div class="chat-box" id="chatBox">
-            <div class="message system">💡 Entrez votre clé API GLM puis cliquez sur « Démarrer » pour faire couler la conversation.</div>
+            <div class="message system">💡 Entrez votre clé API GLM puis cliquez sur « Démarrer » pour faire couler la conversation. Pour obtenir votre clé : créez un compte sur open.bigmodel.cn (plateforme IA de Zhipu), générez une clé API dans votre espace — elle commence par sk- — puis collez-la ci-dessus.</div>
         </div>
 
         <!-- ZONE DE SAISIE -->
@@ -646,7 +649,7 @@
 
         let apiKey = '';
         let isReady = false;
-        let currentModel = 'glm-4.7-flash';
+        const currentModel = 'glm-4.7-flash';
 
         const conversationHistory = [{
             role: 'system',
@@ -661,7 +664,6 @@
         const userInput = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
         const apiKeyInput = document.getElementById('apiKeyInput');
-        const modelSelect = document.getElementById('modelSelect');
         const saveKeyBtn = document.getElementById('saveKeyBtn');
         const resetKeyBtn = document.getElementById('resetKeyBtn');
         const statusBadge = document.getElementById('statusBadge');
@@ -967,7 +969,6 @@
             userInput.disabled = !enabled;
             sendBtn.disabled = !enabled;
             apiKeyInput.disabled = enabled;
-            modelSelect.disabled = enabled;
             saveKeyBtn.disabled = enabled;
             if (enabled) {
                 resetKeyBtn.style.display = 'inline-block';
@@ -982,7 +983,7 @@
             if (keepSystem) {
                 addMessage('💡 Session réinitialisée. Vous pouvez continuer à discuter.', 'system');
             } else {
-                addMessage('💡 Entrez votre clé API GLM puis cliquez sur « Démarrer ».', 'system');
+                addMessage('💡 Entrez votre clé API GLM puis cliquez sur « Démarrer » (clé à récupérer sur open.bigmodel.cn, elle commence par sk-).', 'system');
             }
             conversationHistory.length = 1;
         }
@@ -1037,7 +1038,7 @@
                 throw new Error('Clé API manquante. Veuillez la saisir.');
             }
 
-            const model = currentModel || sessionStorage.getItem('glm_model') || 'glm-4.7-flash';
+            const model = currentModel;
 
             console.log(`📡 L'esprit de la rivière interroge GLM avec le modèle : ${model}`);
 
@@ -1071,8 +1072,7 @@
                 } catch (_) { /* ignore */ }
 
                 if (errorDetail.includes('model') || errorDetail.includes('Model')) {
-                    errorMsg = `❌ Modèle invalide. Vérifiez que "${model}" est correct.
-                                Modèles disponibles : glm-4.7-flash, glm-4-flash, glm-4-air, glm-4-plus, glm-4, glm-3-turbo`;
+                    errorMsg = `❌ Modèle invalide pour cette clé. Seul "${model}" est utilisé.`;
                 } else if (errorDetail) {
                     errorMsg = errorDetail;
                 }
@@ -1178,14 +1178,12 @@
         //  INITIALISATION DE LA SESSION
         // ============================================================
 
-        function initSession(key, model) {
+        function initSession(key) {
             apiKey = key;
-            currentModel = model;
             isReady = true;
 
             // Sauvegarder les préférences
             sessionStorage.setItem('glm_api_key', key);
-            sessionStorage.setItem('glm_model', model);
 
             setUIEnabled(true);
             setStatus('✅ Connecté', true);
@@ -1216,18 +1214,15 @@
                 return;
             }
 
-            const model = modelSelect.value;
-
             // Réinitialiser l'historique (on garde le system)
             conversationHistory.length = 1;
             resetChat(false);
-            initSession(key, model);
+            initSession(key);
         });
 
         // --- Changer de clé ---
         resetKeyBtn.addEventListener('click', () => {
             sessionStorage.removeItem('glm_api_key');
-            sessionStorage.removeItem('glm_model');
             apiKey = '';
             isReady = false;
             setUIEnabled(false);
@@ -1236,7 +1231,6 @@
             resetChat(false);
             apiKeyInput.value = '';
             apiKeyInput.disabled = false;
-            modelSelect.disabled = false;
             saveKeyBtn.disabled = false;
             resetKeyBtn.style.display = 'none';
             addMessage('💡 Veuillez entrer une nouvelle clé API.', 'system');
@@ -1265,18 +1259,12 @@
 
         window.addEventListener('load', () => {
             const savedKey = sessionStorage.getItem('glm_api_key');
-            const savedModel = sessionStorage.getItem('glm_model') || 'glm-4.7-flash';
-
-            // Restaurer le modèle sélectionné
-            if (savedModel) {
-                modelSelect.value = savedModel;
-            }
 
             if (savedKey && savedKey.startsWith('sk-')) {
                 // On initialise directement
                 conversationHistory.length = 1;
                 resetChat(false);
-                initSession(savedKey, savedModel);
+                initSession(savedKey);
                 addMessage('🔄 Session restaurée. Bon retour !', 'system');
             } else {
                 // Si une clé corrompue existe, on la nettoie
@@ -1299,7 +1287,7 @@
         });
 
         console.log('🌊 L\'esprit de la rivière est réveillé !');
-        console.log('📋 Modèles disponibles : glm-4.7-flash (⭐ recommandé), glm-4-flash, glm-4-air, glm-4-plus, glm-4, glm-3-turbo');
+        console.log('📋 Modèle utilisé : glm-4.7-flash');
         console.log('💡 Double-cliquez sur le statut pour voir votre clé (masquée).');
     </script>
 
