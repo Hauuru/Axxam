@@ -3,11 +3,12 @@
 Bienvenue dans le dépôt **Axxam**, qui contient plusieurs projets web distincts :
 
 1. **`/`** – **Portail Axxam** : page hub unifiée donnant accès à tous les sites de l'univers Axxam
-2. **`/animation/`** – Site **axxam.net/animation** : site professionnel d'entrepreneur (services en catalogue, page tarifs)
-3. **`/poterie/`** – Site **Poterie Axxam Touraine** : tourneur potier, gobelets, cuisson et émaux + générateur de gobelets 3D
-4. **`/vesemt.org/`** – Site **vesemt.org** : conversion HTML+CSS du site WordPress politique
-5. **`/boxingclubspdc/`** – Site **Boxing Club SPDC** : one-page du club de boxe (refondu août 2026)
-6. **`/chateauambulant/`** – Site **Château Ambulant** : grimoire documentant le système multi-agents « Foyer de Calcifère »
+2. **`/numerique.html`** – **Axxam Numérique** : activités numériques (création de sites web, agents IA locaux, automatisation, dépannage, impression 3D)
+3. **`/animation/`** – Site **axxam.net/animation** : site professionnel d'entrepreneur (services en catalogue, page tarifs)
+4. **`/poterie/`** – Site **Poterie Axxam Touraine** : tourneur potier, gobelets, cuisson et émaux + générateur de gobelets 3D
+5. **`/vesemt.org/`** – Site **vesemt.org** : conversion HTML+CSS du site WordPress politique
+6. **`/boxingclubspdc/`** – Site **Boxing Club SPDC** : one-page du club de boxe (refondu août 2026)
+7. **`/chateauambulant/`** – Site **Château Ambulant** : grimoire documentant le système multi-agents « Foyer de Calcifère »
 
 ---
 
@@ -16,6 +17,7 @@ Bienvenue dans le dépôt **Axxam**, qui contient plusieurs projets web distinct
 ```
 Axxam/
 ├── index.html              ← Page hub : portail vers tous les sites
+├── numerique.html          ← Axxam Numérique : création de sites, agents IA, automatisation, dépannage, impression 3D
 ├── hub.css                 ← Feuille de style du portail
 ├── animation/              ← Site axxam.net/animation
 │   ├── index.html          ← Page d'accueil (animations créatives)
@@ -71,10 +73,16 @@ Axxam/
 
 ### Portail Axxam (racine)
 - **Page hub** : donne accès à tous les sites de l'univers Axxam via une grille de cartes
+- **Section Axxam Numérique** : activités numériques (création de sites web, agents IA locaux, automatisation, dépannage, impression 3D) avec page dédiée `numerique.html`
 - HTML+CSS simple et léger, sans framework
 - Les anciennes URLs (`/a-propos.html`, `/services.html`, `/tarifs.html`, `/contact.html`) redirigent vers `/animation/`
 - Déployé via GitHub Pages sur `https://hauuru.github.io/Axxam/`
 - Domaine personnalisé : `https://axxam.net` (via fichier CNAME)
+
+### Axxam Numérique (`numerique.html`)
+- Page dédiée aux activités numériques : création de pages web HTML/CSS, initiation aux agents IA hébergés sur l'ordinateur (Nanobot, OpenClaw…), automatisation de tâches simples, dépannage informatique, impression 3D
+- Étapes « Comment ça se passe ? » + bandeau contact
+- Accessible sur `https://axxam.net/numerique.html`
 
 ### axxam.net/animation (sous-dossier)
 - Site vitrine d'entrepreneur — **Axxam, animations créatives et durables**
