@@ -1,0 +1,85 @@
+/* ============ AXXAM NUMÉRIQUE — THÈME « TERMINAL » ============ */
+/* Code couleur de la carte Axxam Numérique (proposition B, carte sombre « terminal »)
+   : icône terminale (fond #0f172a, bordure #22c55e, #4ade80), cartes #1c2733, liserés #334155. */
+
+.numerique-page {
+    --primary: #22c55e;
+    --primary-dark: #4ade80;
+    --primary-light: #1e293b;
+    --bg: #0f172a;
+    --bg-white: #1c2733;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --shadow: rgba(0, 0, 0, 0.35);
+    background: var(--bg);
+    color: var(--text);
+}
+
+.numerique-page .num-nav {
+    background: #0f172a;
+    border-bottom: 1px solid #334155;
+}
+
+.numerique-page .hub-hero--numerique {
+    background: linear-gradient(135deg, #0f172a, #1c2733);
+    border-bottom: 1px solid #22c55e;
+}
+
+.numerique-page .hub-card {
+    border: 1px solid #334155;
+}
+
+.numerique-page .hub-card:hover {
+    border-color: #22c55e;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(34, 197, 94, 0.35);
+}
+
+.numerique-page .hub-card-icon {
+    background: #0f172a;
+    border: 1px solid #22c55e;
+    color: #4ade80;
+}
+
+.numerique-page .hub-card .hub-card-type {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: 0;
+    color: #64748b;
+}
+
+.numerique-page .hub-section--steps {
+    background: #16202b;
+    border-top: 1px solid #334155;
+    border-bottom: 1px solid #334155;
+}
+
+.numerique-page .step-num {
+    background: #0f172a;
+    border: 1px solid #22c55e;
+    color: #4ade80;
+}
+
+.numerique-page .cta-band {
+    background: linear-gradient(135deg, #0f172a, #1c2733);
+    border-top: 1px solid #22c55e;
+}
+
+.numerique-page .cta-band-btn {
+    background: #22c55e;
+    color: #0f172a;
+}
+
+.numerique-page .cta-band-btn--ghost {
+    background: transparent;
+    color: #4ade80;
+    border: 2px solid rgba(74, 222, 128, 0.8);
+}
+
+.numerique-page .cta-band-btn--ghost:hover {
+    box-shadow: 0 6px 20px rgba(74, 222, 128, 0.25);
+}
+
+.numerique-page .site-footer {
+    background: #0f172a;
+    border-top: 1px solid #334155;
+    color: #94a3b8;
+}
