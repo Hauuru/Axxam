@@ -3,8 +3,21 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chatbot GLM - Assistant Axxam</title>
+    <title>L'esprit de la rivière — Axxam</title>
     <style>
+        /* ===== PALETTE RIVIÈRE ===== */
+        :root {
+            --deep: #173a5e;
+            --mid: #9fb3b8;
+            --pale: #d7e7f0;
+            --glow: #bfe3f5;
+            --ink: #eef6fb;
+            --ink-dim: #bcd3e0;
+            --glass: rgba(10, 24, 40, 0.5);
+            --glass-strong: rgba(10, 24, 40, 0.62);
+            --line: rgba(215, 231, 240, 0.14);
+        }
+
         /* ===== RESET & BASE ===== */
         * {
             margin: 0;
@@ -12,10 +25,15 @@
             box-sizing: border-box;
         }
 
+        html, body {
+            height: 100%;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
+            color: var(--ink);
+            background: #0e2740;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -23,120 +41,156 @@
             padding: 20px;
         }
 
-        /* ===== CONTENEUR PRINCIPAL ===== */
+        /* ===== FOND EAU ===== */
+        #riverCanvas {
+            position: fixed;
+            inset: 0;
+            display: block;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .water-vignette {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at 50% 32%, rgba(10, 24, 40, 0.1) 0%, rgba(7, 17, 31, 0.55) 80%);
+        }
+
+        /* ===== CONTENEUR OUVERT ===== */
         .app-container {
-            background: #1c2733;
-            border: 1px solid #334155;
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 2;
             width: 100%;
-            max-width: 780px;
-            overflow: hidden;
+            max-width: 860px;
+            max-height: 94vh;
             display: flex;
             flex-direction: column;
-            max-height: 95vh;
+            overflow: hidden;
+            background: transparent;
         }
 
         /* ===== EN-TÊTE ===== */
         .app-header {
-            background: linear-gradient(135deg, #0f172a, #16202b);
-            border-bottom: 2px solid #22c55e;
-            padding: 20px 28px;
-            color: #e2e8f0;
+            text-align: center;
+            padding: 22px 28px 14px;
+            color: var(--ink);
+        }
+
+        .spirit-orb {
+            display: inline-block;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: 2px;
+            background: radial-gradient(circle at 35% 35%, #ffffff, var(--glow) 45%, var(--mid));
+            box-shadow: 0 0 12px rgba(191, 227, 245, 0.8), 0 0 30px rgba(159, 179, 184, 0.45);
+        }
+
+        body.busy .spirit-orb {
+            animation: orbPulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes orbPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(191, 227, 245, 0.7), 0 0 26px rgba(159, 179, 184, 0.4); transform: scale(1); }
+            50% { box-shadow: 0 0 22px rgba(191, 227, 245, 1), 0 0 46px rgba(159, 179, 184, 0.75); transform: scale(1.25); }
         }
 
         .app-header .header-tag {
             display: block;
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
             font-size: 11px;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            color: #22c55e;
-            margin-bottom: 6px;
+            color: var(--pale);
+            opacity: 0.85;
+            margin-bottom: 8px;
         }
 
         .app-header h1 {
-            font-size: 22px;
+            font-size: 27px;
             font-weight: 600;
             letter-spacing: -0.3px;
-            color: #4ade80;
+            background: linear-gradient(120deg, var(--pale), var(--mid) 55%, var(--pale));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: var(--pale);
+            text-shadow: 0 2px 18px rgba(7, 17, 31, 0.35);
         }
 
         .app-header p {
             font-size: 13px;
-            opacity: 0.85;
-            margin-top: 4px;
+            color: var(--ink-dim);
+            margin-top: 6px;
             font-weight: 300;
-            color: #94a3b8;
         }
 
-        /* ===== ZONE DE CONFIGURATION ===== */
+        /* ===== BANDEAU CONFIGURATION ===== */
         .config-area {
-            padding: 18px 28px;
-            background: #16202b;
-            border-bottom: 1px solid #334155;
+            margin: 0 0 10px;
+            padding: 14px 20px;
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             gap: 12px;
+            background: var(--glass);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 30px rgba(7, 17, 31, 0.35);
         }
 
         .config-area label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
-            color: #94a3b8;
+            color: var(--ink-dim);
             display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        .config-area input[type="password"] {
-            flex: 1;
-            min-width: 180px;
-            padding: 10px 14px;
-            border: 1px solid #334155;
+        .config-area input[type="password"],
+        .config-area select {
+            padding: 9px 13px;
+            border: 1px solid rgba(215, 231, 240, 0.22);
             border-radius: 10px;
             font-size: 14px;
-            background: #0f172a;
-            color: #e2e8f0;
+            background: rgba(7, 17, 31, 0.5);
+            color: var(--ink);
             transition: border 0.2s, box-shadow 0.2s;
         }
 
-        .config-area input[type="password"]:focus {
-            outline: none;
-            border-color: #22c55e;
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+        .config-area input[type="password"] {
+            flex: 1;
+            min-width: 180px;
         }
 
-        .config-area input[type="password"]:disabled {
-            background: #1e293b;
+        .config-area input[type="password"]:focus,
+        .config-area select:focus {
+            outline: none;
+            border-color: var(--glow);
+            box-shadow: 0 0 0 3px rgba(191, 227, 245, 0.18);
+        }
+
+        .config-area input[type="password"]:disabled,
+        .config-area select:disabled {
+            opacity: 0.55;
             cursor: not-allowed;
         }
 
         .config-area select {
-            padding: 10px 14px;
-            border: 1px solid #334155;
-            border-radius: 10px;
-            font-size: 14px;
-            background: #0f172a;
-            color: #e2e8f0;
             cursor: pointer;
         }
 
-        .config-area select:focus {
-            outline: none;
-            border-color: #22c55e;
-        }
-
-        .config-area select:disabled {
-            background: #1e293b;
-            cursor: not-allowed;
-        }
-
+        /* ===== BOUTONS ===== */
         .btn {
-            padding: 10px 20px;
+            padding: 10px 18px;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
@@ -145,12 +199,12 @@
         }
 
         .btn-primary {
-            background: #22c55e;
-            color: #0f172a;
+            background: linear-gradient(135deg, var(--glow), var(--pale));
+            color: #0f2336;
         }
 
         .btn-primary:hover:not(:disabled) {
-            background: #4ade80;
+            filter: brightness(1.07);
             transform: translateY(-1px);
         }
 
@@ -160,7 +214,7 @@
         }
 
         .btn-danger {
-            background: #dc2626;
+            background: rgba(220, 38, 38, 0.8);
             color: white;
         }
 
@@ -169,12 +223,13 @@
         }
 
         .btn-success {
-            background: #16a34a;
-            color: white;
+            background: linear-gradient(135deg, var(--glow), var(--pale));
+            color: #0f2336;
         }
 
         .btn-success:hover:not(:disabled) {
-            background: #15803d;
+            filter: brightness(1.07);
+            transform: translateY(-1px);
         }
 
         .btn-success:disabled {
@@ -188,169 +243,203 @@
             padding: 4px 12px;
             border-radius: 20px;
             font-weight: 500;
-            background: #1e293b;
-            color: #94a3b8;
-            border: 1px solid #334155;
+            background: rgba(7, 17, 31, 0.55);
+            color: var(--ink-dim);
+            border: 1px solid rgba(215, 231, 240, 0.2);
         }
 
         .status-badge.active {
-            background: rgba(34, 197, 94, 0.15);
-            color: #4ade80;
-            border-color: #22c55e;
+            background: rgba(159, 179, 184, 0.18);
+            color: var(--pale);
+            border-color: var(--glow);
         }
 
         /* ===== ZONE DE CHAT ===== */
         .chat-box {
             flex: 1;
             overflow-y: auto;
-            padding: 20px 28px;
-            min-height: 320px;
-            max-height: 440px;
-            background: #0f172a;
+            padding: 14px 10px;
+            min-height: 280px;
+            max-height: 52vh;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
+        }
+
+        .chat-box::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-box::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-box::-webkit-scrollbar-thumb {
+            background: rgba(215, 231, 240, 0.25);
+            border-radius: 10px;
+        }
+
+        .chat-box::-webkit-scrollbar-thumb:hover {
+            background: rgba(215, 231, 240, 0.45);
         }
 
         /* Messages */
         .message {
             max-width: 82%;
-            padding: 12px 18px;
-            border-radius: 16px;
+            padding: 13px 18px;
+            border-radius: 18px;
             font-size: 15px;
-            line-height: 1.5;
+            line-height: 1.55;
             word-wrap: break-word;
-            animation: fadeIn 0.3s ease;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 6px 22px rgba(7, 17, 31, 0.28);
+            animation: riseIn 0.45s ease;
         }
 
         .message.user {
             align-self: flex-end;
-            background: #22c55e;
-            color: #0f172a;
-            border-bottom-right-radius: 4px;
+            background: rgba(23, 58, 94, 0.72);
+            color: var(--ink);
+            border: 1px solid rgba(215, 231, 240, 0.18);
+            border-bottom-right-radius: 6px;
         }
 
         .message.assistant {
             align-self: flex-start;
-            background: #1e293b;
-            border: 1px solid #334155;
-            color: #e2e8f0;
-            border-bottom-left-radius: 4px;
+            background: rgba(159, 179, 184, 0.24);
+            color: var(--ink);
+            border: 1px solid rgba(215, 231, 240, 0.28);
+            border-bottom-left-radius: 6px;
+        }
+
+        .message.assistant.streaming {
+            animation: streamGlow 1.6s ease-in-out infinite, riseIn 0.45s ease;
+        }
+
+        @keyframes streamGlow {
+            0%, 100% { box-shadow: 0 0 0 1px rgba(191, 227, 245, 0.3), 0 0 18px rgba(159, 179, 184, 0.3); }
+            50% { box-shadow: 0 0 0 1px rgba(191, 227, 245, 0.55), 0 0 42px rgba(191, 227, 245, 0.5); }
         }
 
         .message.system {
             align-self: center;
-            background: rgba(250, 204, 21, 0.12);
-            color: #fde68a;
+            background: rgba(10, 24, 40, 0.55);
+            color: var(--pale);
             font-size: 13px;
             padding: 8px 18px;
             border-radius: 20px;
             max-width: 95%;
             text-align: center;
+            border: 1px solid var(--line);
         }
 
         .message.error {
             align-self: center;
-            background: rgba(239, 68, 68, 0.15);
-            color: #fca5a5;
+            background: rgba(127, 29, 29, 0.5);
+            color: #fecaca;
             font-size: 13px;
             padding: 8px 18px;
             border-radius: 20px;
             max-width: 95%;
             text-align: center;
+            border: 1px solid rgba(254, 202, 202, 0.2);
+        }
+
+        @keyframes riseIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: none; }
         }
 
         /* ===== RENDU MARKDOWN DANS LES BULLES ===== */
         .md-p { margin: 0 0 8px; }
         .md-p:last-child { margin-bottom: 0; }
-        .md-h { margin: 10px 0 6px; font-size: 1.02rem; color: #4ade80; line-height: 1.3; }
+        .md-h { margin: 10px 0 6px; font-size: 1.02rem; color: var(--pale); line-height: 1.3; }
         .md-h:first-child { margin-top: 0; }
         .md-list { margin: 6px 0 8px; padding-left: 20px; }
         .md-list li { margin-bottom: 3px; }
         .md-list li:last-child { margin-bottom: 0; }
-        .md-quote { margin: 6px 0 8px; padding-left: 12px; border-left: 3px solid #22c55e; color: #94a3b8; }
-        .md-code { margin: 6px 0 8px; padding: 10px 14px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; overflow-x: auto; font-size: 13px; }
-        .md-code code { background: transparent; padding: 0; color: #4ade80; }
-        .message.assistant a { color: #4ade80; text-decoration: underline; word-break: break-word; }
-        .message.assistant a:hover { color: #86efac; }
-        .message.assistant code { background: #0f172a; color: #4ade80; padding: 1px 5px; border-radius: 6px; font-size: 0.9em; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+        .md-quote { margin: 6px 0 8px; padding-left: 12px; border-left: 3px solid var(--mid); color: var(--ink-dim); }
+        .md-code { margin: 6px 0 8px; padding: 10px 14px; background: rgba(7, 17, 31, 0.6); border: 1px solid rgba(215, 231, 240, 0.16); border-radius: 10px; overflow-x: auto; font-size: 13px; }
+        .md-code code { background: transparent; padding: 0; color: var(--pale); }
+        .message.assistant a { color: var(--glow); text-decoration: underline; word-break: break-word; }
+        .message.assistant a:hover { color: #ffffff; }
+        .message.assistant code { background: rgba(7, 17, 31, 0.6); color: var(--pale); padding: 1px 5px; border-radius: 6px; font-size: 0.9em; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
         .message.assistant strong { color: #ffffff; }
-        .message.assistant hr { border: none; border-top: 1px solid #334155; margin: 8px 0; }
+        .message.assistant hr { border: none; border-top: 1px solid rgba(215, 231, 240, 0.25); margin: 8px 0; }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(8px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* ===== STREAM : CONTENU + CARET ===== */
+        .stream-content { min-height: 1em; }
+
+        .caret {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            margin-left: 5px;
+            vertical-align: -2px;
+            border-radius: 2px;
+            background: var(--glow);
+            box-shadow: 0 0 8px rgba(191, 227, 245, 0.8);
+            animation: caretBlink 0.85s steps(2, start) infinite;
+        }
+
+        .message:not(.streaming) .caret {
+            display: none;
+        }
+
+        @keyframes caretBlink {
+            to { visibility: hidden; }
         }
 
         /* ===== ZONE DE SAISIE ===== */
         .input-area {
-            padding: 16px 28px 24px;
-            background: #16202b;
-            border-top: 1px solid #334155;
+            margin-top: 10px;
+            padding: 14px 20px;
             display: flex;
             gap: 12px;
             align-items: flex-end;
+            background: var(--glass);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 30px rgba(7, 17, 31, 0.35);
         }
 
         .input-area textarea {
             flex: 1;
             padding: 12px 16px;
-            border: 1px solid #334155;
-            border-radius: 12px;
+            border: 1px solid rgba(215, 231, 240, 0.22);
+            border-radius: 14px;
             font-size: 14px;
             font-family: inherit;
             resize: vertical;
             min-height: 48px;
             max-height: 120px;
-            background: #0f172a;
-            color: #e2e8f0;
+            background: rgba(7, 17, 31, 0.5);
+            color: var(--ink);
             transition: border 0.2s, box-shadow 0.2s;
             line-height: 1.4;
         }
 
         .input-area textarea::placeholder {
-            color: #64748b;
+            color: rgba(188, 211, 224, 0.55);
         }
 
         .input-area textarea:focus {
             outline: none;
-            border-color: #22c55e;
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+            border-color: var(--glow);
+            box-shadow: 0 0 0 3px rgba(191, 227, 245, 0.14);
         }
 
         .input-area textarea:disabled {
-            background: #1e293b;
+            opacity: 0.55;
             cursor: not-allowed;
         }
 
         .input-area .btn {
-            padding: 12px 22px;
+            padding: 12px 24px;
             align-self: stretch;
-        }
-
-        /* ===== SCROLLBAR ===== */
-        .chat-box::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .chat-box::-webkit-scrollbar-track {
-            background: #0f172a;
-            border-radius: 10px;
-        }
-
-        .chat-box::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 10px;
-        }
-
-        .chat-box::-webkit-scrollbar-thumb:hover {
-            background: #4ade80;
         }
 
         /* ===== LIEN RETOUR PORTAL ===== */
@@ -358,36 +447,40 @@
             position: absolute;
             top: 16px;
             left: 16px;
+            z-index: 10;
             font-size: 14px;
             font-weight: 600;
-            color: #4ade80;
-            background: #1c2733;
-            border: 1px solid #334155;
+            color: var(--pale);
+            background: var(--glass-strong);
+            border: 1px solid rgba(215, 231, 240, 0.22);
             padding: 8px 14px;
             border-radius: 999px;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
             text-decoration: none;
-            z-index: 10;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 4px 14px rgba(7, 17, 31, 0.4);
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
         .back-link:hover {
             transform: translateY(-1px);
-            border-color: #22c55e;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+            border-color: var(--glow);
+            box-shadow: 0 6px 18px rgba(7, 17, 31, 0.5);
         }
 
+        /* ===== RESPONSIVE ===== */
         @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+
             .back-link {
                 top: 10px;
                 left: 10px;
                 padding: 6px 12px;
                 font-size: 13px;
             }
-        }
 
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 600px) {
             .config-area {
                 flex-direction: column;
                 align-items: stretch;
@@ -415,12 +508,19 @@
             }
 
             .app-header h1 {
-                font-size: 18px;
+                font-size: 20px;
+            }
+
+            .app-header p {
+                font-size: 12px;
             }
         }
     </style>
 </head>
 <body>
+
+    <canvas id="riverCanvas" aria-hidden="true"></canvas>
+    <div class="water-vignette" aria-hidden="true"></div>
 
     <a href="index.html" class="back-link">← Retour au portail</a>
 
@@ -428,16 +528,16 @@
 
         <!-- EN-TÊTE -->
         <header class="app-header">
-            <span class="header-tag">❯ assistant-axxam</span>
-            <h1>🤖 Assistant Axxam</h1>
-            <p>Présente les services d'Axxam et redirige vers les bonnes pages — Entrez votre clé API pour commencer</p>
+            <span class="header-tag">~ esprit-de-la-riviere ~</span>
+            <h1><span class="spirit-orb" aria-hidden="true"></span>L'esprit de la rivière</h1>
+            <p>Posez vos questions au fil de l'eau : il vous guide à travers tout l'univers Axxam.</p>
         </header>
 
         <!-- CONFIGURATION -->
         <div class="config-area" id="configArea">
             <label for="apiKeyInput">🔑 Clé API GLM :</label>
             <input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx" />
-            
+
             <label for="modelSelect">🧠 Modèle :</label>
             <select id="modelSelect">
                 <option value="glm-4.7-flash" selected>⭐ GLM-4.7 Flash (gratuit, recommandé)</option>
@@ -447,7 +547,7 @@
                 <option value="glm-4">GLM-4 (standard)</option>
                 <option value="glm-3-turbo">GLM-3 Turbo (économique)</option>
             </select>
-            
+
             <button class="btn btn-primary" id="saveKeyBtn">🔓 Démarrer</button>
             <button class="btn btn-danger" id="resetKeyBtn" style="display:none;">🔄 Changer de clé</button>
             <span class="status-badge" id="statusBadge">⏳ En attente</span>
@@ -455,12 +555,12 @@
 
         <!-- ZONE DE CHAT -->
         <div class="chat-box" id="chatBox">
-            <div class="message system">💡 Entrez votre clé API GLM puis cliquez sur « Démarrer ».</div>
+            <div class="message system">💡 Entrez votre clé API GLM puis cliquez sur « Démarrer » pour faire couler la conversation.</div>
         </div>
 
         <!-- ZONE DE SAISIE -->
         <div class="input-area">
-            <textarea id="userInput" rows="1" placeholder="Écrivez votre message..." disabled></textarea>
+            <textarea id="userInput" rows="1" placeholder="Posez votre question à l'esprit de la rivière..." disabled></textarea>
             <button class="btn btn-success" id="sendBtn" disabled>Envoyer</button>
         </div>
 
@@ -473,7 +573,8 @@
 
         // --- Contexte personnalisé (modifiez cette variable !) ---
         const CUSTOM_CONTEXT = `
-        Vous êtes l'assistant officiel d'Axxam : vous présentez les services de l'univers Axxam et redirigez l'utilisateur vers les bonnes pages.
+        Vous êtes « l'esprit de la rivière », l'assistant officiel de l'univers Axxam : vous présentez ses services et redirigez l'utilisateur vers les bonnes pages.
+        Vous parlez avec une voix chaleureuse, limpide et légèrement poétique, comme une rivière qui coule : phrases simples, images douces, jamais d'emphase artificielle.
         Répondez toujours en français, de façon concise, professionnelle et chaleureuse.
         Ne donnez JAMAIS d'informations inventées : redirigez toujours vers les pages officielles ci-dessous.
 
@@ -564,6 +665,118 @@
         const saveKeyBtn = document.getElementById('saveKeyBtn');
         const resetKeyBtn = document.getElementById('resetKeyBtn');
         const statusBadge = document.getElementById('statusBadge');
+
+        // ============================================================
+        //  FOND EAU ANIMÉ
+        //  Courant sinusoïdal horizontal en couches (S),
+        //  dont la vitesse suit l'état du modèle (flowSpeed).
+        // ============================================================
+
+        const canvas = document.getElementById('riverCanvas');
+        const ctx = canvas.getContext('2d');
+        let W = 0;
+        let H = 0;
+
+        // Couches d'eau : du fond (bleu foncé) vers la surface (bleu pâle)
+        const layers = [
+            { base: '#0e2740', top: '#173a5e', amp: 20, freq: 0.009, speed: 0.5, y: 0.78 },
+            { base: '#1d4a70', top: '#2a5e86', amp: 22, freq: 0.012, speed: 0.75, y: 0.6 },
+            { base: '#7d9aa2', top: '#9fb3b8', amp: 22, freq: 0.016, speed: 1.0, y: 0.42 },
+            { base: '#bcd3e0', top: '#d7e7f0', amp: 16, freq: 0.02, speed: 1.3, y: 0.22 }
+        ];
+
+        // Miettes de lumière qui dérivent avec le courant
+        let motes = [];
+
+        function resizeRiver() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            W = window.innerWidth;
+            H = window.innerHeight;
+            canvas.width = Math.round(W * dpr);
+            canvas.height = Math.round(H * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            initMotes();
+        }
+
+        function initMotes() {
+            motes = [];
+            const n = Math.max(6, Math.round(W * H / 32000));
+            for (let i = 0; i < n; i++) {
+                motes.push({
+                    x: Math.random() * W,
+                    y: Math.random() * H,
+                    r: 0.8 + Math.random() * 1.8,
+                    a: 0.04 + Math.random() * 0.2,
+                    speed: 0.3 + Math.random() * 0.9,
+                    bob: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        function drawWater(t) {
+            // Fond profond
+            const bg = ctx.createLinearGradient(0, 0, 0, H);
+            bg.addColorStop(0, '#0c2238');
+            bg.addColorStop(0.55, '#12314f');
+            bg.addColorStop(1, '#0e2740');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
+
+            // Couches de vagues (S horizontaux)
+            for (const L of layers) {
+                const grad = ctx.createLinearGradient(0, L.y * H, 0, H);
+                grad.addColorStop(0, L.top);
+                grad.addColorStop(1, L.base);
+                ctx.beginPath();
+                ctx.moveTo(0, H);
+                for (let x = 0; x <= W; x += 8) {
+                    const y = H * L.y
+                        + Math.sin(x * L.freq + t * L.speed) * L.amp
+                        + Math.sin(x * L.freq * 0.5 + t * L.speed * 1.6) * L.amp * 0.5;
+                    ctx.lineTo(x, y);
+                }
+                ctx.lineTo(W, H);
+                ctx.closePath();
+                ctx.fillStyle = grad;
+                ctx.fill();
+            }
+
+            // Miettes de lumière
+            for (const m of motes) {
+                m.x += m.speed * (0.15 + flowSpeed * 0.35);
+                m.bob += 0.02;
+                if (m.x > W + 12) m.x = -12;
+                const y = m.y + Math.sin(m.bob) * 6;
+                ctx.beginPath();
+                ctx.arc(m.x, y, m.r, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(215, 231, 240, ' + m.a.toFixed(3) + ')';
+                ctx.fill();
+            }
+        }
+
+        // Vitesse du courant : interpolation douce vers la cible
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        let flowSpeed = 0.4;
+        let flowTarget = 0.4;
+        let lastTs = 0;
+
+        function setFlow(state) {
+            const targets = { idle: 0.4, thinking: 2.3, streaming: 1.25, done: 0.4 };
+            flowTarget = reducedMotion ? 0.12 : (targets[state] !== undefined ? targets[state] : 0.4);
+            document.body.classList.toggle('busy', state === 'thinking' || state === 'streaming');
+        }
+
+        function frame(ts) {
+            const dt = Math.min(ts - (lastTs || ts), 50);
+            lastTs = ts;
+            flowSpeed += (flowTarget - flowSpeed) * 0.06;
+            drawWater((ts / 1000) * flowSpeed);
+            requestAnimationFrame(frame);
+        }
+
+        window.addEventListener('resize', resizeRiver);
+        resizeRiver();
+        requestAnimationFrame(frame);
 
         // ============================================================
         //  FONCTIONS UTILITAIRES
@@ -771,15 +984,54 @@
             } else {
                 addMessage('💡 Entrez votre clé API GLM puis cliquez sur « Démarrer ».', 'system');
             }
-            // On garde seulement le message système dans l'historique
             conversationHistory.length = 1;
         }
 
         // ============================================================
-        //  APPEL À L'API GLM
+        //  LECTURE DU FLUX SSE (streaming GLM)
         // ============================================================
 
-        async function callGLM(messages) {
+        async function readSSEStream(response, onDelta) {
+            if (!response.body) {
+                throw new Error('Le streaming n\'est pas pris en charge par ce navigateur.');
+            }
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
+            let pending = '';
+
+            const flush = () => {
+                if (pending === '') return;
+                const data = pending;
+                pending = '';
+                if (data === '[DONE]') return;
+                try {
+                    const json = JSON.parse(data);
+                    const choice = json.choices && json.choices[0];
+                    const delta = choice && choice.delta && choice.delta.content;
+                    if (typeof delta === 'string' && delta.length > 0) onDelta(delta);
+                } catch (_) { /* ligne SSE ignorée */ }
+            };
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                let nl;
+                while ((nl = buffer.indexOf('\n')) >= 0) {
+                    const line = buffer.slice(0, nl).trim();
+                    buffer = buffer.slice(nl + 1);
+                    if (line === '') {
+                        flush();
+                    } else if (line.startsWith('data:')) {
+                        pending += line.slice(5).trim();
+                    }
+                }
+            }
+            flush();
+        }
+
+        async function callGLMStream(messages, onDelta) {
             const key = apiKey || sessionStorage.getItem('glm_api_key');
             if (!key) {
                 throw new Error('Clé API manquante. Veuillez la saisir.');
@@ -787,7 +1039,7 @@
 
             const model = currentModel || sessionStorage.getItem('glm_model') || 'glm-4.7-flash';
 
-            console.log(`📡 Appel à GLM avec le modèle : ${model}`);
+            console.log(`📡 L'esprit de la rivière interroge GLM avec le modèle : ${model}`);
 
             const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
                 method: 'POST',
@@ -800,7 +1052,8 @@
                     messages: messages,
                     temperature: 0.7,
                     max_tokens: 2048,
-                    top_p: 0.9
+                    top_p: 0.9,
+                    stream: true
                 })
             });
 
@@ -816,9 +1069,9 @@
                         errorMsg += ` [${errData.error.code}]`;
                     }
                 } catch (_) { /* ignore */ }
-                
+
                 if (errorDetail.includes('model') || errorDetail.includes('Model')) {
-                    errorMsg = `❌ Modèle invalide. Vérifiez que "${model}" est correct. 
+                    errorMsg = `❌ Modèle invalide. Vérifiez que "${model}" est correct.
                                 Modèles disponibles : glm-4.7-flash, glm-4-flash, glm-4-air, glm-4-plus, glm-4, glm-3-turbo`;
                 } else if (errorDetail) {
                     errorMsg = errorDetail;
@@ -826,11 +1079,11 @@
                 throw new Error(errorMsg);
             }
 
-            return await response.json();
+            await readSSEStream(response, onDelta);
         }
 
         // ============================================================
-        //  ENVOI D'UN MESSAGE
+        //  ENVOI D'UN MESSAGE (avec streaming progressif)
         // ============================================================
 
         async function sendUserMessage() {
@@ -840,7 +1093,8 @@
             // Désactiver le temps de l'appel
             userInput.disabled = true;
             sendBtn.disabled = true;
-            setStatus('⏳ Envoi...', false);
+            setStatus('🌊 L\'esprit cherche...', true);
+            setFlow('thinking');
 
             // Afficher le message de l'utilisateur
             addMessage(text, 'user');
@@ -848,21 +1102,68 @@
             userInput.value = '';
             userInput.style.height = 'auto';
 
-            try {
-                const data = await callGLM(conversationHistory);
-                const reply = data.choices?.[0]?.message?.content;
+            let bubble = null;
 
-                if (!reply) {
+            try {
+                // Bulle de streaming : contenu + caret clignotant
+                bubble = document.createElement('div');
+                bubble.className = 'message assistant streaming';
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'stream-content';
+                bubble.appendChild(contentDiv);
+                const caret = document.createElement('span');
+                caret.className = 'caret';
+                bubble.appendChild(caret);
+                chatBox.appendChild(bubble);
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                let acc = '';
+                let renderQueued = false;
+                const renderNow = () => {
+                    renderQueued = false;
+                    contentDiv.replaceChildren();
+                    contentDiv.appendChild(renderMarkdown(acc));
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                };
+                const queueRender = () => {
+                    if (!renderQueued) {
+                        renderQueued = true;
+                        requestAnimationFrame(renderNow);
+                    }
+                };
+
+                let firstToken = true;
+                await callGLMStream(conversationHistory, (delta) => {
+                    if (firstToken) {
+                        firstToken = false;
+                        setStatus('🌊 L\'esprit écrit...', true);
+                        setFlow('streaming');
+                    }
+                    acc += delta;
+                    queueRender();
+                });
+
+                // Rendu final propre
+                contentDiv.replaceChildren();
+                contentDiv.appendChild(renderMarkdown(acc));
+                bubble.classList.remove('streaming');
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                if (!acc) {
                     throw new Error('Réponse invalide de l\'API');
                 }
 
-                addMessage(reply, 'assistant');
-                conversationHistory.push({ role: 'assistant', content: reply });
+                conversationHistory.push({ role: 'assistant', content: acc });
                 setStatus('✅ Connecté', true);
+                setFlow('done');
 
             } catch (error) {
+                if (bubble && bubble.parentNode) {
+                    bubble.parentNode.removeChild(bubble);
+                }
                 addMessage(`⚠️ ${error.message}`, 'error');
                 setStatus('❌ Erreur', false);
+                setFlow('done');
                 // On retire le message utilisateur de l'historique pour éviter la confusion
                 conversationHistory.pop();
             }
@@ -881,18 +1182,20 @@
             apiKey = key;
             currentModel = model;
             isReady = true;
-            
+
             // Sauvegarder les préférences
             sessionStorage.setItem('glm_api_key', key);
             sessionStorage.setItem('glm_model', model);
-            
+
             setUIEnabled(true);
             setStatus('✅ Connecté', true);
             resetChat(true);
-            addMessage(`🤖 Bonjour ! Je suis l'assistant Axxam (modèle ${model}). Je présente les services d'Axxam et vous redirige vers les bonnes pages. Comment puis-je vous aider ?`, 'assistant');
+
+            const greeting = `Bonjour, je suis l'esprit de la rivière. Je coule à travers les services d'Axxam et je vous guide vers les bonnes pages. Quelle est votre question ?`;
+            addMessage(`🌊 ${greeting}`, 'assistant');
             conversationHistory.push({
                 role: 'assistant',
-                content: `Bonjour ! Je suis l'assistant Axxam (modèle ${model}). Je présente les services d'Axxam et vous redirige vers les bonnes pages. Comment puis-je vous aider ?`
+                content: greeting
             });
             apiKeyInput.value = '•••••••••••••';
         }
@@ -914,7 +1217,7 @@
             }
 
             const model = modelSelect.value;
-            
+
             // Réinitialiser l'historique (on garde le system)
             conversationHistory.length = 1;
             resetChat(false);
@@ -963,12 +1266,12 @@
         window.addEventListener('load', () => {
             const savedKey = sessionStorage.getItem('glm_api_key');
             const savedModel = sessionStorage.getItem('glm_model') || 'glm-4.7-flash';
-            
+
             // Restaurer le modèle sélectionné
             if (savedModel) {
                 modelSelect.value = savedModel;
             }
-            
+
             if (savedKey && savedKey.startsWith('sk-')) {
                 // On initialise directement
                 conversationHistory.length = 1;
@@ -995,7 +1298,7 @@
             }
         });
 
-        console.log('🚀 Chatbot GLM Axxam chargé !');
+        console.log('🌊 L\'esprit de la rivière est réveillé !');
         console.log('📋 Modèles disponibles : glm-4.7-flash (⭐ recommandé), glm-4-flash, glm-4-air, glm-4-plus, glm-4, glm-3-turbo');
         console.log('💡 Double-cliquez sur le statut pour voir votre clé (masquée).');
     </script>
