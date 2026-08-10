@@ -18,6 +18,7 @@ Bienvenue dans le dépôt **Axxam**, qui contient plusieurs projets web distinct
 Axxam/
 ├── index.html              ← Page hub : portail vers tous les sites
 ├── numerique.html          ← Axxam Numérique : création de sites, agents IA, automatisation, dépannage, impression 3D
+├── llm.html                ← Chatbot « L'esprit de la rivière » (GLM-4.7 Flash, streaming SSE, fond eau animé)
 ├── hub.css                 ← Feuille de style du portail
 ├── animation/              ← Site axxam.net/animation
 │   ├── index.html          ← Page d'accueil (animations créatives)
@@ -84,6 +85,15 @@ Axxam/
 - Étapes « Comment ça se passe ? » + bandeau contact
 - Accessible sur `https://axxam.net/numerique.html`
 
+### Chatbot « L'esprit de la rivière » (`llm.html`)
+- Assistant IA propulsé par les modèles GLM (Zhipu AI), modèle unique **GLM-4.7 Flash** (sans sélecteur)
+- Persona « l'esprit de la rivière » : présente les services d'Axxam et redirige vers les pages officielles (contexte `CUSTOM_CONTEXT`)
+- **Fond eau animé** (canvas 2D) : vagues sinusoïdales horizontales bleu foncé / bleu beige / bleu pâle dont la vitesse suit l'état du modèle (rapide quand il cherche, active pendant le stream, lente quand il a répondu) ; respect de `prefers-reduced-motion`
+- Interface ouverte : bulles flottantes translucides (verre dépoli, `backdrop-filter`), sans carte opaque
+- **Streaming SSE** : réponse affichée token par token (rendu markdown progressif + caret clignotant) ; parser markdown maison, anti-XSS, liens `http(s)` uniquement
+- Clé API à fournir par l'utilisateur : note dans le chat expliquant l'obtention sur `https://z.ai/manage-apikey/apikey-list`
+- Carte d'accès depuis le portail : `index.html` → « Chatbot GLM »
+
 ### axxam.net/animation (sous-dossier)
 - Site vitrine d'entrepreneur — **Axxam, animations créatives et durables**
 - Services présentés en **catalogue** avec prix (Dès 50 €/heure)
@@ -143,6 +153,11 @@ Le dossier `/vesemt.org/` est une **copie HTML+CSS** du site WordPress `vesemt.o
 - Responsive design (media queries)
 - Catalogue de services avec prix + page tarifs dédiée
 
+### llm.html (Chatbot « L'esprit de la rivière »)
+- HTML5 + CSS3 (palette eau, `backdrop-filter`, animations CSS)
+- JavaScript Vanilla : canvas 2D animé (vagues + miettes de lumière), fetch SSE (streaming), parser markdown maison (nœuds DOM, anti-XSS)
+- API : `chat/completions` de Zhipu AI (GLM), modèle `glm-4.7-flash` en streaming
+
 ### poterie
 - HTML5 + CSS3 (Flexbox, Grid, Variables CSS, animations)
 - JavaScript Vanilla (filtres galerie + lightbox)
@@ -195,6 +210,11 @@ Attendre 1-2 minutes, puis les sites sont accessibles.
 - Le **portail** : éditer `index.html` (racine) et `hub.css`
 - Le **site animation** : éditer `animation/index.html`, `animation/services.html`, etc.
 - Modifier `animation/style.css` pour le style global du site animation
+- Commit & push
+
+### Pour **llm.html** (chatbot)
+- Éditer `llm.html` : structure, styles (palette eau), JavaScript (fond animé, streaming SSE, parser markdown) et le contexte `CUSTOM_CONTEXT`
+- La carte d'accès vit dans `index.html` (classe `hub-card--llm`)
 - Commit & push
 
 ### Pour **poterie**
@@ -268,5 +288,5 @@ Pour toute question sur le dépôt ou les sites :
 
 ---
 
-**Dernière mise à jour** : 8 août 2026
-**Statut** : ✅ Opérationnel, déployé via GitHub Pages — portail axxam.net, site animation/, poterie (avec générateur de gobelets) et boxingclubspdc en ligne
+**Dernière mise à jour** : 10 août 2026
+**Statut** : ✅ Opérationnel, déployé via GitHub Pages — portail axxam.net, site animation/, poterie (avec générateur de gobelets), boxingclubspdc et chatbot « L'esprit de la rivière » en ligne
