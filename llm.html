@@ -558,7 +558,7 @@
 
         <!-- ZONE DE CHAT -->
         <div class="chat-box" id="chatBox">
-            <div class="message system">💡 Entrez votre clé API GLM puis cliquez sur « Démarrer » pour faire couler la conversation. Pour obtenir votre clé : créez un compte sur open.bigmodel.cn (plateforme IA de Zhipu), générez une clé API dans votre espace — elle commence par sk- — puis collez-la ci-dessus.</div>
+            <div class="message system">💡 Entrez votre clé API GLM puis cliquez sur « Démarrer » pour faire couler la conversation. Pour obtenir votre clé : connectez-vous sur https://z.ai/manage-apikey/apikey-list (espace API de Z.ai, compatible avec le plan coding), générez une clé API — elle commence par sk- — puis collez-la ci-dessus.</div>
         </div>
 
         <!-- ZONE DE SAISIE -->
@@ -983,7 +983,7 @@
             if (keepSystem) {
                 addMessage('💡 Session réinitialisée. Vous pouvez continuer à discuter.', 'system');
             } else {
-                addMessage('💡 Entrez votre clé API GLM puis cliquez sur « Démarrer » (clé à récupérer sur open.bigmodel.cn, elle commence par sk-).', 'system');
+                addMessage('💡 Entrez votre clé API GLM puis cliquez sur « Démarrer » (clé à récupérer sur https://z.ai/manage-apikey/apikey-list, elle commence par sk-).', 'system');
             }
             conversationHistory.length = 1;
         }
