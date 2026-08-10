@@ -148,6 +148,102 @@ body {
     text-decoration: underline;
 }
 
+/* ============ CARTE AXXAM NUMÉRIQUE — VARIANTES ============ */
+/* Propositions visuelles pour différencier Axxam Numérique (🖥️) de Axxam Animations (🎪).
+   - A : accent cyan « tech »          (active par défaut)
+   - B : carte sombre « terminal »
+   - C : dégradé clair + badge « Numérique »
+   Pour basculer : remplacer hub-card--num-A par hub-card--num-B ou -C dans index.html. */
+
+.hub-card--num { position: relative; }
+
+/* --- Proposition A : accent cyan « tech » --- */
+.hub-card--num-a {
+    border: 1px solid rgba(2, 136, 209, 0.18);
+    border-top: 4px solid #00bcd4;
+}
+
+.hub-card--num-a .hub-card-icon {
+    background: linear-gradient(135deg, #00bcd4, #0277bd);
+    color: #ffffff;
+}
+
+.hub-card--num-a h3 { color: #01579b; }
+.hub-card--num-a .hub-card-type { color: #0097a7; }
+.hub-card--num-a p { color: #37474f; }
+.hub-card--num-a .hub-card-cta { color: #0277bd; }
+
+.hub-card--num-a:hover {
+    border-color: #00bcd4;
+    box-shadow: 0 10px 30px rgba(0, 172, 193, 0.22);
+}
+
+/* --- Proposition B : carte sombre « terminal » --- */
+.hub-card--num-b {
+    background: #1c2733;
+    border: 1px solid #334155;
+    color: #e2e8f0;
+}
+
+.hub-card--num-b .hub-card-icon {
+    background: #0f172a;
+    border: 1px solid #22c55e;
+    color: #4ade80;
+}
+
+.hub-card--num-b h3 { color: #4ade80; }
+.hub-card--num-b .hub-card-type {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: #64748b;
+    letter-spacing: 0;
+}
+.hub-card--num-b p { color: #94a3b8; }
+.hub-card--num-b .hub-card-cta { color: #4ade80; }
+
+.hub-card--num-b:hover {
+    border-color: #22c55e;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(34, 197, 94, 0.35);
+}
+
+/* --- Proposition C : dégradé clair + badge --- */
+.hub-card--num-c {
+    background: linear-gradient(135deg, #eef7ff, #e7f7ee);
+    border: 1px solid rgba(2, 136, 209, 0.25);
+}
+
+.hub-card--num-c .hub-card-icon {
+    background: #ffffff;
+    border: 2px solid #0288d1;
+    color: #0288d1;
+}
+
+.hub-card--num-c h3 { color: #01579b; }
+.hub-card--num-c .hub-card-type { color: #0288d1; }
+.hub-card--num-c p { color: #37474f; }
+.hub-card--num-c .hub-card-cta { color: #01579b; }
+
+.hub-card--num-c:hover {
+    border-color: #0288d1;
+    box-shadow: 0 10px 30px rgba(2, 136, 209, 0.22);
+}
+
+.hub-card-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #0288d1;
+    color: #ffffff;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-weight: 700;
+    opacity: 0;
+}
+
+.hub-card--num-c .hub-card-badge { opacity: 1; }
+
 /* ============ INTRO DE SECTION ============ */
 .hub-section-intro {
     max-width: 720px;
