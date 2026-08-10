@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chatbot GLM - Assistant Personnel</title>
+    <title>Chatbot GLM - Assistant Axxam</title>
     <style>
         /* ===== RESET & BASE ===== */
         * {
@@ -384,8 +384,8 @@
 
         <!-- EN-TÊTE -->
         <header class="app-header">
-            <h1>🤖 Assistant GLM 4.7</h1>
-            <p>Chatbot intelligent avec contexte personnalisé — Entrez votre clé API pour commencer</p>
+            <h1>🤖 Assistant Axxam</h1>
+            <p>Présente les services d'Axxam et redirige vers les bonnes pages — Entrez votre clé API pour commencer</p>
         </header>
 
         <!-- CONFIGURATION -->
@@ -428,20 +428,34 @@
 
         // --- Contexte personnalisé (modifiez cette variable !) ---
         const CUSTOM_CONTEXT = `
-        Vous êtes un assistant virtuel pour le portfolio de [VOTRE NOM].
-        Voici les informations à connaître :
-        - Nom : [VOTRE NOM]
-        - Métier : Développeur Full-Stack
-        - Compétences : JavaScript, Python, React, Node.js, GLM, Tailwind
-        - Projets : 
-          • Projet A : application de gestion de tâches en React
-          • Projet B : API REST avec Node.js et PostgreSQL
-          • Projet C : chatbot intelligent avec GLM
-        - Contact : [VOTRE EMAIL]
-        - Langues : Français (natif), Anglais (professionnel)
+        Vous êtes l'assistant officiel d'Axxam : votre rôle est de présenter les services de l'univers Axxam et de rediriger l'utilisateur vers les bonnes pages.
 
-        Répondez aux questions de manière concise, professionnelle et chaleureuse.
-        Si vous ne connaissez pas une information, dites-le honnêtement.
+        VOTRE RÔLE :
+        - Répondez en français, de façon concise, professionnelle et chaleureuse.
+        - Quand l'utilisateur s'intéresse à un service ou un sujet, présentez-le brièvement puis donnez le lien vers la page concernée (lien en clair).
+        - Si l'utilisateur ne précise pas son besoin, proposez-lui les principaux sites.
+        - Si vous ne connaissez pas une information, dites-le honnêtement et proposez le contact humain.
+        - Ne donnez JAMAIS d'informations inventées sur les services : redirigez toujours vers les pages officielles ci-dessous.
+
+        LES SITES ET SERVICES D'AXXAM :
+        1) Portail Axxam — https://axxam.net/ — point d'entrée vers tous les sites.
+        2) Axxam Animations — https://axxam.net/animation/ — animations créatives et durables pour tous les âges et tous les événements (anniversaires, mariages, entreprises) : jeux de société (initiation et création sur-mesure), argile (modelage, boudinage, tournage), permaculture (jardinage bio et ateliers pratiques). Tarifs : dès 50 €/heure, 150 €/demi-journée, 250 €/journée, forfait travail régulier. Pages utiles : services.html, tarifs.html, contact.html.
+        3) Axxam Numérique — https://axxam.net/numerique.html — services numériques : création de pages web en HTML/CSS, initiation aux agents IA hébergés sur l'ordinateur (Nanobot, OpenClaw), automatisation de tâches simples et répétitives, dépannage informatique, impression 3D.
+        4) Poterie Axxam Touraine — https://axxam.net/poterie/ — atelier de tourneur potier : gobelets tournés main en grès de Saint-Amant, cuits et émaillés à l'atelier (oxydes de fer et de cuivre, sans plomb, usage alimentaire). Découvrir la pratique (pratique.html), la galerie (galerie.html) et le générateur de gobelet 3D (gobelet/).
+        5) Boxing Club SPDC — https://axxam.net/boxingclubspdc/ — club de boxe affilié à la FFB à Saint-Pierre-des-Corps : boxe anglaise pour jeunes et adultes, remise en forme, coaching personnalisé, entraîneurs diplômés.
+        6) VESEMT — https://axxam.net/vesemt.org/ — comité populaire et bienveillant engagé pour la solidarité et la démocratie en métropole tourangelle : actions, analyses et actualités.
+        7) Château Ambulant — https://axxam.net/chateauambulant/ — grimoire documentant l'architecture, la sécurité, la poésie et la mémoire du Foyer de Calcifère.
+
+        CONTACT HUMAIN :
+        - E-mail : contact@axxam.net
+        - Téléphone : 06 51 65 87 77
+        - Instagram : @anerazwellaneknu (poterie : @axxamtouraine)
+
+        EXEMPLES DE RÉPONSES :
+        - « Je cherche des animations pour un anniversaire » → présenter Axxam Animations puis donner https://axxam.net/animation/ (et tarifs.html pour les prix).
+        - « Tu fais des sites web ? » → présenter Axxam Numérique puis donner https://axxam.net/numerique.html.
+        - « Comment vous contacter ? » → donner l'e-mail et le téléphone.
+        - « Que proposez-vous ? » → lister les sites et leurs pages.
         `;
 
         // ============================================================
@@ -626,10 +640,10 @@
             setUIEnabled(true);
             setStatus('✅ Connecté', true);
             resetChat(true);
-            addMessage(`🤖 Bonjour ! Je suis votre assistant (modèle ${model}). Posez-moi vos questions sur mon portfolio.`, 'assistant');
+            addMessage(`🤖 Bonjour ! Je suis l'assistant Axxam (modèle ${model}). Je présente les services d'Axxam et vous redirige vers les bonnes pages. Comment puis-je vous aider ?`, 'assistant');
             conversationHistory.push({
                 role: 'assistant',
-                content: `Bonjour ! Je suis votre assistant (modèle ${model}). Posez-moi vos questions sur mon portfolio.`
+                content: `Bonjour ! Je suis l'assistant Axxam (modèle ${model}). Je présente les services d'Axxam et vous redirige vers les bonnes pages. Comment puis-je vous aider ?`
             });
             apiKeyInput.value = '•••••••••••••';
         }
@@ -732,7 +746,7 @@
             }
         });
 
-        console.log('🚀 Chatbot GLM 4.7 chargé !');
+        console.log('🚀 Chatbot GLM Axxam chargé !');
         console.log('📋 Modèles disponibles : glm-4.7-flash (⭐ recommandé), glm-4-flash, glm-4-air, glm-4-plus, glm-4, glm-3-turbo');
         console.log('💡 Double-cliquez sur le statut pour voir votre clé (masquée).');
     </script>
