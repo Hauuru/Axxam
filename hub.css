@@ -244,6 +244,122 @@ body {
 
 .hub-card--num-c .hub-card-badge { opacity: 1; }
 
+/* ============ CARTES PAR SITE — VARIANTES ============ */
+/* Chaque carte du portail reprend le code couleur du site correspondant :
+   - hub-card--anim    : Axxam Animations      (vert + orange)
+   - hub-card--pot     : Poterie Axxam Touraine (terracotta)
+   - hub-card--box     : Boxing Club SPDC      (rouge / noir)
+   - hub-card--vesemt  : VESEMT                (rouge)
+   - hub-card--chateau : Château Ambulant      (or / parchemin) */
+
+/* --- Carte Axxam Animations : vert + orange --- */
+.hub-card--anim {
+    border-top: 4px solid #ff9800;
+}
+
+.hub-card--anim .hub-card-icon {
+    background: linear-gradient(135deg, #4caf50, #2e7d32);
+    color: #ffffff;
+}
+
+.hub-card--anim h3 { color: #2e7d32; }
+.hub-card--anim .hub-card-type { color: #e65100; }
+.hub-card--anim p { color: #455a64; }
+.hub-card--anim .hub-card-cta { color: #2e7d32; }
+
+.hub-card--anim:hover {
+    border-color: #ff9800;
+    box-shadow: 0 10px 30px rgba(255, 152, 0, 0.22);
+}
+
+/* --- Carte Poterie : terracotta --- */
+.hub-card--pot {
+    background: #fffdf9;
+    border: 1px solid #ddd6cb;
+    border-top: 4px solid #b0452f;
+}
+
+.hub-card--pot .hub-card-icon {
+    background: linear-gradient(135deg, #b0452f, #8f3624);
+    color: #ffffff;
+}
+
+.hub-card--pot h3 { color: #8f3624; }
+.hub-card--pot .hub-card-type { color: #b0452f; }
+.hub-card--pot p { color: #4b5563; }
+.hub-card--pot .hub-card-cta { color: #8f3624; }
+
+.hub-card--pot:hover {
+    border-color: #b0452f;
+    box-shadow: 0 10px 30px rgba(176, 69, 47, 0.25);
+}
+
+/* --- Carte Boxing Club SPDC : rouge / noir --- */
+.hub-card--box {
+    background: #141414;
+    border: 1px solid #2c2c2c;
+    color: #e8e8e8;
+}
+
+.hub-card--box .hub-card-icon {
+    background: #0a0a0a;
+    border: 1px solid #e74c3c;
+    color: #f1948a;
+}
+
+.hub-card--box h3 { color: #f1948a; }
+.hub-card--box .hub-card-type { color: #f1c40f; }
+.hub-card--box p { color: #999999; }
+.hub-card--box .hub-card-cta { color: #e74c3c; }
+
+.hub-card--box:hover {
+    border-color: #e74c3c;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(231, 76, 60, 0.4);
+}
+
+/* --- Carte VESEMT : rouge --- */
+.hub-card--vesemt {
+    border-top: 4px solid #f44336;
+}
+
+.hub-card--vesemt .hub-card-icon {
+    background: linear-gradient(135deg, #f44336, #c0392b);
+    color: #ffffff;
+}
+
+.hub-card--vesemt h3 { color: #c62828; }
+.hub-card--vesemt .hub-card-type { color: #f44336; }
+.hub-card--vesemt p { color: #444444; }
+.hub-card--vesemt .hub-card-cta { color: #c62828; }
+
+.hub-card--vesemt:hover {
+    border-color: #f44336;
+    box-shadow: 0 10px 30px rgba(244, 67, 54, 0.25);
+}
+
+/* --- Carte Château Ambulant : or / parchemin --- */
+.hub-card--chateau {
+    background: #f5e7d3;
+    border: 1px solid #e0c9a0;
+    border-top: 4px solid #d4af37;
+    color: #3a2c1a;
+}
+
+.hub-card--chateau .hub-card-icon {
+    background: #d4af37;
+    color: #3a2c1a;
+}
+
+.hub-card--chateau h3 { color: #2c3e50; }
+.hub-card--chateau .hub-card-type { color: #b08a1f; }
+.hub-card--chateau p { color: #5a4632; }
+.hub-card--chateau .hub-card-cta { color: #2c3e50; }
+
+.hub-card--chateau:hover {
+    border-color: #d4af37;
+    box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+}
+
 /* ============ INTRO DE SECTION ============ */
 .hub-section-intro {
     max-width: 720px;
