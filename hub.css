@@ -1,12 +1,12 @@
 /* ============ AXXAM — HUB — VARIABLES ============ */
 :root {
-    --primary: #4CAF50;
-    --primary-dark: #2e7d32;
-    --primary-light: #c8e6c9;
-    --bg: #f7faf7;
+    --primary: #64748b;
+    --primary-dark: #334155;
+    --primary-light: #cbd5e1;
+    --bg: #f1f5f9;
     --bg-white: #ffffff;
     --text: #263238;
-    --text-muted: #607d8b;
+    --text-muted: #64748b;
     --shadow: rgba(38, 50, 56, 0.12);
     --border-radius: 14px;
     --space-sm: 0.75rem;
@@ -96,7 +96,7 @@ body {
     transition: transform 0.25s ease, box-shadow 0.25s ease;
     text-decoration: none;
     color: inherit;
-    border: 1px solid rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(51, 65, 85, 0.12);
 }
 
 .hub-card:hover {
@@ -406,8 +406,8 @@ body {
 
 .hub-section--steps {
     background: var(--bg-white);
-    border-top: 1px solid rgba(76, 175, 80, 0.12);
-    border-bottom: 1px solid rgba(76, 175, 80, 0.12);
+    border-top: 1px solid rgba(51, 65, 85, 0.12);
+    border-bottom: 1px solid rgba(51, 65, 85, 0.12);
 }
 
 .steps {
