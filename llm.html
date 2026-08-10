@@ -97,6 +97,25 @@
             cursor: not-allowed;
         }
 
+        .config-area select {
+            padding: 10px 14px;
+            border: 1px solid #d1d9e6;
+            border-radius: 10px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .config-area select:focus {
+            outline: none;
+            border-color: #1a2a6c;
+        }
+
+        .config-area select:disabled {
+            background: #eef2f6;
+            cursor: not-allowed;
+        }
+
         .btn {
             padding: 10px 20px;
             border: none;
@@ -340,6 +359,16 @@
         <div class="config-area" id="configArea">
             <label for="apiKeyInput">🔑 Clé API GLM :</label>
             <input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx" />
+            
+            <label for="modelSelect">🧠 Modèle :</label>
+            <select id="modelSelect">
+                <option value="glm-4-flash">GLM-4 Flash (rapide)</option>
+                <option value="glm-4-air" selected>GLM-4 Air (équilibré)</option>
+                <option value="glm-4-plus">GLM-4 Plus (meilleure qualité)</option>
+                <option value="glm-4">GLM-4 (standard)</option>
+                <option value="glm-3-turbo">GLM-3 Turbo (économique)</option>
+            </select>
+            
             <button class="btn btn-primary" id="saveKeyBtn">🔓 Démarrer</button>
             <button class="btn btn-danger" id="resetKeyBtn" style="display:none;">🔄 Changer de clé</button>
             <span class="status-badge" id="statusBadge">⏳ En attente</span>
@@ -387,6 +416,7 @@
 
         let apiKey = '';
         let isReady = false;
+        let currentModel = 'glm-4-air';
 
         const conversationHistory = [{
             role: 'system',
@@ -401,6 +431,7 @@
         const userInput = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
         const apiKeyInput = document.getElementById('apiKeyInput');
+        const modelSelect = document.getElementById('modelSelect');
         const saveKeyBtn = document.getElementById('saveKeyBtn');
         const resetKeyBtn = document.getElementById('resetKeyBtn');
         const statusBadge = document.getElementById('statusBadge');
@@ -426,6 +457,7 @@
             userInput.disabled = !enabled;
             sendBtn.disabled = !enabled;
             apiKeyInput.disabled = enabled;
+            modelSelect.disabled = enabled;
             saveKeyBtn.disabled = enabled;
             if (enabled) {
                 resetKeyBtn.style.display = 'inline-block';
@@ -442,12 +474,12 @@
             } else {
                 addMessage('💡 Entrez votre clé API GLM puis cliquez sur « Démarrer ».', 'system');
             }
-            // On garde le message système dans l'historique
-            conversationHistory.length = 1; // garde seulement le system
+            // On garde seulement le message système dans l'historique
+            conversationHistory.length = 1;
         }
 
         // ============================================================
-        //  APPEL À L'API GLM
+        //  APPEL À L'API GLM (avec les bons modèles)
         // ============================================================
 
         async function callGLM(messages) {
@@ -456,6 +488,10 @@
                 throw new Error('Clé API manquante. Veuillez la saisir.');
             }
 
+            const model = currentModel || sessionStorage.getItem('glm_model') || 'glm-4.7-flash';
+
+            console.log(`📡 Appel à GLM avec le modèle : ${model}`);
+
             const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -463,20 +499,33 @@
                     'Authorization': `Bearer ${key}`
                 },
                 body: JSON.stringify({
-                    model: 'glm-4-flash', // ou 'glm-4' / 'glm-4-plus'
+                    model: model,
                     messages: messages,
                     temperature: 0.7,
-                    max_tokens: 1024,
+                    max_tokens: 2048,
                     top_p: 0.9
                 })
             });
 
+            // Gestion des erreurs détaillée
             if (!response.ok) {
                 let errorMsg = `Erreur HTTP ${response.status}`;
+                let errorDetail = '';
                 try {
                     const errData = await response.json();
-                    errorMsg = errData.error?.message || errorMsg;
+                    console.error('📛 Détails de l\'erreur GLM :', errData);
+                    errorDetail = errData.error?.message || errData.message || '';
+                    if (errData.error?.code) {
+                        errorMsg += ` [${errData.error.code}]`;
+                    }
                 } catch (_) { /* ignore */ }
+                
+                if (errorDetail.includes('model') || errorDetail.includes('Model')) {
+                    errorMsg = `❌ Modèle invalide. Vérifiez que "${model}" est correct. 
+                                Modèles disponibles : glm-4-flash, glm-4-air, glm-4-plus, glm-4, glm-3-turbo`;
+                } else if (errorDetail) {
+                    errorMsg = errorDetail;
+                }
                 throw new Error(errorMsg);
             }
 
@@ -531,16 +580,22 @@
         //  INITIALISATION DE LA SESSION
         // ============================================================
 
-        function initSession(key) {
+        function initSession(key, model) {
             apiKey = key;
+            currentModel = model;
             isReady = true;
+            
+            // Sauvegarder les préférences
+            sessionStorage.setItem('glm_api_key', key);
+            sessionStorage.setItem('glm_model', model);
+            
             setUIEnabled(true);
             setStatus('✅ Connecté', true);
             resetChat(true);
-            addMessage('🤖 Bonjour ! Je suis votre assistant. Posez-moi vos questions sur mon portfolio.', 'assistant');
+            addMessage(`🤖 Bonjour ! Je suis votre assistant (modèle ${model}). Posez-moi vos questions sur mon portfolio.`, 'assistant');
             conversationHistory.push({
                 role: 'assistant',
-                content: 'Bonjour ! Je suis votre assistant. Posez-moi vos questions sur mon portfolio.'
+                content: `Bonjour ! Je suis votre assistant (modèle ${model}). Posez-moi vos questions sur mon portfolio.`
             });
             apiKeyInput.value = '•••••••••••••';
         }
@@ -561,17 +616,18 @@
                 return;
             }
 
-            // Stockage temporaire (session)
-            sessionStorage.setItem('glm_api_key', key);
+            const model = modelSelect.value;
+            
             // Réinitialiser l'historique (on garde le system)
             conversationHistory.length = 1;
             resetChat(false);
-            initSession(key);
+            initSession(key, model);
         });
 
         // --- Changer de clé ---
         resetKeyBtn.addEventListener('click', () => {
             sessionStorage.removeItem('glm_api_key');
+            sessionStorage.removeItem('glm_model');
             apiKey = '';
             isReady = false;
             setUIEnabled(false);
@@ -580,6 +636,7 @@
             resetChat(false);
             apiKeyInput.value = '';
             apiKeyInput.disabled = false;
+            modelSelect.disabled = false;
             saveKeyBtn.disabled = false;
             resetKeyBtn.style.display = 'none';
             addMessage('💡 Veuillez entrer une nouvelle clé API.', 'system');
@@ -608,11 +665,18 @@
 
         window.addEventListener('load', () => {
             const savedKey = sessionStorage.getItem('glm_api_key');
+            const savedModel = sessionStorage.getItem('glm_model') || 'glm-4-air';
+            
+            // Restaurer le modèle sélectionné
+            if (savedModel) {
+                modelSelect.value = savedModel;
+            }
+            
             if (savedKey && savedKey.startsWith('sk-')) {
                 // On initialise directement
                 conversationHistory.length = 1;
                 resetChat(false);
-                initSession(savedKey);
+                initSession(savedKey, savedModel);
                 addMessage('🔄 Session restaurée. Bon retour !', 'system');
             } else {
                 // Si une clé corrompue existe, on la nettoie
@@ -628,12 +692,14 @@
             if (apiKey) {
                 const masked = apiKey.slice(0, 6) + '••••••••' + apiKey.slice(-4);
                 addMessage(`🔑 Clé actuelle : ${masked}`, 'system');
+                addMessage(`🧠 Modèle actuel : ${currentModel}`, 'system');
             } else {
                 addMessage('🔑 Aucune clé enregistrée.', 'system');
             }
         });
 
         console.log('🚀 Chatbot GLM chargé !');
+        console.log('📋 Modèles disponibles : glm-4-flash, glm-4-air, glm-4-plus, glm-4, glm-3-turbo');
         console.log('💡 Double-cliquez sur le statut pour voir votre clé (masquée).');
     </script>
 
