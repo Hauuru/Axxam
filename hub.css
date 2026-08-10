@@ -252,6 +252,26 @@ body {
    - hub-card--vesemt  : VESEMT                (rouge)
    - hub-card--chateau : Château Ambulant      (or / parchemin) */
 
+/* --- Carte Chatbot GLM : bleu marine / rouge / or --- */
+.hub-card--llm {
+    border-top: 4px solid #b21f1f;
+}
+
+.hub-card--llm .hub-card-icon {
+    background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+    color: #ffffff;
+}
+
+.hub-card--llm h3 { color: #1a2a6c; }
+.hub-card--llm .hub-card-type { color: #b21f1f; }
+.hub-card--llm p { color: #455a64; }
+.hub-card--llm .hub-card-cta { color: #1a2a6c; }
+
+.hub-card--llm:hover {
+    border-color: #b21f1f;
+    box-shadow: 0 10px 30px rgba(178, 31, 31, 0.25);
+}
+
 /* --- Carte Axxam Animations : vert + orange --- */
 .hub-card--anim {
     border-top: 4px solid #ff9800;
