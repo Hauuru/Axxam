@@ -150,10 +150,10 @@ body {
 
 /* ============ CARTE AXXAM NUMÉRIQUE — VARIANTES ============ */
 /* Propositions visuelles pour différencier Axxam Numérique (🖥️) de Axxam Animations (🎪).
-   - A : accent cyan « tech »          (active par défaut)
-   - B : carte sombre « terminal »
+   - A : accent cyan « tech »
+   - B : carte sombre « terminal »      (active par défaut)
    - C : dégradé clair + badge « Numérique »
-   Pour basculer : remplacer hub-card--num-A par hub-card--num-B ou -C dans index.html. */
+   Pour basculer : remplacer hub-card--num-B par hub-card--num-A ou -C dans index.html. */
 
 .hub-card--num { position: relative; }
 
