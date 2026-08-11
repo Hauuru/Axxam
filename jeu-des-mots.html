@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Le Jeu des Mots — Axxam</title>
+    <style>
+        :root {
+            --ink: #2b2a3a;
+            --muted: #7a788c;
+            --line: rgba(122, 120, 140, 0.18);
+            --accent: #6d63e0;
+            --accent-dark: #5449c4;
+            --accent-soft: #eef0ff;
+            --paper: rgba(255, 255, 255, 0.78);
+            --chip: #ffffff;
+            --ok: #166534;
+            --ok-soft: #dcfce7;
+            --err: #991b1b;
+            --err-soft: #fee2e2;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f4fb;
+            color: var(--ink);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        .bg {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1.4s ease;
+            filter: saturate(0.92);
+        }
+        .bg.loaded { opacity: 1; }
+
+        .bg-veil {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(180deg, rgba(246, 245, 251, 0.88), rgba(251, 250, 253, 0.82));
+        }
+
+        .page {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 22px 16px 60px;
+        }
+
+        header.top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        header.top h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        header.top .sub { color: var(--muted); font-size: 13px; }
+
+        a.back {
+            color: var(--accent-dark);
+            text-decoration: none;
+            font-size: 13px;
+            border: 1px solid var(--line);
+            background: var(--paper);
+            padding: 6px 12px;
+            border-radius: 999px;
+        }
+        a.back:hover { border-color: var(--accent); }
+
+        .card {
+            background: var(--paper);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            padding: 18px;
+            margin-bottom: 16px;
+        }
+
+        .config-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .config-row label { font-size: 13px; font-weight: 600; }
+
+        input[type="password"] {
+            flex: 1;
+            min-width: 190px;
+            padding: 9px 12px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        .status-badge {
+            font-size: 12px;
+            color: var(--muted);
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.5);
+        }
+        .status-badge.active { color: var(--ok); border-color: #86efac; background: var(--ok-soft); }
+
+        button {
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 9px 16px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: filter 0.15s ease, transform 0.1s ease;
+        }
+        button:active { transform: scale(0.98); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button:not(:disabled):hover { filter: brightness(1.05); }
+
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-ghost { background: rgba(255, 255, 255, 0.6); color: var(--ink); border-color: var(--line); }
+        .btn-soft { background: var(--accent-soft); color: var(--accent-dark); }
+
+        .arena {
+            text-align: center;
+            padding: 26px 14px 22px;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .turn-label { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+
+        .chain {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin: 4px 0;
+        }
+
+        .chip {
+            background: var(--chip);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 7px 14px;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(90, 80, 200, 0.08);
+        }
+        .chip.last { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+        .connector { color: #c9c7d6; font-size: 14px; user-select: none; }
+
+        .last-response { font-size: 15px; color: var(--ink); }
+        .last-response .why { color: var(--muted); font-style: italic; font-size: 14px; margin-bottom: 8px; }
+        .last-response .word-big {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 16px;
+            padding: 10px 24px;
+            font-size: 26px;
+            font-weight: 700;
+            margin: 4px 0;
+            box-shadow: 0 6px 18px rgba(109, 99, 224, 0.30);
+        }
+        .last-response .justif { color: var(--muted); font-size: 13px; margin-top: 8px; }
+        .last-response .player-note { color: var(--muted); }
+
+        .controls { display: flex; flex-direction: column; gap: 12px; max-width: 460px; margin: 0 auto; width: 100%; }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            font-size: 15px;
+            font-family: inherit;
+            background: rgba(255, 255, 255, 0.85);
+        }
+        input[type="text"]:focus, textarea:focus, input[type="password"]:focus {
+            outline: 2px solid var(--accent-soft);
+            border-color: var(--accent);
+        }
+
+        .why-input { font-size: 13px; resize: vertical; min-height: 48px; }
+
+        .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+        .end-panel { text-align: center; padding: 8px 0; }
+        .end-panel .score { font-size: 34px; font-weight: 800; color: var(--accent-dark); }
+        .end-panel .dup { color: var(--err); margin: 6px 0 12px; }
+
+        .top-note { font-size: 12px; color: var(--muted); margin-top: 4px; text-align: center; }
+        .mini-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .mini-btn {
+            background: rgba(255, 255, 255, 0.5);
+            color: var(--muted);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .mini-btn:hover { border-color: var(--accent); color: var(--accent-dark); }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="bg" id="bgLayer"></div>
+    <div class="bg-veil"></div>
+
+    <div class="page">
+        <header class="top">
+            <div>
+                <h1>🎲 Le Jeu des Mots</h1>
+                <div class="sub">Proposez un mot lié au précédent, à tour de rôle avec GLM. Deux fois le même mot = fin de partie.</div>
+            </div>
+            <a class="back" href="index.html">← Portail</a>
+        </header>
+
+        <section class="card">
+            <div class="config-row">
+                <label for="apiKeyInput">🔑 Clé API GLM :</label>
+                <input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
+                <button class="btn-primary" id="saveKeyBtn">🔓 Démarrer</button>
+                <button class="btn-ghost" id="resetKeyBtn" style="display:none;">🔄 Changer</button>
+                <span class="status-badge" id="statusBadge">⏳ En attente</span>
+            </div>
+            <div class="top-note">Clé sur <strong>https://z.ai/manage-apikey/apikey-list</strong> — stockée uniquement dans votre navigateur (sessionStorage), partagée avec le chatbot.</div>
+        </section>
+
+        <section class="card arena">
+            <div class="turn-label" id="turnLabel">Nouvelle partie</div>
+            <div class="chain" id="chainBox"></div>
+            <div class="last-response hidden" id="lastBox"></div>
+
+            <div class="controls" id="controlsBox"></div>
+
+            <div class="end-panel hidden" id="endBox"></div>
+
+            <div class="mini-row">
+                <button class="mini-btn" id="newGameBtn">🔄 Nouvelle partie</button>
+                <button class="mini-btn" id="copyChainBtn" title="Copier la série">📋 Copier la série</button>
+                <button class="mini-btn" id="imgToggle">🖼️ Images : on</button>
+                <span class="status-badge" id="bestBadge">🏆 Meilleure : —</span>
+            </div>
+        </section>
+
+        <footer class="top-note">
+            Moteur : GLM (glm-4.7-flash) · Fond généré par Pollinations.ai à partir des mots de la série (gratuit, sans clé).
+            Les mots saisis sont envoyés à l'API GLM — ne jouez pas d'informations sensibles.
+        </footer>
+    </div>
+
+    <script>
+        // Polyfill replaceChildren pour iOS < 14 / navigateurs plus anciens
+        if (typeof Element !== 'undefined' && !Element.prototype.replaceChildren) {
+            Element.prototype.replaceChildren = function () {
+                while (this.firstChild) this.removeChild(this.firstChild);
+                for (let i = 0; i < arguments.length; i++) this.appendChild(arguments[i]);
+            };
+        }
+
+        const API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+        const MODEL = 'glm-4.7-flash';
+        const IMG_URL = 'https://image.pollinations.ai/prompt/';
+        const BEST_KEY = 'jeu_mots_best';
+        const IMG_KEY = 'jeu_mots_images';
+
+        const SYSTEM_PROMPT = [
+            'Tu es le moteur d\'un jeu de mots alterné en français. Le joueur et toi proposez à tour de rôle des mots.',
+            'Chaque nouveau mot doit être LIÉ au mot précédent (thème, sens, sonorité, culture, littérature…).',
+            'Tu ne dois JAMAIS répéter un mot déjà utilisé dans l\'historique.',
+            '',
+            'RÉPONDS UNIQUEMENT en JSON valide, sans rien d\'autre. Format exact :',
+            '{"pourquoi": "...", "mot": "...", "justification": "..."}',
+            '',
+            'Règles :',
+            '- "pourquoi" : explique en 1 à 3 phrases le lien entre le mot précédent et TON nouveau mot.',
+            '- "mot" : un mot ou une courte expression (2-3 mots max), en français, au singulier, sans article.',
+            '- "justification" : une note brève et facultative (ou une chaîne vide "").',
+            '- Ne répète jamais un mot de l\'historique, sous aucune forme.',
+            '- Si le lien du joueur était faible ou inventé, signale-le gentiment dans "pourquoi" mais continue le jeu.',
+            '- Reste créatif, poétique et sans vulgarité.'
+        ].join('\n');
+
+        let apiKey = '';
+        let phase = 'start';          // start | player | glm | over
+        let words = [];
+        let usedWords = new Set();
+        let playerLastWhy = '';
+        let lastPlayerEntry = null;   // {word, pourquoi}
+        let lastGlamEntry = null;     // {pourquoi, mot, justification}
+        let busy = false;
+        let best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
+        let imagesOn = localStorage.getItem(IMG_KEY) !== 'off';
+
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const saveKeyBtn = document.getElementById('saveKeyBtn');
+        const resetKeyBtn = document.getElementById('resetKeyBtn');
+        const statusBadge = document.getElementById('statusBadge');
+        const turnLabel = document.getElementById('turnLabel');
+        const chainBox = document.getElementById('chainBox');
+        const lastBox = document.getElementById('lastBox');
+        const controlsBox = document.getElementById('controlsBox');
+        const endBox = document.getElementById('endBox');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const copyChainBtn = document.getElementById('copyChainBtn');
+        const imgToggle = document.getElementById('imgToggle');
+        const bestBadge = document.getElementById('bestBadge');
+        const bgLayer = document.getElementById('bgLayer');
+
+        // ============================================================
+        //  UTILITAIRES
+        // ============================================================
+        function norm(w) {
+            return String(w).toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^\p{L}\p{N}'’\-\s]/gu, '')
+                .trim().replace(/\s+/g, ' ');
+        }
+
+        function setStatus(text, isActive) {
+            statusBadge.textContent = text;
+            statusBadge.className = 'status-badge' + (isActive ? ' active' : '');
+        }
+
+        function setKeyState(active) {
+            resetKeyBtn.style.display = active ? 'inline-block' : 'none';
+            apiKeyInput.disabled = active;
+            saveKeyBtn.disabled = active;
+        }
+
+        function setBusy(v) {
+            busy = v;
+            renderUI();
+        }
+
+        function hasKey() {
+            const k = apiKey || sessionStorage.getItem('glm_api_key');
+            return k && k.startsWith('sk-');
+        }
+
+        // ============================================================
+        //  FOND POLLINATIONS
+        // ============================================================
+        function updateBackground() {
+            if (!imagesOn) { bgLayer.classList.remove('loaded'); bgLayer.style.backgroundImage = ''; return; }
+            if (!words.length) return;
+            const prompt = 'illustration douce et rêveuse, atmosphère pastel onirique, concepts réunis : ' + words.join(', ');
+            const url = IMG_URL + encodeURIComponent(prompt) + '?model=flux&width=1600&height=900&enhance=true';
+            const img = new Image();
+            img.onload = () => {
+                bgLayer.style.backgroundImage = 'url(' + url + ')';
+                bgLayer.classList.add('loaded');
+            };
+            img.onerror = () => { /* silencieux : fond neutre conservé */ };
+            img.src = url;
+        }
+
+        // ============================================================
+        //  AFFICHAGE
+        // ============================================================
+        function renderChain() {
+            chainBox.replaceChildren();
+            words.forEach((w, i) => {
+                if (i > 0) {
+                    const sep = document.createElement('span');
+                    sep.className = 'connector';
+                    sep.textContent = '→';
+                    chainBox.appendChild(sep);
+                }
+                const chip = document.createElement('span');
+                chip.className = 'chip' + (i === words.length - 1 ? ' last' : '');
+                chip.textContent = w;
+                chainBox.appendChild(chip);
+            });
+        }
+
+        function el(tag, cls, text) {
+            const e = document.createElement(tag);
+            if (cls) e.className = cls;
+            if (text !== undefined) e.textContent = text;
+            return e;
+        }
+
+        function renderLast() {
+            lastBox.replaceChildren();
+            if (phase === 'player' && lastGlamEntry) {
+                lastBox.classList.remove('hidden');
+                lastBox.appendChild(el('p', 'why', 'Pourquoi ce lien : ' + lastGlamEntry.pourquoi));
+                lastBox.appendChild(el('div', 'word-big', lastGlamEntry.mot));
+                if (lastGlamEntry.justification) lastBox.appendChild(el('p', 'justif', 'Note : ' + lastGlamEntry.justification));
+            } else if (phase === 'glm' && lastPlayerEntry) {
+                lastBox.classList.remove('hidden');
+                lastBox.appendChild(el('p', 'player-note', 'Votre mot : ' + lastPlayerEntry.word));
+                if (lastPlayerEntry.pourquoi) lastBox.appendChild(el('p', 'why', 'Votre pourquoi : ' + lastPlayerEntry.pourquoi));
+            } else {
+                lastBox.classList.add('hidden');
+            }
+        }
+
+        function renderControls() {
+            controlsBox.replaceChildren();
+            if (phase === 'start') {
+                turnLabel.textContent = 'Écrivez le premier mot';
+                const input = el('input'); input.type = 'text'; input.id = 'startWord'; input.placeholder = 'Un mot… (ex. nuage)'; input.maxLength = 40;
+                input.addEventListener('keydown', (e) => { if (e.key === 'Enter') startGame(); });
+                const btn = el('button', 'btn-primary', 'Commencer');
+                btn.addEventListener('click', startGame);
+                controlsBox.appendChild(input);
+                controlsBox.appendChild(btn);
+                setTimeout(() => { const f = controlsBox.querySelector('#startWord'); if (f) f.focus(); }, 60);
+            } else if (phase === 'player') {
+                turnLabel.textContent = 'À vous — un mot lié à « ' + words[words.length - 1] + ' »';
+                const input = el('input'); input.type = 'text'; input.id = 'playerWord'; input.placeholder = 'Votre mot…'; input.maxLength = 60;
+                input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitPlayerWord(); });
+                const why = el('textarea', 'why-input'); why.id = 'playerWhy'; why.placeholder = 'Pourquoi ce lien ? (facultatif)'; why.maxLength = 300;
+                const btn = el('button', 'btn-primary', 'Proposer');
+                btn.addEventListener('click', submitPlayerWord);
+                const row = el('div', 'btn-row');
+                row.appendChild(btn);
+                controlsBox.appendChild(input);
+                controlsBox.appendChild(why);
+                controlsBox.appendChild(row);
+                setTimeout(() => { const f = controlsBox.querySelector('#playerWord'); if (f) f.focus(); }, 60);
+            } else if (phase === 'glm') {
+                turnLabel.textContent = 'À GLM de jouer';
+                const btn = el('button', 'btn-soft', busy ? '🪄 GLM réfléchit…' : '✨ Demander le mot');
+                btn.disabled = busy;
+                btn.addEventListener('click', runGamTurn);
+                controlsBox.appendChild(btn);
+            }
+        }
+
+        function renderUI() {
+            renderChain();
+            renderLast();
+            renderControls();
+            if (phase === 'over') {
+                endBox.classList.remove('hidden');
+            } else {
+                endBox.classList.add('hidden');
+            }
+            bestBadge.textContent = '🏆 Meilleure : ' + best;
+            imgToggle.textContent = imagesOn ? '🖼️ Images : on' : '🖼️ Images : off';
+        }
+
+        function showError(msg) {
+            lastBox.classList.remove('hidden');
+            lastBox.replaceChildren(el('p', 'why', '⚠️ ' + msg));
+        }
+
+        // ============================================================
+        //  LOGIQUE DU JEU
+        // ============================================================
+        function startGame() {
+            const input = controlsBox.querySelector('#startWord');
+            const w = (input ? input.value : '').trim();
+            if (!w) return;
+            if (!norm(w)) { showError('Ce mot ne contient aucun caractère valide.'); return; }
+            usedWords.add(norm(w));
+            words.push(w);
+            playerLastWhy = '';
+            lastPlayerEntry = null;
+            lastGlamEntry = null;
+            phase = 'glm';
+            updateBackground();
+            renderUI();
+        }
+
+        function submitPlayerWord() {
+            if (busy || phase !== 'player') return;
+            const input = controlsBox.querySelector('#playerWord');
+            const whyInput = controlsBox.querySelector('#playerWhy');
+            const w = (input ? input.value : '').trim();
+            if (!w) return;
+            const n = norm(w);
+            if (!n) { showError('Ce mot ne contient aucun caractère valide.'); return; }
+            if (usedWords.has(n)) {
+                phase = 'over';
+                updateBackground();
+                renderUI();
+                showEndPanel(w, 'player');
+                return;
+            }
+            usedWords.add(n);
+            words.push(w);
+            lastPlayerEntry = { word: w, pourquoi: (whyInput ? whyInput.value.trim() : '') };
+            lastGlamEntry = null;
+            playerLastWhy = lastPlayerEntry.pourquoi;
+            phase = 'glm';
+            updateBackground();
+            renderUI();
+        }
+
+        async function runGamTurn() {
+            if (busy || phase !== 'glm' || !words.length) return;
+            setBusy(true);
+            setStatus('🔎 GLM réfléchit…', true);
+            try {
+                const lastWord = words[words.length - 1];
+                const history = words.map((w, i) => (i + 1) + '. ' + w).join('\n');
+                const userMsg = [
+                    'Historique des mots déjà utilisés (à ne JAMAIS répéter) :',
+                    history,
+                    '',
+                    'Le joueur vient de jouer : "' + lastWord + '"',
+                    playerLastWhy ? 'Explication du joueur (facultative) : "' + playerLastWhy + '"' : '',
+                    '',
+                    'À toi de jouer. Réponds en JSON valide uniquement.'
+                ].join('\n');
+
+                const res = await callGLMJson([
+                    { role: 'system', content: SYSTEM_PROMPT },
+                    { role: 'user', content: userMsg }
+                ]);
+
+                const mot = String(res.mot || '').replace(/[*_`#]/g, '').trim();
+                if (!mot) throw new Error('GLM n\'a pas fourni de mot valide.');
+                const n = norm(mot);
+                if (!n) throw new Error('GLM a fourni un mot illisible : « ' + mot + ' ».');
+
+                if (usedWords.has(n)) {
+                    phase = 'over';
+                    renderUI();
+                    showEndPanel(mot, 'glm');
+                    setStatus('🏁 Série terminée', false);
+                    updateBackground();
+                    return;
+                }
+
+                usedWords.add(n);
+                words.push(mot);
+                lastGlamEntry = {
+                    pourquoi: String(res.pourquoi || '').trim() || 'Lien non précisé.',
+                    mot: mot,
+                    justification: String(res.justification || '').trim()
+                };
+                lastPlayerEntry = null;
+                phase = 'player';
+                setStatus('✅ À vous', true);
+                updateBackground();
+                renderUI();
+            } catch (err) {
+                setStatus('❌ Erreur', false);
+                showError(err.message);
+            } finally {
+                setBusy(false);
+            }
+        }
+
+        function showEndPanel(dupWord, who) {
+            const total = words.length;
+            if (total > best) {
+                best = total;
+                localStorage.setItem(BEST_KEY, String(best));
+            }
+            bestBadge.textContent = '🏆 Meilleure : ' + best;
+            endBox.replaceChildren();
+            endBox.appendChild(el('div', 'score', total + ' mot' + (total > 1 ? 's' : '')));
+            const cause = who === 'player'
+                ? '« ' + dupWord + ' » avait déjà été joué — vous avez répété un mot !'
+                : 'GLM a répété « ' + dupWord + ' » — le jeu s\'arrête !';
+            endBox.appendChild(el('p', 'dup', cause));
+            const replay = el('button', 'btn-primary', '🔄 Rejouer');
+            replay.addEventListener('click', newGame);
+            endBox.appendChild(replay);
+        }
+
+        function newGame() {
+            words = [];
+            usedWords = new Set();
+            playerLastWhy = '';
+            lastPlayerEntry = null;
+            lastGlamEntry = null;
+            phase = 'start';
+            endBox.replaceChildren();
+            setStatus(hasKey() ? '✅ Prêt' : '⏳ En attente', hasKey());
+            updateBackground();
+            renderUI();
+        }
+
+        // ============================================================
+        //  API GLM (JSON)
+        // ============================================================
+        async function callGLMJson(messages) {
+            const key = apiKey || sessionStorage.getItem('glm_api_key');
+            if (!key || !key.startsWith('sk-')) throw new Error('Clé API manquante ou invalide — ajoutez-la en haut de la page.');
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+                body: JSON.stringify({
+                    model: MODEL,
+                    messages: messages,
+                    temperature: 0.9,
+                    max_tokens: 800,
+                    top_p: 0.9
+                })
+            });
+            if (!response.ok) {
+                let msg = 'Erreur HTTP ' + response.status;
+                try {
+                    const err = await response.json();
+                    msg = (err.error && err.error.message) || err.message || msg;
+                } catch (_) {}
+                throw new Error(msg);
+            }
+            const data = await response.json();
+            const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+            if (!content) throw new Error('Réponse vide de l\'API.');
+            return parseJson(content);
+        }
+
+        function parseJson(content) {
+            const text = String(content);
+            try {
+                const obj = JSON.parse(text);
+                if (obj && typeof obj === 'object') return obj;
+            } catch (_) {}
+            const m = text.match(/\{[\s\S]*\}/);
+            if (m) {
+                try {
+                    const obj = JSON.parse(m[0]);
+                    if (obj && typeof obj === 'object') return obj;
+                } catch (_) {}
+            }
+            const grab = (label) => {
+                const r = new RegExp("(?:^|\\n)\\s*[\"']?" + label + "[\"']?\\s*[:=]\\s*[\"']?([^\"'\n]+)", 'i');
+                const mm = text.match(r);
+                return mm ? mm[1].trim().replace(/["'.,;]$/, '') : '';
+            };
+            const res = { pourquoi: grab('pourquoi'), mot: grab('mot'), justification: grab('justification') };
+            if (res.mot) return res;
+            throw new Error('Réponse illisible de GLM : ' + text.slice(0, 140));
+        }
+
+        // ============================================================
+        //  ACTIONS / ÉVÉNEMENTS
+        // ============================================================
+        function initSession(key) {
+            apiKey = key;
+            sessionStorage.setItem('glm_api_key', key);
+            apiKeyInput.value = '•••••••••••••';
+            setKeyState(true);
+            setStatus('✅ Connecté', true);
+        }
+
+        saveKeyBtn.addEventListener('click', () => {
+            const key = apiKeyInput.value.trim();
+            if (!key) return;
+            if (!key.startsWith('sk-')) {
+                showError('La clé semble invalide (doit commencer par « sk- »).');
+                return;
+            }
+            initSession(key);
+        });
+
+        resetKeyBtn.addEventListener('click', () => {
+            sessionStorage.removeItem('glm_api_key');
+            apiKey = '';
+            setKeyState(false);
+            apiKeyInput.value = '';
+            setStatus('⏳ En attente', false);
+        });
+
+        newGameBtn.addEventListener('click', newGame);
+
+        copyChainBtn.addEventListener('click', () => {
+            if (!words.length) return;
+            const text = 'Série de ' + words.length + ' mots : ' + words.join(' → ');
+            navigator.clipboard.writeText(text).then(
+                () => { copyChainBtn.textContent = '✅ Copié'; setTimeout(() => { copyChainBtn.textContent = '📋 Copier la série'; }, 1500); },
+                () => { copyChainBtn.textContent = '❌ Refusé'; setTimeout(() => { copyChainBtn.textContent = '📋 Copier la série'; }, 1500); }
+            );
+        });
+
+        imgToggle.addEventListener('click', () => {
+            imagesOn = !imagesOn;
+            localStorage.setItem(IMG_KEY, imagesOn ? 'on' : 'off');
+            imgToggle.textContent = imagesOn ? '🖼️ Images : on' : '🖼️ Images : off';
+            if (!imagesOn) {
+                bgLayer.classList.remove('loaded');
+                bgLayer.style.backgroundImage = '';
+            } else {
+                updateBackground();
+            }
+        });
+
+        window.addEventListener('load', () => {
+            bestBadge.textContent = '🏆 Meilleure : ' + best;
+            imgToggle.textContent = imagesOn ? '🖼️ Images : on' : '🖼️ Images : off';
+            const saved = sessionStorage.getItem('glm_api_key');
+            if (saved && saved.startsWith('sk-')) {
+                initSession(saved);
+            } else {
+                sessionStorage.removeItem('glm_api_key');
+            }
+            renderUI();
+        });
+    </script>
+</body>
+</html>

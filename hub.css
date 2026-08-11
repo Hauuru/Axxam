@@ -292,6 +292,26 @@ body {
     box-shadow: 0 10px 30px rgba(180, 83, 9, 0.25);
 }
 
+/* --- Carte Le Jeu des Mots : indigo / lavande --- */
+.hub-card--mots {
+    border-top: 4px solid #6d63e0;
+}
+
+.hub-card--mots .hub-card-icon {
+    background: linear-gradient(135deg, #2b2a3a, #6d63e0);
+    color: #ffffff;
+}
+
+.hub-card--mots h3 { color: #2b2a3a; }
+.hub-card--mots .hub-card-type { color: #6d63e0; }
+.hub-card--mots p { color: #455a64; }
+.hub-card--mots .hub-card-cta { color: #6d63e0; }
+
+.hub-card--mots:hover {
+    border-color: #6d63e0;
+    box-shadow: 0 10px 30px rgba(109, 99, 224, 0.28);
+}
+
 /* --- Carte Axxam Animations : vert + orange --- */
 .hub-card--anim {
     border-top: 4px solid #ff9800;
