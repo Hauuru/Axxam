@@ -29,6 +29,13 @@
    "score": 1.0
   },
   {
+   "p": 884,
+   "title": "« Métropole, piscine et promesses en eau trouble »",
+   "date": "Wed, 05 Aug 2026 06:29:29 +0000",
+   "match": "« Métropole, piscine et promesses en eau trouble »",
+   "score": 1.0
+  },
+  {
    "p": 270,
    "title": "« Le vote musulman n’existe pas : la citoyenneté, si ».",
    "date": "Wed, 04 Mar 2026 03:36:48 +0000",
@@ -340,7 +347,7 @@
    "p": 870,
    "title": "Notre Gare :  Épisode 2 : Cinq  millions d’euros, un joli cadrage… et toujours pas beaucoup d’ombre",
    "date": "Mon, 03 Aug 2026 04:54:27 +0000",
-   "match": "Notre Gare :  Épisode 2 : Cinq  millions d’euros, un joli cadrage… et toujours pas beaucoup d’ombre",
+   "match": "Notre Gare : Épisode 2 : Cinq millions d’euros, un joli cadrage… et toujours pas beaucoup d’ombre",
    "score": 1.0
   },
   {
@@ -379,6 +386,13 @@
    "score": 1.0
   },
   {
+   "p": 894,
+   "title": "Déchets et TMVL : Si tout est toujours la faute des habitant.es, à quoi sert encore un service public ?",
+   "date": "Fri, 07 Aug 2026 06:23:02 +0000",
+   "match": "Déchets : si tout est toujours la faute des habitant.es, à quoi sert encore un service public ?",
+   "score": 0.89
+  },
+  {
    "p": 760,
    "title": "Un quartier c’est comme une ville….. pas un puzzle en kit !",
    "date": "Fri, 03 Jul 2026 04:57:55 +0000",
@@ -388,14 +402,19 @@
  ],
  "pending": [
   {
-   "p": 884,
-   "title": "« Métropole, piscine et promesses en eau trouble »",
-   "date": "Wed, 05 Aug 2026 06:29:29 +0000"
+   "p": 936,
+   "title": "TMVL Vs QPV : Ou comment TMVL « bat la communication » avec un entretien annuel dans les quartiers populaires",
+   "date": "Tue, 11 Aug 2026 05:38:42 +0000"
   },
   {
-   "p": 894,
-   "title": "Déchets : si tout est toujours la faute des habitant.es, à quoi sert encore un service public ?",
-   "date": "Fri, 07 Aug 2026 06:23:02 +0000"
+   "p": 906,
+   "title": "TMVL : La Métropole, buffet à volonté ou braquage en col blanc ? (Episode 3 de notre série estivale)",
+   "date": "Sat, 08 Aug 2026 06:55:55 +0000"
+  },
+  {
+   "p": 925,
+   "title": "Mémoires Fertiles : « Le combat continue. Les consciences, elles, ne prennent pas de vacances. »",
+   "date": "Mon, 10 Aug 2026 06:01:24 +0000"
   }
  ]
 }
