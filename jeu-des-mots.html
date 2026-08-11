@@ -655,45 +655,99 @@
         }
 
         // ============================================================
-        //  API GLM (JSON)
+        //  API GLM (streaming JSON)
         // ============================================================
+        function readSSEStream(response, onDelta, onReasoning, onFinish) {
+            if (!response.body) throw new Error('Le streaming n\'est pas pris en charge par ce navigateur.');
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '', pending = '';
+            const flush = () => {
+                if (pending === '') return;
+                const data = pending;
+                pending = '';
+                if (data === '[DONE]') return;
+                try {
+                    const json = JSON.parse(data);
+                    const choice = json.choices && json.choices[0];
+                    if (!choice) return;
+                    const delta = choice.delta;
+                    if (delta) {
+                        if (onReasoning && typeof delta.reasoning_content === 'string' && delta.reasoning_content.length) {
+                            onReasoning(delta.reasoning_content);
+                        }
+                        if (typeof delta.content === 'string' && delta.content.length) onDelta(delta.content);
+                    }
+                    if (onFinish && choice.finish_reason) onFinish(choice.finish_reason);
+                } catch (_) {}
+            };
+            return (async () => {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    let nl;
+                    while ((nl = buffer.indexOf('\n')) >= 0) {
+                        const line = buffer.slice(0, nl).trim();
+                        buffer = buffer.slice(nl + 1);
+                        if (line === '') flush();
+                        else if (line.startsWith('data:')) pending += line.slice(5).trim();
+                    }
+                }
+                flush();
+            })();
+        }
+
         async function callGLMJson(messages) {
             const key = apiKey || sessionStorage.getItem('glm_api_key');
             if (!key || !key.startsWith('sk-')) throw new Error('Clé API manquante ou invalide — ajoutez-la en haut de la page.');
             const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-            const timer = controller ? setTimeout(() => controller.abort(), 45000) : null;
-            let response;
+            const timer = controller ? setTimeout(() => controller.abort(), 60000) : null;
             try {
-                response = await fetch(API_URL, {
+                const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
                     body: JSON.stringify({
                         model: MODEL,
                         messages: messages,
                         temperature: 0.9,
-                        max_tokens: 800,
-                        top_p: 0.9
+                        max_tokens: 4000,
+                        top_p: 0.9,
+                        stream: true
                     }),
                     signal: controller ? controller.signal : undefined
                 });
+                if (!response.ok) {
+                    let msg = 'Erreur HTTP ' + response.status;
+                    try {
+                        const err = await response.json();
+                        msg = (err.error && err.error.message) || err.message || msg;
+                    } catch (_) {}
+                    throw new Error(msg);
+                }
+                let acc = '', reasoning = '', finish = '';
+                await readSSEStream(response,
+                    (d) => { acc += d; },
+                    (r) => { reasoning += r; },
+                    (f) => { finish = f; }
+                );
+                const trimmed = acc.trim();
+                if (!trimmed) {
+                    const hint = reasoning ? ' — le modèle a « réfléchi » sans produire de réponse, réessayez.' : '.';
+                    throw new Error('Réponse vide de l\'API' + hint);
+                }
+                try {
+                    return parseJson(trimmed);
+                } catch (e) {
+                    if (finish === 'length') throw new Error('Réponse coupée (limite de sortie atteinte) — réessayez.');
+                    throw e;
+                }
             } catch (e) {
-                if (controller && controller.signal.aborted) throw new Error('Délai d\'attente dépassé (45 s) — l\'API GLM ne répond pas. Réessayez.');
+                if (controller && controller.signal.aborted) throw new Error('Délai d\'attente dépassé — l\'API GLM ne répond pas. Réessayez.');
                 throw e;
             } finally {
                 if (timer) clearTimeout(timer);
             }
-            if (!response.ok) {
-                let msg = 'Erreur HTTP ' + response.status;
-                try {
-                    const err = await response.json();
-                    msg = (err.error && err.error.message) || err.message || msg;
-                } catch (_) {}
-                throw new Error(msg);
-            }
-            const data = await response.json();
-            const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-            if (!content) throw new Error('Réponse vide de l\'API.');
-            return parseJson(content);
         }
 
         function parseJson(content) {
