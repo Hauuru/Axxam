@@ -382,6 +382,18 @@
         /* ===== STREAM : CONTENU + CARET ===== */
         .stream-content { min-height: 1em; }
 
+        .thinking-block {
+            color: rgba(215, 231, 240, 0.62);
+            font-style: italic;
+            font-size: 12px;
+            white-space: pre-wrap;
+            border-left: 3px solid rgba(191, 227, 245, 0.35);
+            padding: 4px 10px;
+            margin: 2px 0 8px;
+            max-height: 140px;
+            overflow-y: auto;
+        }
+
         .caret {
             display: inline-block;
             width: 8px;
@@ -1002,7 +1014,7 @@
         //  LECTURE DU FLUX SSE (streaming GLM)
         // ============================================================
 
-        async function readSSEStream(response, onDelta) {
+        async function readSSEStream(response, onDelta, onReasoning, onFinish) {
             if (!response.body) {
                 throw new Error('Le streaming n\'est pas pris en charge par ce navigateur.');
             }
@@ -1019,8 +1031,15 @@
                 try {
                     const json = JSON.parse(data);
                     const choice = json.choices && json.choices[0];
-                    const delta = choice && choice.delta && choice.delta.content;
-                    if (typeof delta === 'string' && delta.length > 0) onDelta(delta);
+                    if (!choice) return;
+                    const delta = choice.delta;
+                    if (delta) {
+                        if (onReasoning && typeof delta.reasoning_content === 'string' && delta.reasoning_content.length) {
+                            onReasoning(delta.reasoning_content);
+                        }
+                        if (typeof delta.content === 'string' && delta.content.length) onDelta(delta.content);
+                    }
+                    if (onFinish && choice.finish_reason) onFinish(choice.finish_reason);
                 } catch (_) { /* ligne SSE ignorée */ }
             };
 
@@ -1042,7 +1061,7 @@
             flush();
         }
 
-        async function callGLMStream(messages, onDelta) {
+        async function callGLMStream(messages, onDelta, onReasoning, onFinish) {
             const key = apiKey || sessionStorage.getItem('glm_api_key');
             if (!key) {
                 throw new Error('Clé API manquante. Veuillez la saisir.');
@@ -1062,7 +1081,7 @@
                     model: model,
                     messages: messages,
                     temperature: 0.7,
-                    max_tokens: 2048,
+                    max_tokens: 4000,
                     top_p: 0.9,
                     stream: true
                 })
@@ -1089,7 +1108,7 @@
                 throw new Error(errorMsg);
             }
 
-            await readSSEStream(response, onDelta);
+            await readSSEStream(response, onDelta, onReasoning, onFinish);
         }
 
         // ============================================================
@@ -1118,6 +1137,10 @@
                 // Bulle de streaming : contenu + caret clignotant
                 bubble = document.createElement('div');
                 bubble.className = 'message assistant streaming';
+                const thinkDiv = document.createElement('div');
+                thinkDiv.className = 'thinking-block';
+                thinkDiv.hidden = true;
+                bubble.appendChild(thinkDiv);
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'stream-content';
                 bubble.appendChild(contentDiv);
@@ -1128,12 +1151,18 @@
                 chatBox.scrollTop = chatBox.scrollHeight;
 
                 let acc = '';
+                let think = '';
+                let truncated = false;
                 let renderQueued = false;
                 const renderNow = () => {
                     renderQueued = false;
                     contentDiv.replaceChildren();
                     contentDiv.appendChild(renderMarkdown(acc));
                     chatBox.scrollTop = chatBox.scrollHeight;
+                };
+                const renderThink = () => {
+                    thinkDiv.hidden = think === '';
+                    thinkDiv.textContent = think;
                 };
                 const queueRender = () => {
                     if (!renderQueued) {
@@ -1151,6 +1180,11 @@
                     }
                     acc += delta;
                     queueRender();
+                }, (r) => {
+                    think += r;
+                    renderThink();
+                }, (finish) => {
+                    if (finish === 'length') truncated = true;
                 });
 
                 // Rendu final propre
@@ -1159,13 +1193,17 @@
                 bubble.classList.remove('streaming');
                 chatBox.scrollTop = chatBox.scrollHeight;
 
-                if (!acc) {
+                if (!acc && !think) {
                     throw new Error('Réponse invalide de l\'API');
                 }
 
                 conversationHistory.push({ role: 'assistant', content: acc });
                 setStatus('✅ Connecté', true);
                 setFlow('done');
+
+                if (truncated) {
+                    addMessage('⚠️ Réponse interrompue (limite de sortie atteinte). Reformulez la question ou divisez-la en deux.', 'error');
+                }
 
             } catch (error) {
                 if (bubble && bubble.parentNode) {
