@@ -246,6 +246,7 @@ Attendre 1-2 minutes, puis les sites sont accessibles.
 
 - **`/boxingclubspdc/README.md`** – Documentation du site Boxing Club SPDC (structure, formulaire, maintenance)
 - **`/vesemt.org/README.md`** – Documentation du site vesemt.org (installation, structure, déploiement)
+- **`/tmp/opencode/README.md`** – README maître (handover) de l'espace de travail : vue d'ensemble, rubriques, adressage des URLs et bases de données (base de connaissances de l'agent + bases anyclaw/Turso)
 - **`/vesemt.org/RAPPORT_ANALYSE.md`** – Rapport d'analyse détaillé et recommandations
 - **`/vesemt.org/JOURNAL-MODIFICATIONS.md`** – Historique des modifications du site vesemt.org
 - **`/chateauambulant/README.md`** – Documentation du site Château Ambulant
