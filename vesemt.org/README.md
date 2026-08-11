@@ -22,23 +22,26 @@ vesemt.org/
 │   ├── style.css                # Styles principaux (nav, hero, accueil, footer)
 │   ├── article.css              # Styles des articles
 │   └── dossiers.css             # Styles des dossiers métropolitains
-├── images/                      # 57 images (JPEG, ≤ 800 px, q85)
-├── articles/                    # 58 articles (dates : 01/03 → 04/08/2026)
+├── images/                      # 86 images (JPEG, ≤ 800 px, q85)
+├── articles/                    # 63 articles (dates : 01/03 → 11/08/2026)
+├── agent.html                   # Agent « Questionner nos articles » (clé API GLM)
+├── vesemt-knowledge.js          # Base de connaissance des 63 articles (générée)
 ├── tools/                       # Outils de conversion WordPress → statique
 │   ├── build_registry.py        # inventaire des articles → registry.json
 │   ├── backlog.py               # RSS → backlog.json (known / pending)
 │   ├── convert.py               # ?p=ID → article HTML + images + slugmap.json
 │   ├── wire.py                  # index, nav, prev/next, placeholders, sitemap
+│   ├── build_knowledge.py       # articles → vesemt-knowledge.js (base de l'agent)
 │   └── slugmap.json             # correspondance p:N → slug
 ├── documentation/
 │   ├── PROPOSITION-METHODE.md   # proposition validée (structure + pipeline)
 │   └── CONVERSION-METHODE.md    # playbook de conversion (à suivre pour chaque nouvel article)
-├── index.html                   # Accueil : bandeau + liste de tous les articles
+├── index.html                   # Accueil : bandeau + bouton agent + liste de tous les articles
 ├── qui-sommes-nous.html         # Page "Qui sommes nous ?"
 ├── elections-municipales-2026.html  # Élections Municipales 2026
 ├── contacter-reseaux.html       # Contact et réseaux
 ├── politique-confidentialite.html  # Politique de confidentialité
-├── sitemap.xml                  # Sitemap (63 URLs : 5 pages + 58 articles)
+├── sitemap.xml                  # Sitemap (69 URLs : 6 pages + 63 articles)
 └── robots.txt
 ```
 
@@ -53,13 +56,23 @@ Le site est publié via GitHub Pages sur `https://axxam.net/vesemt.org/` (domain
 
 ## 📊 Statistiques
 
-- **Total de fichiers HTML** : 63 (5 pages + 58 articles)
+- **Total de fichiers HTML** : 69 (6 pages + 63 articles)
 - **Total d'images** : 86 (toutes en JPEG, ≤ 800 px)
 - **Total de fichiers CSS** : 3
 - **Liens internes** : 0 cassé (vérifié) ; **placeholders** : 0 restant
 - **Rendu** : 0 erreur JS, 0 image cassée, 0 overflow (desktop + mobile, Playwright)
 
 ## 🛠️ Maintenance (août 2026)
+
+### Étape 7 (agent conversationnel, 11/08/2026)
+- **Agent « Questionner nos articles »** (`agent.html`) : l'utilisateur saisit sa
+  clé API GLM (`sk-…`, même système que `llm.html`, stockée en `sessionStorage`)
+  puis pose ses questions en français. L'agent recherche les articles pertinents
+  (index inversé, pondération titre/résumé/tags/texte, suivi de conversation) et
+  les explique en citant 🔗 [Titre](URL). Base de 63 articles embarquée dans
+  `vesemt-knowledge.js` (375 Ko), générée par `tools/build_knowledge.py`.
+- **Accès** : bouton « 💬 Questionner nos articles » sur la page d'accueil
+  (navigation conservée à 5 liens) ; page ajoutée au `sitemap.xml`.
 
 ### Étape 5 (précédente)
 - **Liens réparés** : article résiduel du clone WordPress reconstruit (header, CSS, catégorie, tags, image) ; les 5 archives `articles/archives/*` promues vers `articles/` avec chemins corrigés ; 0 fichier cassé (check automatique)

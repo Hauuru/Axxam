@@ -78,6 +78,19 @@ Si des placeholders restent non résolus (`[[p:N]]`), c'est que le post n'est pa
 encore converti : ajouter la correspondance dans `tools/slugmap.json` (comme pour
 les anciens posts déjà statiques, ex. `542 → communique-clarification-...`).
 
+## 3bis. Base de connaissance de l'agent
+
+```bash
+python3 tools/build_knowledge.py
+```
+
+`build_knowledge.py` parse chaque article de `articles/*.html` (titre, date ISO,
+auteur, résumé, tags `#...`, texte brut) et régénère `vesemt-knowledge.js`
+(`window.VESEMT_ARTICLES`, trié par date décroissante). Cette base alimente la
+page [agent.html](../agent.html) (« Questionner nos articles », bouton sur
+l'accueil) : l'agent y recherche les articles pertinents puis les explique en
+citant leurs liens. À exécuter après chaque conversion, avant la publication.
+
 ## 4. Validation
 
 ```bash
@@ -110,14 +123,16 @@ git push origin main
 | `backlog.py` | RSS → `backlog.json` (known / pending, dédupliqué) |
 | `convert.py` | `?p=ID` → article HTML + images + `slugmap.json` |
 | `wire.py` | index, nav, prev/next, placeholders, sitemap |
+| `build_knowledge.py` | articles → `vesemt-knowledge.js` (base de l'agent) |
 | `slugmap.json` | correspondance `p:N → slug` (y compris anciens posts) |
 
-## État du site (après conversion du backlog, 04/08/2026)
+## État du site (après ajout de l'agent, 11/08/2026)
 
-- **58 articles** statiques (22 existants + 36 convertis depuis le WordPress),
-  du 01/03/2026 au 04/08/2026.
-- **5 pages** racine : index, qui-sommes-nous, elections-municipales-2026,
-  contacter-reseaux, politique-confidentialite.
+- **63 articles** statiques (22 existants + 36 convertis depuis le WordPress
+  + 5 mis à jour depuis), du 01/03/2026 au 11/08/2026.
+- **6 pages** racine : index, qui-sommes-nous, elections-municipales-2026,
+  contacter-reseaux, politique-confidentialite, **agent** (« Questionner nos
+  articles », accès via un bouton sur l'accueil).
 - Les pages de catégories (saint-pierre-des-corps, le-quotidien-le-vrai,
   dossiers-metropolitains, vesemt-localement) et la page auteur
   (author-le-plombier) ont été supprimées (présentation simplifiée sans catégories).

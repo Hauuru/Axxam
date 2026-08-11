@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent — Questionnez les articles – VIVRE (SURTOUT) ENSEMBLE ET (SI POSSIBLE) SOLIDAIRES EN MÉTROPOLE TOURANGELLE</title>
+    <meta name="description" content="L'agent VESEMT connaît les 63 articles du site : posez-lui une question, il retrouve les articles pertinents et vous les explique avec leurs liens.">
+    <meta name="author" content="VESEMT">
+    <meta property="og:title" content="Agent — Questionnez les articles VESEMT">
+    <meta property="og:description" content="L'agent VESEMT retrouve et explique les articles du site. Posez-lui vos questions !">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://axxam.net/vesemt.org/agent.html">
+    <meta property="og:image" content="https://axxam.net/vesemt.org/images/New-bandeau-SITE.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Agent — Questionnez les articles VESEMT">
+    <meta name="twitter:description" content="L'agent VESEMT retrouve et explique les articles du site. Posez-lui vos questions !">
+    <meta name="twitter:image" content="https://axxam.net/vesemt.org/images/New-bandeau-SITE.jpg">
+    <link rel="stylesheet" href="vesemt-css/style.css">
+    <style>
+        /* ===== AGENT VESEMT — THÈME NEUTRE / MINIMALISTE ===== */
+        :root {
+            --agent-ink: #333333;
+            --agent-muted: #6b7280;
+            --agent-line: #e5e7eb;
+            --agent-bg: #fafafa;
+            --agent-card: #ffffff;
+            --agent-accent: #F44336;
+            --agent-accent-dark: #c0392b;
+            --agent-ok: #16a34a;
+            --agent-warn: #b45309;
+        }
+
+        .agent-page {
+            background: var(--agent-bg);
+            min-height: 100vh;
+        }
+
+        .agent-shell {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 28px 18px 40px;
+        }
+
+        .agent-head {
+            text-align: center;
+            margin-bottom: 22px;
+        }
+
+        .agent-head .agent-tag {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--agent-muted);
+            margin-bottom: 6px;
+        }
+
+        .agent-head h1 {
+            font-size: 26px;
+            color: var(--agent-ink);
+            font-weight: 700;
+        }
+
+        .agent-head p {
+            font-size: 14px;
+            color: var(--agent-muted);
+            margin-top: 6px;
+            max-width: 560px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .agent-card {
+            background: var(--agent-card);
+            border: 1px solid var(--agent-line);
+            border-radius: 16px;
+            box-shadow: 0 6px 24px rgba(38, 50, 56, 0.06);
+        }
+
+        /* Config */
+        .agent-config {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--agent-line);
+        }
+
+        .agent-config label {
+            font-size: 13px;
+            color: var(--agent-muted);
+            font-weight: 600;
+        }
+
+        .agent-config input[type="password"] {
+            flex: 1;
+            min-width: 190px;
+            padding: 9px 13px;
+            border: 1px solid var(--agent-line);
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--agent-ink);
+            background: #fff;
+        }
+
+        .agent-config input[type="password"]:focus {
+            outline: none;
+            border-color: var(--agent-accent);
+            box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.12);
+        }
+
+        .agent-config input[type="password"]:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .agent-btn {
+            padding: 9px 16px;
+            border: 1px solid var(--agent-line);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #fff;
+            color: var(--agent-ink);
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .agent-btn.primary {
+            background: var(--agent-accent);
+            border-color: var(--agent-accent);
+            color: #fff;
+        }
+
+        .agent-btn.primary:hover:not(:disabled) {
+            background: var(--agent-accent-dark);
+        }
+
+        .agent-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .agent-status {
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: #f3f4f6;
+            color: var(--agent-muted);
+            border: 1px solid var(--agent-line);
+        }
+
+        .agent-status.active {
+            background: #ecfdf5;
+            color: var(--agent-ok);
+            border-color: #86efac;
+        }
+
+        .agent-status.error {
+            background: #fef2f2;
+            color: var(--agent-accent-dark);
+            border-color: #fecaca;
+        }
+
+        /* Zone de chat */
+        .agent-chat {
+            padding: 18px 18px 8px;
+            max-height: 56vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .agent-msg {
+            max-width: 86%;
+            padding: 11px 15px;
+            border-radius: 14px;
+            font-size: 14px;
+            line-height: 1.55;
+            word-wrap: break-word;
+            animation: agentRise 0.35s ease;
+        }
+
+        .agent-msg.user {
+            align-self: flex-end;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: var(--agent-ink);
+            border-bottom-right-radius: 4px;
+        }
+
+        .agent-msg.assistant {
+            align-self: flex-start;
+            background: #ffffff;
+            border: 1px solid var(--agent-line);
+            color: var(--agent-ink);
+            border-bottom-left-radius: 4px;
+        }
+
+        .agent-msg.system {
+            align-self: center;
+            background: #f9fafb;
+            color: var(--agent-muted);
+            font-size: 12px;
+            padding: 7px 16px;
+            border-radius: 999px;
+            max-width: 95%;
+            text-align: center;
+            border: 1px solid var(--agent-line);
+        }
+
+        .agent-msg.error {
+            align-self: center;
+            background: #fef2f2;
+            color: var(--agent-accent-dark);
+            font-size: 12px;
+            padding: 7px 16px;
+            border-radius: 999px;
+            max-width: 95%;
+            text-align: center;
+            border: 1px solid #fecaca;
+        }
+
+        @keyframes agentRise {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        .agent-msg.assistant.streaming {
+            border-color: var(--agent-accent);
+            box-shadow: 0 0 0 1px rgba(244, 67, 54, 0.25);
+        }
+
+        .agent-msg a {
+            color: var(--agent-accent-dark);
+            text-decoration: underline;
+            word-break: break-word;
+        }
+
+        .agent-msg strong { color: #111827; }
+
+        .agent-msg code {
+            background: #f3f4f6;
+            color: var(--agent-accent-dark);
+            padding: 1px 5px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        .agent-md-p { margin: 0 0 7px; }
+        .agent-md-p:last-child { margin-bottom: 0; }
+        .agent-md-h { margin: 9px 0 5px; font-size: 1.02rem; color: #111827; line-height: 1.3; }
+        .agent-md-h:first-child { margin-top: 0; }
+        .agent-md-list { margin: 5px 0 7px; padding-left: 20px; }
+        .agent-md-list li { margin-bottom: 3px; }
+        .agent-md-list li:last-child { margin-bottom: 0; }
+        .agent-md-quote { margin: 5px 0 7px; padding-left: 12px; border-left: 3px solid #fca5a5; color: var(--agent-muted); }
+        .agent-md-code { margin: 5px 0 7px; padding: 9px 13px; background: #f9fafb; border: 1px solid var(--agent-line); border-radius: 10px; overflow-x: auto; font-size: 13px; }
+        .agent-md-code code { background: transparent; padding: 0; color: #111827; }
+        .agent-msg hr { border: none; border-top: 1px solid var(--agent-line); margin: 7px 0; }
+
+        .agent-caret {
+            display: inline-block;
+            width: 7px;
+            height: 14px;
+            margin-left: 4px;
+            vertical-align: -2px;
+            border-radius: 2px;
+            background: var(--agent-accent);
+            animation: agentBlink 0.85s steps(2, start) infinite;
+        }
+
+        .agent-msg:not(.streaming) .agent-caret { display: none; }
+
+        @keyframes agentBlink {
+            to { visibility: hidden; }
+        }
+
+        /* Sources */
+        .agent-sources {
+            align-self: flex-start;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-width: 94%;
+        }
+
+        .agent-source-chip {
+            font-size: 11px;
+            color: var(--agent-muted);
+            background: #ffffff;
+            border: 1px solid var(--agent-line);
+            padding: 3px 10px;
+            border-radius: 999px;
+        }
+
+        /* Saisie */
+        .agent-input-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            padding: 12px 18px 18px;
+        }
+
+        .agent-input-row textarea {
+            flex: 1;
+            padding: 11px 14px;
+            border: 1px solid var(--agent-line);
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--agent-ink);
+            background: #fff;
+            resize: vertical;
+            min-height: 46px;
+            max-height: 120px;
+            line-height: 1.4;
+        }
+
+        .agent-input-row textarea::placeholder { color: #9ca3af; }
+
+        .agent-input-row textarea:focus {
+            outline: none;
+            border-color: var(--agent-accent);
+            box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.12);
+        }
+
+        .agent-input-row textarea:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        .agent-input-row .agent-btn { padding: 11px 22px; align-self: stretch; }
+
+        .agent-hint {
+            text-align: center;
+            font-size: 12px;
+            color: var(--agent-muted);
+            padding: 0 18px 16px;
+        }
+
+        .agent-back {
+            display: inline-block;
+            margin-bottom: 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--agent-accent-dark);
+            text-decoration: none;
+        }
+
+        .agent-back:hover { text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            .agent-shell { padding: 18px 10px 28px; }
+            .agent-config { flex-direction: column; align-items: stretch; }
+            .agent-config input[type="password"] { min-width: unset; }
+            .agent-msg { max-width: 94%; font-size: 13.5px; }
+            .agent-head h1 { font-size: 21px; }
+        }
+    </style>
+</head>
+<body class="agent-page">
+
+    <header>
+        <div class="header-content">
+            <h1 class="site-title">
+                <a href="index.html">VIVRE (SURTOUT) ENSEMBLE ET (SI POSSIBLE) SOLIDAIRES EN MÉTROPOLE TOURANGELLE</a>
+            </h1>
+            <p class="site-description">Comité Populaire bienveillant</p>
+        </div>
+                        <nav>
+            <ul>
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="qui-sommes-nous.html">Qui sommes nous ?</a></li>
+                <li><a href="elections-municipales-2026.html">Elections Municipales 2026</a></li>
+                <li><a href="contacter-reseaux.html">Contacter- réseaux</a></li>
+                <li><a href="politique-confidentialite.html">Politique de confidentialité</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="agent-shell">
+            <a href="index.html" class="agent-back">← Retour à l'accueil</a>
+
+            <div class="agent-head">
+                <span class="agent-tag">~ agent-articles-vesemt ~</span>
+                <h1>Posez vos questions aux articles VESEMT</h1>
+                <p>L'agent connaît les articles du site : il retrouve ceux qui correspondent à votre question, puis vous les explique en citant leurs liens.</p>
+            </div>
+
+            <div class="agent-card">
+                <div class="agent-config">
+                    <label for="apiKeyInput">🔑 Clé API GLM :</label>
+                    <input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx" />
+                    <button class="agent-btn primary" id="saveKeyBtn">🔓 Démarrer</button>
+                    <button class="agent-btn" id="resetKeyBtn" style="display:none;">🔄 Changer de clé</button>
+                    <span class="agent-status" id="statusBadge">⏳ En attente</span>
+                </div>
+
+                <div class="agent-chat" id="chatBox">
+                    <div class="agent-msg system">💡 Entrez votre clé API GLM puis cliquez sur « Démarrer » pour poser vos questions. Clé à obtenir sur https://z.ai/manage-apikey/apikey-list (elle commence par sk-).</div>
+                </div>
+
+                <div class="agent-input-row">
+                    <textarea id="userInput" rows="1" placeholder="Ex. : que dit VESEMT sur la piscine de Saint-Pierre-des-Corps ?" disabled></textarea>
+                    <button class="agent-btn primary" id="sendBtn" disabled>Envoyer</button>
+                </div>
+                <p class="agent-hint">Conseils : « parle-moi de la gare », « concentre-toi sur le tramway », « et les déchets ? » (la conversation suit votre sujet).</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>À propos</h3>
+                <p>VESEMT est un collectif citoyen engagé pour la solidarité et la démocratie en métropole tourangelle.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Liens utiles</h3>
+                <ul>
+                    <li><a href="qui-sommes-nous.html">Qui sommes nous ?</a></li>
+                    <li><a href="contacter-reseaux.html">Contacter- réseaux</a></li>
+                    <li><a href="politique-confidentialite.html">Politique de confidentialité</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Newsletter</h3>
+                <p>Recevez nos actualités</p>
+                <form class="newsletter-form" action="https://app.brevo.com/form.php" method="POST">
+                    <input type="email" name="email" placeholder="Votre email" required>
+                    <button type="submit">S'inscrire</button>
+                </form>
+            </div>
+            <div class="footer-section">
+                <h3>Suivez-nous</h3>
+                <div class="social-links">
+                    <a href="https://www.facebook.com/vesemt" target="_blank" rel="noopener">Facebook</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 VESEMT - Tous droits réservés</p>
+            <p class="footer-credits">🌱 Créé avec passion par Le Plombier, Marco, Calcifere et Hauuru</p>
+        </div>
+    </footer>
+
+    <script src="vesemt-knowledge.js"></script>
+    <script>
+        // ============================================================
+        //  BASE DE CONNAISSANCE (générée par tools/build_knowledge.py)
+        // ============================================================
+        const ARTICLES = (window.VESEMT_ARTICLES || []).slice();
+        const KNOWLEDGE_READY = ARTICLES.length > 0;
+
+        // ============================================================
+        //  MOTEUR DE RECHERCHE — pertinence + suivi de conversation
+        // ============================================================
+
+        const STOPWORDS = new Set([
+            "le","la","les","de","des","du","un","une","et","ou","a","au","aux","en","sur",
+            "pour","par","avec","dans","qui","que","quoi","dont","est","sont","ce","cette",
+            "ces","se","sa","son","ses","ne","pas","plus","moins","tout","tous","toute",
+            "toutes","il","elle","on","nous","vous","ils","elles","je","tu","me","moi",
+            "te","toi","y","dans","vers","sans","sous","chez","comme","mais","si","donc",
+            "car","ni","où","ou","alors","encore","aussi","leur","leurs","lui","entre"
+        ]);
+
+        function tokenize(raw) {
+            if (!raw) return [];
+            let s = String(raw).replace(/([a-zà-ÿ0-9])([A-ZÀ-Ý])/g, "$1 $2");
+            s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            s = s.toLowerCase().replace(/[^a-z0-9]+/g, " ");
+            return s.split(" ").map(t => {
+                if (t.length > 3 && t.endsWith("s")) t = t.slice(0, -1);
+                return t;
+            }).filter(t => t.length > 2 && !STOPWORDS.has(t));
+        }
+
+        const N = ARTICLES.length;
+        const inv = new Map();
+
+        function addToIndex(idx, text, w) {
+            for (const t of tokenize(text)) {
+                if (!inv.has(t)) inv.set(t, new Map());
+                const m = inv.get(t);
+                m.set(idx, (m.get(idx) || 0) + w);
+            }
+        }
+
+        ARTICLES.forEach((a, i) => {
+            addToIndex(i, a.title, 3);
+            addToIndex(i, a.excerpt, 2);
+            addToIndex(i, (a.tags || []).join(" "), 2.5);
+            addToIndex(i, a.text, 1);
+        });
+
+        function applyTokens(scores, tokens, w) {
+            for (const t of tokens) {
+                const m = inv.get(t);
+                if (!m) continue;
+                for (const [idx, v] of m) scores[idx] += v * w;
+            }
+        }
+
+        // Directive naturelle de focus (« concentre-toi sur… ») : pondère le
+        // sujet extrait pour ce tour ET les tours suivants (décroissant).
+        const FOCUS_CUE = /\b(?:concentre(?:-toi)?|concentrer|focalise(?:-toi)?|focaliser|parle\s*-?\s*moi\s*(?:de|d'|sur|du)|raconte\s*-?\s*moi|raconte|détaille\s*-?\s*moi|détaille|développe\s*-?\s*moi|développe)\b/i;
+        const ARTICLE_CUE = /\bl[’']article\s+(?:sur|au|aux|intitulé\s*[:"]?)\s*([^?.]+)/i;
+        let focusTokens = new Map();
+
+        function detectFocus(text) {
+            const toks = [];
+            const art = text.match(ARTICLE_CUE);
+            if (art) toks.push(...tokenize(art[1]));
+            else if (FOCUS_CUE.test(text)) {
+                const after = text.replace(FOCUS_CUE, "");
+                toks.push(...tokenize(after.split(/[?.\n]/)[0]));
+            }
+            return toks;
+        }
+
+        function retrieve(lastUserText, historyUserTexts) {
+            const scores = new Array(N).fill(0);
+            applyTokens(scores, tokenize(lastUserText), 1.0);
+            const focus = detectFocus(lastUserText);
+            if (focus.length) applyTokens(scores, focus, 2.5);
+            // historique : décroît avec l'ancienneté (la conversation reste sur le sujet)
+            historyUserTexts.slice(-6).forEach((t, i) => {
+                const w = 0.4 * Math.pow(0.7, historyUserTexts.slice(-6).length - 1 - i);
+                applyTokens(scores, tokenize(t), w);
+            });
+            // focus reporté des tours précédents
+            if (focusTokens.size) {
+                applyTokens(scores, Array.from(focusTokens.keys()), focusTokens.get("__w__") || 1.2);
+            }
+            return scores;
+        }
+
+        // Sélection dans le budget de contexte
+        const MAX_ARTICLES = 4;
+        const MAX_CTX_CHARS = 16000;
+
+        function selectArticles(scores) {
+            const order = ARTICLES.map((a, i) => i).sort((x, y) => scores[y] - scores[x]);
+            let budget = MAX_CTX_CHARS;
+            const chosen = [];
+            for (const idx of order) {
+                if (scores[idx] <= 0) break;
+                if (chosen.length >= MAX_ARTICLES) break;
+                const a = ARTICLES[idx];
+                let text = a.text;
+                if (text.length + a.title.length + 40 > budget) {
+                    if (chosen.length === 0 && budget > 600) {
+                        text = text.slice(0, budget - 500) + " […]";
+                    } else {
+                        break;
+                    }
+                }
+                chosen.push({ ...a, text });
+                budget -= text.length + a.title.length + 40;
+            }
+            return chosen;
+        }
+
+        function buildContext(lastUserText, historyUserTexts) {
+            const chosen = selectArticles(retrieve(lastUserText, historyUserTexts));
+            if (!KNOWLEDGE_READY) {
+                return { context: "", chosen: [] };
+            }
+            if (!chosen.length) {
+                return {
+                    context: "Aucun article du site VESEMT ne semble directement pertinent pour cette question.",
+                    chosen: []
+                };
+            }
+            const blocks = chosen.map((a, i) => {
+                const date = a.iso ? a.iso.split("-").reverse().join("/") : "";
+                const who = a.author ? a.author.replace(/^par\s+/i, "") : "";
+                return `[Article ${i + 1}] « ${a.title} »${date ? " — " + date : ""}${who ? " — " + who : ""}\nSource : ${a.url}\n${a.text}`;
+            });
+            return {
+                context: "CONTEXTE — articles de VESEMT jugés pertinents pour la discussion. Exploitez-les pour répondre :\n\n" + blocks.join("\n\n---\n\n"),
+                chosen
+            };
+        }
+
+        function setFocusCarry(text) {
+            const focus = detectFocus(text);
+            const next = new Map(focusTokens);
+            next.delete("__w__");
+            for (const t of focus) next.set(t, 2.5);
+            for (const [t, w] of Array.from(next)) next.set(t, w * 0.6);
+            focusTokens = next;
+            if (focusTokens.size) focusTokens.set("__w__", 1.2);
+        }
+
+        // ============================================================
+        //  CONFIGURATION & ÉTAT
+        // ============================================================
+        const CURRENT_MODEL = "glm-4.7-flash";
+        let apiKey = "";
+        let isReady = false;
+        const chatHistory = [];   // messages user/assistant (sans le système)
+
+        const SYSTEM_PROMPT = `
+Tu es l'agent « Articles VESEMT », un guide qui connaît les articles publiés par VESEMT
+(Vivre (surtout) Ensemble et (si possible) Solidaires en Métropole Tourangelle), un comité
+populaire engagé pour la solidarité et la démocratie en métropole tourangelle (Tours, Saint-Pierre-des-Corps).
+
+RÈGLES DE RÉPONSE :
+- Réponds toujours en français, de façon claire, concise et sans emphase.
+- Base-toi UNIQUEMENT sur les articles fournis dans le message CONTEXTE. Ne cite aucun fait,
+  chiffre ou citation qui n'y figure pas.
+- Pour expliquer un article, cite son titre exact et son lien ainsi :
+  🔗 [Titre de l'article](URL de l'article)
+- Si la question ne correspond à aucun article du contexte, dis-le honnêtement et suggère
+  [Contacter- réseaux](https://axxam.net/vesemt.org/contacter-reseaux.html) ou l'accueil
+  [VESEMT](https://axxam.net/vesemt.org/).
+- Ne répète pas le texte des articles mot à mot : résume et explique avec tes mots.
+- Format léger : courte introduction, l'essentiel en quelques points si utile, puis les liens.
+`.trim();
+
+        // ============================================================
+        //  DOM
+        // ============================================================
+        const chatBox = document.getElementById("chatBox");
+        const userInput = document.getElementById("userInput");
+        const sendBtn = document.getElementById("sendBtn");
+        const apiKeyInput = document.getElementById("apiKeyInput");
+        const saveKeyBtn = document.getElementById("saveKeyBtn");
+        const resetKeyBtn = document.getElementById("resetKeyBtn");
+        const statusBadge = document.getElementById("statusBadge");
+
+        // ============================================================
+        //  RENDU MARKDOWN (parser léger maison, nœuds DOM uniquement)
+        // ============================================================
+        function renderInline(node, text) {
+            const patterns = [
+                { re: /`([^`]+)`/, type: "code" },
+                { re: /\*\*([^*]+)\*\*/, type: "bold" },
+                { re: /\*([^*]+)\*/, type: "italic" },
+                { re: /\[([^\]]+)\]\(([^)\s]+)\)/, type: "link" }
+            ];
+            let best = null;
+            for (const p of patterns) {
+                const m = text.match(p.re);
+                if (m && (!best || m.index < best.m.index)) best = { m, type: p.type };
+            }
+            if (!best) { node.appendChild(document.createTextNode(text)); return; }
+            const { m, type } = best;
+            if (m.index > 0) node.appendChild(document.createTextNode(text.slice(0, m.index)));
+            if (type === "code") {
+                const code = document.createElement("code");
+                code.textContent = m[1];
+                node.appendChild(code);
+            } else if (type === "bold") {
+                const b = document.createElement("strong");
+                renderInline(b, m[1]);
+                node.appendChild(b);
+            } else if (type === "italic") {
+                const i = document.createElement("em");
+                renderInline(i, m[1]);
+                node.appendChild(i);
+            } else if (type === "link" && /^https?:\/\//i.test(m[2])) {
+                const a = document.createElement("a");
+                a.href = m[2];
+                a.target = "_blank";
+                a.rel = "noopener";
+                a.textContent = m[1];
+                node.appendChild(a);
+            } else if (type === "link") {
+                node.appendChild(document.createTextNode(m[1] + " (" + m[2] + ")"));
+            }
+            renderInline(node, text.slice(m.index + m[0].length));
+        }
+
+        function renderMarkdown(text) {
+            const frag = document.createDocumentFragment();
+            const lines = String(text).replace(/\r\n/g, "\n").split("\n");
+            let codeBlock = null, listType = null, currentList = null, currentParagraph = null;
+
+            const flushParagraph = () => {
+                if (currentParagraph) {
+                    if (currentParagraph.textContent.trim() !== "") frag.appendChild(currentParagraph);
+                    currentParagraph = null;
+                }
+            };
+            const flushList = () => {
+                if (currentList) { frag.appendChild(currentList); currentList = null; listType = null; }
+            };
+
+            for (const line of lines) {
+                if (/^```/.test(line)) {
+                    flushParagraph(); flushList();
+                    if (codeBlock === null) {
+                        const pre = document.createElement("pre");
+                        pre.className = "agent-md-code";
+                        pre.appendChild(document.createElement("code"));
+                        codeBlock = pre;
+                    } else { frag.appendChild(codeBlock); codeBlock = null; }
+                    continue;
+                }
+                if (codeBlock !== null) {
+                    const codeEl = codeBlock.querySelector("code");
+                    if (codeEl.textContent.length > 0) codeEl.textContent += "\n";
+                    codeEl.textContent += line;
+                    continue;
+                }
+                const heading = line.match(/^(#{1,3})\s+(.*)$/);
+                if (heading) {
+                    flushParagraph(); flushList();
+                    const h = document.createElement("h" + (heading[1].length + 1));
+                    h.className = "agent-md-h";
+                    renderInline(h, heading[2]);
+                    frag.appendChild(h);
+                    continue;
+                }
+                if (/^\s*---+\s*$/.test(line)) {
+                    flushParagraph(); flushList();
+                    frag.appendChild(document.createElement("hr"));
+                    continue;
+                }
+                const quote = line.match(/^>\s?(.*)$/);
+                if (quote) {
+                    flushParagraph(); flushList();
+                    const bq = document.createElement("blockquote");
+                    bq.className = "agent-md-quote";
+                    renderInline(bq, quote[1]);
+                    frag.appendChild(bq);
+                    continue;
+                }
+                const ulMatch = line.match(/^\s*[-*•]\s+(.*)$/);
+                const olMatch = line.match(/^\s*\d+\.\s+(.*)$/);
+                if (ulMatch || olMatch) {
+                    flushParagraph();
+                    const isUl = !!ulMatch;
+                    if (!currentList || listType !== (isUl ? "ul" : "ol")) {
+                        flushList();
+                        currentList = document.createElement(isUl ? "ul" : "ol");
+                        currentList.className = "agent-md-list";
+                        listType = isUl ? "ul" : "ol";
+                    }
+                    const li = document.createElement("li");
+                    renderInline(li, isUl ? ulMatch[1] : olMatch[1]);
+                    currentList.appendChild(li);
+                    continue;
+                }
+                if (line.trim() === "") { flushParagraph(); flushList(); continue; }
+                flushList();
+                if (!currentParagraph) {
+                    currentParagraph = document.createElement("p");
+                    currentParagraph.className = "agent-md-p";
+                } else {
+                    currentParagraph.appendChild(document.createElement("br"));
+                }
+                renderInline(currentParagraph, line.trim());
+            }
+            flushParagraph(); flushList();
+            return frag;
+        }
+
+        function addMessage(text, type) {
+            const div = document.createElement("div");
+            div.className = "agent-msg " + type;
+            if (type === "assistant") div.appendChild(renderMarkdown(text));
+            else div.textContent = text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function setStatus(text, state) {
+            statusBadge.textContent = text;
+            statusBadge.className = "agent-status" + (state === "ok" ? " active" : state === "error" ? " error" : "");
+        }
+
+        function setUIEnabled(enabled) {
+            userInput.disabled = !enabled;
+            sendBtn.disabled = !enabled;
+            apiKeyInput.disabled = enabled;
+            saveKeyBtn.disabled = enabled;
+            resetKeyBtn.style.display = enabled ? "inline-block" : "none";
+            if (enabled) userInput.focus();
+        }
+
+        function resetChat() {
+            chatBox.innerHTML = "";
+            chatHistory.length = 0;
+            focusTokens = new Map();
+        }
+
+        // ============================================================
+        //  STREAMING SSE (GLM)
+        // ============================================================
+        async function readSSEStream(response, onDelta) {
+            if (!response.body) throw new Error("Le streaming n'est pas pris en charge par ce navigateur.");
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let buffer = "", pending = "";
+            const flush = () => {
+                if (pending === "") return;
+                const data = pending;
+                pending = "";
+                if (data === "[DONE]") return;
+                try {
+                    const json = JSON.parse(data);
+                    const delta = json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content;
+                    if (typeof delta === "string" && delta.length) onDelta(delta);
+                } catch (_) {}
+            };
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                let nl;
+                while ((nl = buffer.indexOf("\n")) >= 0) {
+                    const line = buffer.slice(0, nl).trim();
+                    buffer = buffer.slice(nl + 1);
+                    if (line === "") flush();
+                    else if (line.startsWith("data:")) pending += line.slice(5).trim();
+                }
+            }
+            flush();
+        }
+
+        async function callGLM(messages, onDelta) {
+            const key = apiKey || sessionStorage.getItem("glm_api_key");
+            if (!key) throw new Error("Clé API manquante.");
+            const response = await fetch("https://open.bigmodel.cn/api/paas/v4/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+                body: JSON.stringify({
+                    model: CURRENT_MODEL,
+                    messages,
+                    temperature: 0.7,
+                    max_tokens: 1500,
+                    top_p: 0.9,
+                    stream: true
+                })
+            });
+            if (!response.ok) {
+                let msg = "Erreur HTTP " + response.status;
+                try {
+                    const err = await response.json();
+                    msg = (err.error && err.error.message) || err.message || msg;
+                } catch (_) {}
+                throw new Error(msg);
+            }
+            await readSSEStream(response, onDelta);
+        }
+
+        // ============================================================
+        //  ENVOI D'UN MESSAGE
+        // ============================================================
+        async function sendUserMessage() {
+            const text = userInput.value.trim();
+            if (!text || !isReady) return;
+
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            setStatus("🔎 L'agent cherche les articles…", "ok");
+
+            addMessage(text, "user");
+            chatHistory.push({ role: "user", content: text });
+            userInput.value = "";
+            userInput.style.height = "auto";
+
+            const bubble = document.createElement("div");
+            bubble.className = "agent-msg assistant streaming";
+            const contentDiv = document.createElement("div");
+            bubble.appendChild(contentDiv);
+            const caret = document.createElement("span");
+            caret.className = "agent-caret";
+            bubble.appendChild(caret);
+            chatBox.appendChild(bubble);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            let acc = "", renderQueued = false;
+            const renderNow = () => {
+                renderQueued = false;
+                contentDiv.replaceChildren();
+                contentDiv.appendChild(renderMarkdown(acc));
+                chatBox.scrollTop = chatBox.scrollHeight;
+            };
+            const queueRender = () => {
+                if (!renderQueued) { renderQueued = true; requestAnimationFrame(renderNow); }
+            };
+
+            try {
+                const { context, chosen } = buildContext(text, chatHistory.filter(m => m.role === "user").map(m => m.content));
+                const messages = [
+                    { role: "system", content: SYSTEM_PROMPT },
+                    { role: "system", content: context }
+                ].concat(chatHistory.slice(-12));
+
+                await callGLM(messages, (delta) => {
+                    if (acc === "" && delta) setStatus("✍️ L'agent rédige…", "ok");
+                    acc += delta;
+                    queueRender();
+                });
+
+                contentDiv.replaceChildren();
+                contentDiv.appendChild(renderMarkdown(acc));
+                bubble.classList.remove("streaming");
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                if (!acc) throw new Error("Réponse vide de l'API.");
+
+                chatHistory.push({ role: "assistant", content: acc });
+                setFocusCarry(text);
+                setStatus("✅ Connecté", "ok");
+
+                if (chosen.length) {
+                    const chips = document.createElement("div");
+                    chips.className = "agent-sources";
+                    chips.textContent = "Sources : ";
+                    chosen.forEach((a, i) => {
+                        const c = document.createElement("span");
+                        c.className = "agent-source-chip";
+                        c.textContent = (i + 1) + ". " + a.title.slice(0, 42) + (a.title.length > 42 ? "…" : "");
+                        chips.appendChild(c);
+                    });
+                    chatBox.appendChild(chips);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+            } catch (err) {
+                if (bubble.parentNode) bubble.parentNode.removeChild(bubble);
+                addMessage("⚠️ " + err.message, "error");
+                setStatus("❌ Erreur", "error");
+                chatHistory.pop();
+            }
+
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+            userInput.focus();
+        }
+
+        // ============================================================
+        //  SESSION
+        // ============================================================
+        function initSession(key) {
+            apiKey = key;
+            isReady = true;
+            sessionStorage.setItem("glm_api_key", key);
+            setUIEnabled(true);
+            setStatus("✅ Connecté", "ok");
+            resetChat();
+            addMessage("💡 Session initialisée. " + (KNOWLEDGE_READY
+                ? "L'agent connaît les " + ARTICLES.length + " articles du site."
+                : "⚠️ La base de connaissances (vesemt-knowledge.js) n'a pas pu être chargée."), "system");
+            const greeting = "Bonjour 👋 Posez-moi une question sur les articles VESEMT : la métropole, la gare, la piscine, le tramway, les déchets, les élections… Je retrouve les articles pertinents et vous les explique.";
+            addMessage(greeting, "assistant");
+            chatHistory.push({ role: "assistant", content: greeting });
+            apiKeyInput.value = "•••••••••••••";
+        }
+
+        saveKeyBtn.addEventListener("click", () => {
+            const key = apiKeyInput.value.trim();
+            if (!key) { addMessage("⚠️ Veuillez entrer une clé API valide.", "error"); return; }
+            if (!key.startsWith("sk-")) { addMessage("⚠️ La clé semble invalide (doit commencer par « sk- »).", "error"); return; }
+            resetChat();
+            initSession(key);
+        });
+
+        resetKeyBtn.addEventListener("click", () => {
+            sessionStorage.removeItem("glm_api_key");
+            apiKey = "";
+            isReady = false;
+            setUIEnabled(false);
+            setStatus("⏳ En attente", "");
+            resetChat();
+            apiKeyInput.value = "";
+            apiKeyInput.disabled = false;
+            saveKeyBtn.disabled = false;
+            resetKeyBtn.style.display = "none";
+            addMessage("💡 Veuillez entrer une nouvelle clé API.", "system");
+        });
+
+        sendBtn.addEventListener("click", sendUserMessage);
+
+        userInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendUserMessage(); }
+        });
+
+        userInput.addEventListener("input", () => {
+            userInput.style.height = "auto";
+            userInput.style.height = Math.min(userInput.scrollHeight, 120) + "px";
+        });
+
+        window.addEventListener("load", () => {
+            const savedKey = sessionStorage.getItem("glm_api_key");
+            if (savedKey && savedKey.startsWith("sk-")) {
+                resetChat();
+                initSession(savedKey);
+                addMessage("🔄 Session restaurée. Bon retour !", "system");
+            } else {
+                sessionStorage.removeItem("glm_api_key");
+                setStatus("⏳ En attente", "");
+            }
+        });
+    </script>
+</body>
+</html>
