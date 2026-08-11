@@ -387,11 +387,13 @@
         function updateBackground() {
             if (!imagesOn) { bgLayer.classList.remove('loaded'); bgLayer.style.backgroundImage = ''; return; }
             if (!words.length) return;
-            const last = words[words.length - 1];
-            const prev = words.slice(0, -1);
+            const focus = words.slice(-3);
+            const last = focus[focus.length - 1];
+            const prev = focus.slice(0, -1);
             const contexte = prev.length ? ', ambiance : ' + prev.join(' → ') : '';
             const prompt = 'grande illustration immersive et colorée, sujet principal : ' + last + contexte + ', détails riches, style cinématique';
-            const url = IMG_URL + encodeURIComponent(prompt) + '?model=flux&width=1600&height=900&enhance=true';
+            const seed = Math.floor(Math.random() * 100000);
+            const url = IMG_URL + encodeURIComponent(prompt) + '?model=flux&width=1600&height=900&enhance=true&seed=' + seed;
             const img = new Image();
             img.onload = () => {
                 bgLayer.style.backgroundImage = 'url(' + url + ')';
