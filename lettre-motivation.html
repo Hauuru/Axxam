@@ -256,28 +256,28 @@
             <div class="form-grid">
                 <div class="field full">
                     <label for="cvInput">📄 Votre CV <span class="hint">— collez le texte (ou importez un fichier .txt)</span></label>
-                    <textarea id="cvInput" rows="8" placeholder="Expérience, formations, compétences, coordonnées…" disabled></textarea>
+                    <textarea id="cvInput" rows="8" placeholder="Expérience, formations, compétences, coordonnées…"></textarea>
                     <div>
                         <label class="hint" for="cvFile">Importer un fichier .txt/.md :</label>
-                        <input type="file" id="cvFile" accept=".txt,.md,.text" disabled />
+                        <input type="file" id="cvFile" accept=".txt,.md,.text" />
                     </div>
                 </div>
                 <div class="field full">
                     <label for="offerInput">💼 L'offre d'emploi <span class="hint">— collez l'intitulé, les missions, les exigences</span></label>
-                    <textarea id="offerInput" rows="6" placeholder="Intitulé du poste, missions, profil recherché, compétences exigées…" disabled></textarea>
+                    <textarea id="offerInput" rows="6" placeholder="Intitulé du poste, missions, profil recherché, compétences exigées…"></textarea>
                 </div>
                 <div class="meta-row">
                     <div class="field">
                         <label for="posteInput">Poste</label>
-                        <input type="text" id="posteInput" placeholder="Développeur web…" disabled />
+                        <input type="text" id="posteInput" placeholder="Développeur web…" />
                     </div>
                     <div class="field">
                         <label for="societeInput">Entreprise</label>
-                        <input type="text" id="societeInput" placeholder="Nom de l'entreprise…" disabled />
+                        <input type="text" id="societeInput" placeholder="Nom de l'entreprise…" />
                     </div>
                     <div class="field">
                         <label for="toneSelect">Ton</label>
-                        <select id="toneSelect" disabled>
+                        <select id="toneSelect">
                             <option value="Professionnel et confiant">Professionnel et confiant</option>
                             <option value="Chaleureux et engagé">Chaleureux et engagé</option>
                             <option value="Dynamique et enthousiaste">Dynamique et enthousiaste</option>
@@ -287,8 +287,8 @@
                 </div>
             </div>
             <div class="actions">
-                <button class="btn-success" id="generateBtn" disabled>✍️ Générer la lettre</button>
-                <button class="btn-ghost" id="clearBtn" disabled>🧹 Effacer</button>
+                <button class="btn-success" id="generateBtn">✍️ Générer la lettre</button>
+                <button class="btn-ghost" id="clearBtn">🧹 Effacer</button>
             </div>
         </section>
 
@@ -311,6 +311,14 @@
     </div>
 
     <script>
+        // Polyfill replaceChildren pour iOS < 14 / navigateurs plus anciens
+        if (typeof Element !== 'undefined' && !Element.prototype.replaceChildren) {
+            Element.prototype.replaceChildren = function () {
+                while (this.firstChild) this.removeChild(this.firstChild);
+                for (let i = 0; i < arguments.length; i++) this.appendChild(arguments[i]);
+            };
+        }
+
         // ============================================================
         //  PROMPT SYSTÈME
         // ============================================================
@@ -554,19 +562,10 @@ CONSIGNES STRICTES :
             statusBadge.className = 'status-badge' + (isActive ? ' active' : '');
         }
 
-        function setUIEnabled(enabled) {
-            [cvInput, offerInput, posteInput, societeInput, toneSelect, generateBtn, clearBtn, cvFile].forEach(el => {
-                el.disabled = !enabled;
-            });
-            if (enabled) {
-                resetKeyBtn.style.display = 'inline-block';
-                apiKeyInput.disabled = true;
-                saveKeyBtn.disabled = true;
-            } else {
-                resetKeyBtn.style.display = 'none';
-                apiKeyInput.disabled = false;
-                saveKeyBtn.disabled = false;
-            }
+        function setKeyState(active) {
+            resetKeyBtn.style.display = active ? 'inline-block' : 'none';
+            apiKeyInput.disabled = active;
+            saveKeyBtn.disabled = active;
         }
 
         function showError(msg) {
@@ -585,6 +584,14 @@ CONSIGNES STRICTES :
             const offer = offerInput.value.trim();
             if (!cv || !offer) {
                 showError('Veuillez renseigner votre CV et l\'offre d\'emploi.');
+                return;
+            }
+
+            const key = apiKey || sessionStorage.getItem('glm_api_key');
+            if (!key || !key.startsWith('sk-')) {
+                setStatus('🔑 Clé manquante', false);
+                showError('Ajoutez votre clé API GLM dans le champ « 🔑 Clé API GLM » en haut, puis cliquez sur « Démarrer » avant de générer.');
+                apiKeyInput.focus();
                 return;
             }
 
@@ -744,7 +751,7 @@ CONSIGNES STRICTES :
             isReady = true;
             sessionStorage.setItem('glm_api_key', key);
             apiKeyInput.value = '•••••••••••••';
-            setUIEnabled(true);
+            setKeyState(true);
             setStatus('✅ Connecté', true);
         }
 
@@ -762,7 +769,7 @@ CONSIGNES STRICTES :
             sessionStorage.removeItem('glm_api_key');
             apiKey = '';
             isReady = false;
-            setUIEnabled(false);
+            setKeyState(false);
             apiKeyInput.value = '';
             setStatus('⏳ En attente', false);
             showError('');
