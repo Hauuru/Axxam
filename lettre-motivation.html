@@ -255,11 +255,11 @@
         <section class="card no-print">
             <div class="form-grid">
                 <div class="field full">
-                    <label for="cvInput">📄 Votre CV <span class="hint">— collez le texte (ou importez un fichier .txt)</span></label>
+                    <label for="cvInput">📄 Votre CV <span class="hint">— collez le texte (ou importez un fichier .txt / .md / .pdf)</span></label>
                     <textarea id="cvInput" rows="8" placeholder="Expérience, formations, compétences, coordonnées…"></textarea>
                     <div>
-                        <label class="hint" for="cvFile">Importer un fichier .txt/.md :</label>
-                        <input type="file" id="cvFile" accept=".txt,.md,.text" />
+                        <label class="hint" for="cvFile">Importer un fichier .txt/.md/.pdf :</label>
+                        <input type="file" id="cvFile" accept=".txt,.md,.text,.pdf,application/pdf" />
                     </div>
                 </div>
                 <div class="field full">
@@ -577,6 +577,52 @@ CONSIGNES STRICTES :
         }
 
         // ============================================================
+        //  IMPORT PDF (pdf.js chargé à la demande, extraction locale)
+        // ============================================================
+        const PDF_CDN = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+        let pdfJsPromise = null;
+
+        function loadPdfJs() {
+            if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+            if (!pdfJsPromise) {
+                pdfJsPromise = new Promise((resolve, reject) => {
+                    const s = document.createElement('script');
+                    s.src = PDF_CDN;
+                    s.onload = () => resolve(window.pdfjsLib);
+                    s.onerror = () => { pdfJsPromise = null; reject(new Error('Impossible de charger la bibliothèque PDF (connexion internet requise).')); };
+                    document.head.appendChild(s);
+                });
+            }
+            return pdfJsPromise;
+        }
+
+        async function extractPdfToCv(file) {
+            setStatus('⏳ Lecture du PDF…', true);
+            const pdfjs = await loadPdfJs();
+            const buf = await file.arrayBuffer();
+            const pdf = await pdfjs.getDocument({ data: buf }).promise;
+            let text = '';
+            for (let p = 1; p <= pdf.numPages; p++) {
+                const page = await pdf.getPage(p);
+                const tc = await page.getTextContent();
+                const lines = new Map();
+                for (const item of tc.items) {
+                    if (!item.str) continue;
+                    const y = Math.round(item.transform[5] / 3) * 3;
+                    if (!lines.has(y)) lines.set(y, []);
+                    lines.get(y).push(item.str);
+                }
+                const sorted = [...lines.entries()].sort((a, b) => b[0] - a[0]);
+                for (const [, words] of sorted) text += words.join(' ') + '\n';
+                if (p < pdf.numPages) text += '\n';
+            }
+            const trimmed = text.trim();
+            if (!trimmed) throw new Error('Aucun texte n\'a pu être extrait (PDF scanné ? Utilisez le format .txt).');
+            cvInput.value = trimmed;
+            setStatus('✅ CV PDF importé (' + pdf.numPages + ' page' + (pdf.numPages > 1 ? 's' : '') + ')', true);
+        }
+
+        // ============================================================
         //  GÉNÉRATION
         // ============================================================
         async function generateLetter() {
@@ -730,16 +776,24 @@ CONSIGNES STRICTES :
             setStatus('✅ Connecté', true);
         });
 
-        // Import d'un CV depuis un fichier
+        // Import d'un CV depuis un fichier (texte ou PDF)
         cvFile.addEventListener('change', () => {
             const file = cvFile.files && cvFile.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-                cvInput.value = String(reader.result || '').trim();
-                setStatus('✅ CV importé', true);
-            };
-            reader.readAsText(file);
+            const isPdf = /\.pdf$/i.test(file.name) || file.type === 'application/pdf';
+            if (isPdf) {
+                extractPdfToCv(file).catch(err => {
+                    setStatus('❌ Import PDF impossible', false);
+                    showError(err.message || 'Impossible de lire le PDF.');
+                });
+            } else {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    cvInput.value = String(reader.result || '').trim();
+                    setStatus('✅ CV importé', true);
+                };
+                reader.readAsText(file);
+            }
             cvFile.value = '';
         });
 
