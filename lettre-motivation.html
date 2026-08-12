@@ -576,37 +576,34 @@ CONSIGNES STRICTES :
             await readSSEStream(response, onDelta, onReasoning, onFinish);
         }
 
-        async function searchOffers(messages, tools) {
+        async function searchOffers(query) {
             const key = apiKey || sessionStorage.getItem('glm_api_key');
             if (!key) throw new Error('Clé API manquante.');
-            const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+            const response = await fetch('https://open.bigmodel.cn/api/paas/v4/web_search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
                 body: JSON.stringify({
-                    model: CURRENT_MODEL,
-                    messages,
-                    temperature: 0.3,
-                    max_tokens: 2000,
-                    top_p: 0.9,
-                    stream: false,
-                    tools
+                    search_query: query,
+                    search_engine: 'search_pro',
+                    search_intent: false,
+                    count: 8,
+                    search_recency_filter: 'oneMonth',
+                    content_size: 'high'
                 })
             });
             if (!response.ok) {
                 let msg = 'Erreur HTTP ' + response.status;
                 try {
                     const err = await response.json();
-                    msg = (err.error && err.error.message) || err.message || msg;
+                    const e = err && err.error;
+                    if (e && e.code) msg = e.code + ' — ' + e.message;
+                    else if (e && e.message) msg = e.message;
+                    else if (err.message) msg = err.message;
                 } catch (_) {}
                 throw new Error(msg);
             }
             const json = await response.json();
-            const choice = json.choices && json.choices[0];
-            const content = (choice && choice.message && typeof choice.message.content === 'string') ? choice.message.content : '';
-            return {
-                content: content.trim(),
-                searchResult: Array.isArray(json.search_result) ? json.search_result : []
-            };
+            return Array.isArray(json.search_result) ? json.search_result : [];
         }
 
         // ============================================================
@@ -638,6 +635,19 @@ CONSIGNES STRICTES :
                 out.push({ title: s.title, url: s.link, snippet: (s.content || '').trim() });
             }
             return out;
+        }
+
+        function buildOfferSummary(results, maxCount) {
+            const list = (results || []).slice(0, maxCount || 3);
+            if (!list.length) return '';
+            return list.map((s, i) => {
+                let line = (i + 1) + '. ' + s.title;
+                const meta = [s.media, s.publish_date].filter(Boolean).join(' · ');
+                if (meta) line += ' (' + meta + ')';
+                if (s.content) line += '\n   ' + String(s.content).trim();
+                if (s.link) line += '\n   Lien : ' + s.link;
+                return line;
+            }).join('\n');
         }
 
         function renderOffer(summary, list) {
@@ -748,25 +758,10 @@ CONSIGNES STRICTES :
             let offerSummaryText = '';
             let offerSources = [];
             try {
-                const searchMsg = 'Trouve les meilleures offres d\'emploi actuellement disponibles et à pourvoir pour le poste de « ' + poste + ' » à ' + ville + ' (France). Cherche des annonces réelles et récentes (sites d\'emploi, recruteurs, pages carrières des employeurs). Récupère pour les 1 à 3 meilleures offres : intitulé exact, entreprise, ville, missions, exigences / profil recherché, type de contrat, lien. Ne liste que des offres réellement visibles dans les résultats de recherche, sans rien inventer. Si tu ne trouves aucune offre exploitable, dis-le clairement en commençant ta réponse par « AUCUNE OFFRE TROUVÉE ».';
-                const searchTools = [{
-                    type: 'web_search',
-                    web_search: {
-                        enable: 'True',
-                        search_engine: 'search_pro',
-                        search_result: 'True',
-                        search_prompt: 'Recherche sur Internet des offres d\'emploi actuellement disponibles et à pourvoir pour : ' + poste + ' à ' + ville + ' (France). Ne retiens que des annonces réelles et récentes. Résume fidèlement pour chaque offre : titre, entreprise, ville, missions, exigences, type de contrat, lien. Résume dans {search_result} uniquement des offres vérifiées.',
-                        count: '8',
-                        search_recency_filter: 'month',
-                        content_size: 'medium'
-                    }
-                }];
-                const result = await searchOffers([
-                    { role: 'system', content: 'Tu es un assistant de recherche d\'emploi. Tu cherches sur Internet des offres d\'emploi réelles et actuelles et tu les résumes fidèlement, sans rien inventer.' },
-                    { role: 'user', content: searchMsg }
-                ], searchTools);
-                offerSummaryText = result.content;
-                offerSources = mapSources(result.searchResult);
+                const searchQuery = ('offre d\'emploi ' + poste + ' ' + ville + ' France').slice(0, 70);
+                const rawResults = await searchOffers(searchQuery);
+                offerSources = mapSources(rawResults);
+                offerSummaryText = buildOfferSummary(rawResults, 3);
             } catch (err) {
                 setStatus('❌ Recherche impossible', false);
                 showError('La recherche d\'offre d\'emploi a échoué — type d\'erreur : ' + err.message);
@@ -775,16 +770,12 @@ CONSIGNES STRICTES :
                 return;
             }
 
-            if (!offerSummaryText.trim() && !offerSources.length) {
+            if (!offerSources.length) {
                 setStatus('❌ Aucune offre trouvée', false);
                 showError('Aucune offre d\'emploi exploitable n\'a été trouvée pour « ' + poste + ' » à ' + ville + '. Type d\'erreur : la recherche n\'a renvoyé aucun résultat. Essayez avec un autre intitulé de poste ou une autre ville.');
                 generateBtn.disabled = false;
                 clearBtn.disabled = false;
                 return;
-            }
-
-            if (!offerSummaryText.trim() && offerSources.length) {
-                offerSummaryText = offerSources.map(s => '- ' + s.title + (s.snippet ? ' : ' + s.snippet : '')).join('\n');
             }
 
             renderOffer(offerSummaryText, offerSources);
