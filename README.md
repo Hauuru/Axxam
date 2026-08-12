@@ -19,7 +19,7 @@ Axxam/
 ├── index.html              ← Page hub : portail vers tous les sites
 ├── numerique.html          ← Axxam Numérique : création de sites, agents IA, automatisation, dépannage, impression 3D
 ├── llm.html                ← Chatbot « L'esprit de la rivière » (GLM-4.7 Flash, streaming SSE, fond eau animé)
-├── lettre-motivation.html  ← Générateur de lettre de motivation (GLM + recherche web optionnelle)
+├── lettre-motivation.html  ← Générateur de lettre de motivation (GLM, offre collée par l'utilisateur)
 ├── hub.css                 ← Feuille de style du portail
 ├── animation/              ← Site axxam.net/animation
 │   ├── index.html          ← Page d'accueil (animations créatives)
@@ -96,11 +96,10 @@ Axxam/
 - Carte d'accès depuis le portail : `index.html` → « Chatbot GLM »
 
 ### Générateur de lettre de motivation (`lettre-motivation.html`)
-- Application 100 % côté navigateur (aucun backend) : saisie du CV, du **poste**, de la **ville** et du ton → génération d'une lettre personnalisée par l'API GLM (modèle `glm-4.7-flash`, `chat/completions` en streaming SSE)
-- **L'offre d'emploi est trouvée automatiquement par le robot** : à chaque génération, l'assistant cherche en ligne (API Web Search dédiée de Zhipu, moteur `search_pro`, fraîcheur 1 mois, 8 résultats) une **offre d'emploi réelle et disponible** pour le poste dans la ville indiquée. L'utilisateur ne colle plus d'offre manuellement — ce champ a été supprimé
-- Flux en 2 étapes : (1) appel `POST /api/paas/v4/web_search` (sans modèle LLM, indépendant de `glm-4.7-flash`) qui renvoie les offres trouvées (synthèse + liens affichés sous la lettre dans « 🎯 Offre(s) d'emploi trouvée(s) »), (2) rédaction streaming sur `glm-4.7-flash` basée sur cette offre + le CV
-- Si aucune offre exploitable n'est trouvée → **refus explicite avec le type d'erreur** (aucun résultat, ou message d'erreur de l'API) : pas de lettre générique
-- La recherche est **gratuite** sur les plans Coding (inclus dans le quota) ou de l'ordre de quelques centimes par recherche sur les plans Pay-as-you-go ; aucune inscription supplémentaire (même clé API que le chatbot)
+- Application 100 % côté navigateur (aucun backend) : saisie du CV (collage ou import d'un fichier `.txt` / `.md` / `.pdf`), **collage du texte de l'offre d'emploi** et choix du ton → génération d'une lettre personnalisée par l'API GLM (modèle `glm-4.7-flash`, `chat/completions` en streaming SSE)
+- **L'offre est fournie manuellement par l'utilisateur** : il colle le texte complet de l'offre (intitulé, missions, profil recherché, entreprise) — aucune recherche web automatique, aucun champ « poste » / « ville »
+- Flux en 1 étape : rédaction streaming sur `glm-4.7-flash` basée sur l'offre collée + le CV (l'assistant fait le lien entre les exigences de l'offre et les compétences du CV)
+- Si le CV ou l'offre manquent → message d'erreur explicite : pas de lettre générique
 - Boutons d'export : copier dans le presse-papiers, télécharger `.md`, impression ; le CV peut être importé depuis un fichier `.txt` ou `.pdf` (pdf.js chargé à la demande, extraction 100 % locale)
 
 ### axxam.net/animation (sous-dossier)

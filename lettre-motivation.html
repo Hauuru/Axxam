@@ -149,9 +149,7 @@
         .field.full { grid-column: 1 / -1; }
         .field textarea { min-height: 140px; }
 
-        .meta-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-
-        select, input[type="text"] {
+        select {
             padding: 9px 12px;
             border: 1px solid var(--line);
             border-radius: 8px;
@@ -216,25 +214,10 @@
             margin-top: 14px;
         }
 
-        .sources {
-            margin-top: 14px;
-            font-size: 12px;
-            color: var(--muted);
-            border-top: 1px dashed var(--line);
-            padding-top: 10px;
-        }
-
-        .sources ul { list-style: none; padding: 0; margin: 6px 0 0; }
-        .sources li { margin: 4px 0; line-height: 1.4; }
-        .sources a { color: var(--accent-dark); text-decoration: none; }
-        .sources a:hover { text-decoration: underline; }
-        .sources .src-snippet { display: block; color: var(--muted); }
-        .sources .offer-summary { margin: 6px 0 0; white-space: pre-line; }
-
         footer.top-note { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
         @media (max-width: 760px) {
-            .form-grid, .meta-row { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
             .field.full { grid-column: 1; }
         }
 
@@ -251,7 +234,7 @@
         <header class="top">
             <div>
                 <h1>Lettre de motivation assistée</h1>
-                <div class="sub">CV + poste + ville → lettre basée sur une offre d'emploi réelle trouvée en ligne</div>
+                <div class="sub">Collez votre CV et le texte de l'offre d'emploi → lettre personnalisée en streaming</div>
             </div>
             <a class="back" href="index.html">← Retour au portail Axxam</a>
         </header>
@@ -277,31 +260,25 @@
                         <input type="file" id="cvFile" accept=".txt,.md,.text,.pdf,application/pdf" />
                     </div>
                 </div>
-                <div class="meta-row">
-                    <div class="field">
-                        <label for="posteInput">Poste <span class="hint">— obligatoire</span></label>
-                        <input type="text" id="posteInput" placeholder="Développeur web…" />
-                    </div>
-                    <div class="field">
-                        <label for="villeInput">Ville <span class="hint">— obligatoire</span></label>
-                        <input type="text" id="villeInput" placeholder="Tours…" />
-                    </div>
-                    <div class="field">
-                        <label for="toneSelect">Ton</label>
-                        <select id="toneSelect">
-                            <option value="Professionnel et confiant">Professionnel et confiant</option>
-                            <option value="Chaleureux et engagé">Chaleureux et engagé</option>
-                            <option value="Dynamique et enthousiaste">Dynamique et enthousiaste</option>
-                            <option value="Sobre et formel">Sobre et formel</option>
-                        </select>
-                    </div>
+                <div class="field full">
+                    <label for="offreInput">📋 Offre d'emploi <span class="hint">— collez ici le texte complet de l'offre</span></label>
+                    <textarea id="offreInput" rows="8" placeholder="Intitulé du poste, missions, profil recherché, entreprise, localisation…"></textarea>
+                </div>
+                <div class="field">
+                    <label for="toneSelect">Ton</label>
+                    <select id="toneSelect">
+                        <option value="Professionnel et confiant">Professionnel et confiant</option>
+                        <option value="Chaleureux et engagé">Chaleureux et engagé</option>
+                        <option value="Dynamique et enthousiaste">Dynamique et enthousiaste</option>
+                        <option value="Sobre et formel">Sobre et formel</option>
+                    </select>
                 </div>
             </div>
             <div class="actions">
                 <button class="btn-success" id="generateBtn">✍️ Générer la lettre</button>
                 <button class="btn-ghost" id="clearBtn">🧹 Effacer</button>
             </div>
-            <div class="note">🔎 À chaque génération, l'assistant <strong>cherche en ligne une offre d'emploi réelle et disponible</strong> pour le poste dans la ville indiquée, puis rédige la lettre en reliant votre CV aux exigences de cette offre. Coût : inclus dans le plan Coding, sinon quelques centimes par recherche. Le poste et la ville sont transmis aux serveurs de l'API.</div>
+            <div class="note">📋 Collez le texte complet de l'offre d'emploi (missions, profil recherché, entreprise). L'assistant rédige la lettre en reliant votre CV aux exigences de cette offre. Seules ces données (CV + offre) sont envoyées à l'API GLM — ne collez pas d'informations sensibles.</div>
         </section>
 
         <section class="card paper-card">
@@ -315,15 +292,10 @@
             </div>
             <div class="thinking" id="thinkingBox" hidden></div>
             <div class="letter" id="letterBox"><span class="caret"></span></div>
-            <div class="sources no-print" id="sourcesBox" hidden>
-                <strong>🎯 Offre(s) d'emploi trouvée(s) par l'assistant</strong>
-                <p class="offer-summary" id="offerSummary"></p>
-                <ul id="sourcesList"></ul>
-            </div>
         </section>
 
         <footer class="top-note no-print">
-            Modèle : <code>glm-4.7-flash</code> · Appel API <code>open.bigmodel.cn</code> en streaming · L'assistant recherche en ligne une offre d'emploi (poste + ville) puis rédige la lettre · Les données (CV, poste, ville) sont envoyées à l'API GLM — ne collez pas d'informations sensibles.
+            Modèle : <code>glm-4.7-flash</code> · Appel API <code>open.bigmodel.cn</code> en streaming · Les données (CV + offre d'emploi collée) sont envoyées à l'API GLM — ne collez pas d'informations sensibles.
         </footer>
     </div>
 
@@ -351,9 +323,9 @@ CONSIGNES STRICTES :
 - Ton respecté : le ton demandé.
 - Longueur : 250 à 350 mots environ. Paragraphes complets (pas de listes à puces dans la lettre).
 - Format : markdown simple uniquement (un titre éventuel en niveau 2, des paragraphes, pas de tableaux ni d'images).
-- Une OFFRE D'EMPLOI réelle trouvée sur Internet est fournie dans le message : fondez la lettre sur ses missions, ses exigences et les compétences demandées, en reprenant ses mots-clés quand c'est pertinent.
+- Le texte d'une OFFRE D'EMPLOI est fourni dans le message : fondez la lettre sur son intitulé, ses missions, ses exigences et les compétences demandées, en reprenant ses mots-clés quand c'est pertinent.
 - N'inventez JAMAIS de missions, d'exigences ou de faits absents de l'offre fournie : utilisez uniquement ce qui figure dans l'offre et le CV.
-- Ne mentionnez PAS les sources, les liens ni les balises [ref_...] dans le corps de la lettre.
+- Ne mentionnez PAS de liens, d'URL ni de sources dans le corps de la lettre.
 `;
 
         // ============================================================
@@ -372,8 +344,7 @@ CONSIGNES STRICTES :
         const statusBadge = document.getElementById('statusBadge');
         const cvInput = document.getElementById('cvInput');
         const cvFile = document.getElementById('cvFile');
-        const posteInput = document.getElementById('posteInput');
-        const villeInput = document.getElementById('villeInput');
+        const offreInput = document.getElementById('offreInput');
         const toneSelect = document.getElementById('toneSelect');
         const generateBtn = document.getElementById('generateBtn');
         const clearBtn = document.getElementById('clearBtn');
@@ -382,9 +353,6 @@ CONSIGNES STRICTES :
         const printBtn = document.getElementById('printBtn');
         const letterBox = document.getElementById('letterBox');
         const thinkingBox = document.getElementById('thinkingBox');
-        const sourcesBox = document.getElementById('sourcesBox');
-        const sourcesList = document.getElementById('sourcesList');
-        const offerSummary = document.getElementById('offerSummary');
 
         // ============================================================
         //  RENDU MARKDOWN MAISON (nœuds DOM, anti-XSS)
@@ -576,36 +544,6 @@ CONSIGNES STRICTES :
             await readSSEStream(response, onDelta, onReasoning, onFinish);
         }
 
-        async function searchOffers(query) {
-            const key = apiKey || sessionStorage.getItem('glm_api_key');
-            if (!key) throw new Error('Clé API manquante.');
-            const response = await fetch('https://open.bigmodel.cn/api/paas/v4/web_search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-                body: JSON.stringify({
-                    search_query: query,
-                    search_engine: 'search_pro',
-                    search_intent: false,
-                    count: 8,
-                    search_recency_filter: 'oneMonth',
-                    content_size: 'high'
-                })
-            });
-            if (!response.ok) {
-                let msg = 'Erreur HTTP ' + response.status;
-                try {
-                    const err = await response.json();
-                    const e = err && err.error;
-                    if (e && e.code) msg = e.code + ' — ' + e.message;
-                    else if (e && e.message) msg = e.message;
-                    else if (err.message) msg = err.message;
-                } catch (_) {}
-                throw new Error(msg);
-            }
-            const json = await response.json();
-            return Array.isArray(json.search_result) ? json.search_result : [];
-        }
-
         // ============================================================
         //  UTILITAIRES D'INTERFACE
         // ============================================================
@@ -626,51 +564,6 @@ CONSIGNES STRICTES :
             p.style.color = 'var(--err)';
             p.textContent = '⚠️ ' + msg;
             letterBox.appendChild(p);
-        }
-
-        function mapSources(raw) {
-            const out = [];
-            for (const s of (raw || [])) {
-                if (!s || typeof s !== 'object' || !s.title || !s.link) continue;
-                out.push({ title: s.title, url: s.link, snippet: (s.content || '').trim() });
-            }
-            return out;
-        }
-
-        function buildOfferSummary(results, maxCount) {
-            const list = (results || []).slice(0, maxCount || 3);
-            if (!list.length) return '';
-            return list.map((s, i) => {
-                let line = (i + 1) + '. ' + s.title;
-                const meta = [s.media, s.publish_date].filter(Boolean).join(' · ');
-                if (meta) line += ' (' + meta + ')';
-                if (s.content) line += '\n   ' + String(s.content).trim();
-                if (s.link) line += '\n   Lien : ' + s.link;
-                return line;
-            }).join('\n');
-        }
-
-        function renderOffer(summary, list) {
-            offerSummary.textContent = summary;
-            sourcesList.replaceChildren();
-            if (!list.length) return;
-            for (const s of list) {
-                const li = document.createElement('li');
-                const a = document.createElement('a');
-                a.href = s.url;
-                a.target = '_blank';
-                a.rel = 'noopener';
-                a.textContent = s.title;
-                li.appendChild(a);
-                if (s.snippet) {
-                    const sn = document.createElement('span');
-                    sn.className = 'src-snippet';
-                    sn.textContent = s.snippet.slice(0, 200) + (s.snippet.length > 200 ? '…' : '');
-                    li.appendChild(sn);
-                }
-                sourcesList.appendChild(li);
-            }
-            sourcesBox.hidden = false;
         }
 
         // ============================================================
@@ -724,10 +617,9 @@ CONSIGNES STRICTES :
         // ============================================================
         async function generateLetter() {
             const cv = cvInput.value.trim();
-            const poste = posteInput.value.trim();
-            const ville = villeInput.value.trim();
-            if (!cv || !poste || !ville) {
-                showError('Veuillez renseigner votre CV, le poste et la ville.');
+            const offre = offreInput.value.trim();
+            if (!cv || !offre) {
+                showError('Veuillez renseigner votre CV et coller le texte de l\'offre d\'emploi.');
                 return;
             }
 
@@ -746,49 +638,17 @@ CONSIGNES STRICTES :
             thinkingBox.hidden = true;
             thinkingBox.textContent = '';
             letterBox.replaceChildren();
-            sourcesBox.hidden = true;
-            offerSummary.textContent = '';
-            sourcesList.replaceChildren();
             const caret = document.createElement('span');
             caret.className = 'caret';
             letterBox.appendChild(caret);
 
-            // Étape 1 : recherche d'une offre d'emploi réelle sur Internet
-            setStatus('🔎 Recherche d\'une offre d\'emploi : « ' + poste + ' » à ' + ville + '…', true);
-            let offerSummaryText = '';
-            let offerSources = [];
-            try {
-                const searchQuery = ('offre d\'emploi ' + poste + ' ' + ville + ' France').slice(0, 70);
-                const rawResults = await searchOffers(searchQuery);
-                offerSources = mapSources(rawResults);
-                offerSummaryText = buildOfferSummary(rawResults, 3);
-            } catch (err) {
-                setStatus('❌ Recherche impossible', false);
-                showError('La recherche d\'offre d\'emploi a échoué — type d\'erreur : ' + err.message);
-                generateBtn.disabled = false;
-                clearBtn.disabled = false;
-                return;
-            }
-
-            if (!offerSources.length) {
-                setStatus('❌ Aucune offre trouvée', false);
-                showError('Aucune offre d\'emploi exploitable n\'a été trouvée pour « ' + poste + ' » à ' + ville + '. Type d\'erreur : la recherche n\'a renvoyé aucun résultat. Essayez avec un autre intitulé de poste ou une autre ville.');
-                generateBtn.disabled = false;
-                clearBtn.disabled = false;
-                return;
-            }
-
-            renderOffer(offerSummaryText, offerSources);
-
-            // Étape 2 : rédaction de la lettre (streaming)
-            setStatus('📄 Rédaction de la lettre à partir de l\'offre trouvée…', true);
+            // Rédaction de la lettre (streaming)
+            setStatus('📄 Rédaction de la lettre…', true);
             const userMsg = [
-                'POSTE : ' + poste,
-                'VILLE : ' + ville,
                 'TON DEMANDÉ : ' + ton,
                 '',
-                '--- OFFRE D\'EMPLOI TROUVÉE SUR INTERNET ---',
-                offerSummaryText,
+                '--- OFFRE D\'EMPLOI (COLLÉE PAR L\'UTILISATEUR) ---',
+                offre,
                 '',
                 '--- MON CV ---',
                 cv
@@ -820,7 +680,7 @@ CONSIGNES STRICTES :
                     { role: 'user', content: userMsg }
                 ], (delta) => {
                     if (acc === '' && delta) setStatus('✍️ Rédaction en cours…', true);
-                    acc += delta.replace(/\[(?:来源[:：]\s*)?ref_\d+\]/gi, '');
+                    acc += delta;
                     queueRender();
                 }, (r) => {
                     think += r;
@@ -830,7 +690,7 @@ CONSIGNES STRICTES :
                 });
 
                 renderNow();
-                setStatus(offerSources.length ? '✅ Lettre générée · ' + offerSources.length + ' offre' + (offerSources.length > 1 ? 's' : '') + ' trouvée' + (offerSources.length > 1 ? 's' : '') : '✅ Lettre générée', true);
+                setStatus('✅ Lettre générée', true);
 
                 if (truncated) {
                     const note = document.createElement('p');
@@ -839,9 +699,6 @@ CONSIGNES STRICTES :
                     letterBox.appendChild(note);
                 }
             } catch (err) {
-                sourcesBox.hidden = true;
-                offerSummary.textContent = '';
-                sourcesList.replaceChildren();
                 setStatus('❌ Erreur', false);
                 showError(err.message);
             } finally {
@@ -898,14 +755,11 @@ CONSIGNES STRICTES :
         printBtn.addEventListener('click', () => window.print());
 
         clearBtn.addEventListener('click', () => {
-            [cvInput, posteInput, villeInput].forEach(el => { el.value = ''; });
+            [cvInput, offreInput].forEach(el => { el.value = ''; });
             cvFile.value = '';
             letterBox.replaceChildren();
             thinkingBox.hidden = true;
             thinkingBox.textContent = '';
-            sourcesBox.hidden = true;
-            offerSummary.textContent = '';
-            sourcesList.replaceChildren();
             setStatus('✅ Connecté', true);
         });
 
