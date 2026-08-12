@@ -276,6 +276,20 @@
         }
         .chat-input-row input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 
+        .mail-box { margin-top: 12px; }
+        .mail-box textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-family: inherit;
+            line-height: 1.55;
+            resize: vertical;
+            background: #f9fafb;
+        }
+        .mail-box textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); background: #fff; }
+
         footer.top-note { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
         @media (max-width: 760px) {
@@ -368,6 +382,20 @@
             </div>
         </section>
 
+        <section class="card no-print">
+            <div class="paper-head">
+                <strong>📧 Corps de l'e-mail d'envoi</strong>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-primary" id="mailGenBtn" disabled>📧 Générer le corps d'e-mail</button>
+                    <button class="btn-ghost" id="mailCopyBtn" disabled>📋 Copier</button>
+                </div>
+            </div>
+            <div class="note">Texte d'accompagnement à envoyer avec votre <strong>CV</strong> et votre <strong>lettre de motivation</strong> en pièces jointes : objet, contexte, annonce des pièces jointes et signature. Modifiable avant de copier.</div>
+            <div class="mail-box">
+                <textarea id="mailBody" rows="9" placeholder="Générez d'abord votre lettre, puis cliquez sur « Générer le corps d'e-mail »."></textarea>
+            </div>
+        </section>
+
         <footer class="top-note no-print">
             Modèle : <code>glm-4.7-flash</code> · Appel API <code>open.bigmodel.cn</code> en streaming · Les données (CV + offre d'emploi collée) sont envoyées à l'API GLM — ne collez pas d'informations sensibles.
         </footer>
@@ -419,6 +447,22 @@ RÈGLES :
 `;
 
         // ============================================================
+        //  PROMPT SYSTÈME — CORPS DE L'E-MAIL D'ENVOI
+        // ============================================================
+        const EMAIL_SYSTEM_PROMPT = `
+Vous rédigez le corps d'un e-mail de candidature en français, destiné à accompagner un CV et une lettre de motivation envoyés en pièces jointes.
+On vous fournit le ton demandé, l'offre d'emploi, le CV et la lettre de motivation.
+
+RÈGLES :
+- E-mail bref et professionnel (80 à 150 mots environ).
+- Structure : objet de l'e-mail (ligne « Objet : … »), salutation, une phrase de contexte (poste visé / entreprise), une phrase qui annonce le CV et la lettre de motivation en pièces jointes, une phrase de remerciement, formule de politesse et signature.
+- Si le nom du recruteur ou son adresse figure dans l'offre, adressez-vous à lui ; sinon restez générique.
+- Pour la signature, reprenez les coordonnées du CV ; s'il manque des éléments, utilisez des crochets : [Prénom Nom], [téléphone], [email].
+- N'inventez JAMAIS d'informations absentes du CV ou de l'offre.
+- Texte simple, sans markdown.
+`;
+
+        // ============================================================
         //  ÉTAT
         // ============================================================
         let apiKey = '';
@@ -427,6 +471,7 @@ RÈGLES :
         let currentLetter = '';
         let chatHistory = [];
         let chatBusy = false;
+        let mailBusy = false;
 
         // ============================================================
         //  DOM REFS
@@ -451,6 +496,9 @@ RÈGLES :
         const chatInput = document.getElementById('chatInput');
         const chatSendBtn = document.getElementById('chatSendBtn');
         const chatClearBtn = document.getElementById('chatClearBtn');
+        const mailGenBtn = document.getElementById('mailGenBtn');
+        const mailCopyBtn = document.getElementById('mailCopyBtn');
+        const mailBody = document.getElementById('mailBody');
 
         // ============================================================
         //  RENDU MARKDOWN MAISON (nœuds DOM, anti-XSS)
@@ -795,6 +843,7 @@ RÈGLES :
                 addChatMsg('✅ Lettre générée. Dites-moi quoi modifier : raccourcir, changer le ton, insister sur une compétence…', 'system');
                 chatInput.disabled = false;
                 chatSendBtn.disabled = false;
+                mailButtonsState();
                 setStatus('✅ Lettre générée', true);
 
                 if (truncated) {
@@ -999,6 +1048,84 @@ RÈGLES :
         });
 
         // ============================================================
+        //  CORPS DE L'E-MAIL D'ENVOI
+        // ============================================================
+        function mailButtonsState() {
+            mailGenBtn.disabled = !currentLetter || mailBusy;
+            mailCopyBtn.disabled = mailBusy || !mailBody.value.trim();
+        }
+
+        function resetMailPanel() {
+            mailBusy = false;
+            mailBody.value = '';
+            mailButtonsState();
+        }
+
+        async function generateMail() {
+            if (mailBusy) return;
+            if (!currentLetter) {
+                showError('Générez d\'abord la lettre de motivation pour préparer le corps de l\'e-mail.');
+                return;
+            }
+            const cv = cvInput.value.trim();
+            const offre = offreInput.value.trim();
+
+            mailBusy = true;
+            mailGenBtn.disabled = true;
+            mailCopyBtn.disabled = true;
+            mailBody.value = '';
+            setStatus('📧 Rédaction de l\'e-mail…', true);
+
+            const userMsg = [
+                'TON DEMANDÉ : ' + toneSelect.value,
+                '',
+                '--- OFFRE D\'EMPLOI ---',
+                offre,
+                '',
+                '--- MON CV ---',
+                cv,
+                '',
+                '--- LETTRE DE MOTIVATION ---',
+                currentLetter
+            ].join('\n');
+
+            let acc = '';
+            try {
+                await callGLM([
+                    { role: 'system', content: EMAIL_SYSTEM_PROMPT },
+                    { role: 'user', content: userMsg }
+                ], (delta) => {
+                    acc += delta;
+                    mailBody.value = acc;
+                    mailBody.scrollTop = mailBody.scrollHeight;
+                }, null, null);
+                setStatus('✅ Corps d\'e-mail généré', true);
+            } catch (err) {
+                setStatus('❌ Erreur', false);
+                showError(err.message);
+            } finally {
+                mailBusy = false;
+                mailButtonsState();
+            }
+        }
+
+        mailGenBtn.addEventListener('click', generateMail);
+
+        mailCopyBtn.addEventListener('click', async () => {
+            const text = mailBody.value.trim();
+            if (!text) return;
+            try {
+                await navigator.clipboard.writeText(text);
+                mailCopyBtn.textContent = '✅ Copié';
+                setTimeout(() => { mailCopyBtn.textContent = '📋 Copier'; }, 1500);
+            } catch (_) {
+                showError('Impossible de copier dans le presse-papiers (autorisation requise).');
+            }
+        });
+
+        mailBody.addEventListener('input', mailButtonsState);
+
+        // ============================================================
         //  EXPORT
         // ============================================================
         function letterText() {
@@ -1052,6 +1179,7 @@ RÈGLES :
             thinkingBox.hidden = true;
             thinkingBox.textContent = '';
             resetChatPanel();
+            resetMailPanel();
             setStatus('✅ Connecté', true);
         });
 
@@ -1109,6 +1237,7 @@ RÈGLES :
             letterBox.replaceChildren();
             thinkingBox.hidden = true;
             resetChatPanel();
+            resetMailPanel();
         });
 
         generateBtn.addEventListener('click', generateLetter);

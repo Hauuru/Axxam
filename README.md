@@ -100,6 +100,7 @@ Axxam/
 - **L'offre est fournie manuellement par l'utilisateur** : il colle le texte complet de l'offre (intitulé, missions, profil recherché, entreprise) — aucune recherche web automatique, aucun champ « poste » / « ville »
 - Flux en 1 étape : rédaction streaming sur `glm-4.7-flash` basée sur l'offre collée + le CV (l'assistant fait le lien entre les exigences de l'offre et les compétences du CV)
 - **Échange de révision** : après la génération, un panneau de conversation permet de modifier/améliorer la lettre (raccourcir, changer le ton, insister sur une compétence…). Le contexte envoyé inclut le CV, l'offre et la lettre actuelle ; chaque réponse de l'assistant est mise en forme (streaming), remplace automatiquement la lettre si c'est une version complète révisée, et peut être appliquée manuellement via « 📥 Utiliser cette version »
+- **Corps de l'e-mail d'envoi** : bouton « 📧 Générer le corps d'e-mail » (actif après la génération de la lettre) → texte d'accompagnement bref (objet, contexte, annonce des pièces jointes CV + lettre, signature) à envoyer avec les fichiers ; résultat affiché dans un champ éditable et copiable
 - Si le CV ou l'offre manquent → message d'erreur explicite : pas de lettre générique
 - Boutons d'export : copier dans le presse-papiers, télécharger `.md`, impression ; le CV peut être importé depuis un fichier `.txt` ou `.pdf` (pdf.js chargé à la demande, extraction 100 % locale)
 
