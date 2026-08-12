@@ -214,6 +214,68 @@
             margin-top: 14px;
         }
 
+        .chat-panel {
+            border-top: 1px dashed var(--line);
+            margin-top: 16px;
+            padding-top: 14px;
+        }
+
+        .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+
+        .chat-log {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 340px;
+            overflow-y: auto;
+            padding: 12px;
+            background: #f9fafb;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .chat-msg {
+            max-width: 88%;
+            padding: 10px 13px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .chat-msg.user { align-self: flex-end; background: var(--accent-soft); border-bottom-right-radius: 4px; }
+        .chat-msg.assistant { align-self: flex-start; background: #fff; border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+        .chat-msg.system { align-self: center; max-width: 96%; font-size: 12px; color: var(--muted); text-align: center; background: #f3f4f6; border: 1px solid var(--line); }
+
+        .chat-msg-content { min-height: 1em; }
+        .chat-msg p { margin: 0 0 6px; }
+        .chat-msg p:last-child { margin-bottom: 0; }
+        .chat-msg h1, .chat-msg h2, .chat-msg h3 { font-size: 14px; margin: 8px 0 4px; }
+        .chat-msg ul, .chat-msg ol { margin: 0 0 6px; padding-left: 20px; }
+        .chat-msg blockquote { margin: 0 0 6px; padding-left: 10px; border-left: 3px solid var(--line); color: var(--muted); }
+        .chat-msg .caret { vertical-align: -1px; }
+
+        .chat-msg .thinking {
+            margin-bottom: 6px;
+            font-size: 12px;
+            max-height: 120px;
+        }
+
+        .chat-actions { display: flex; gap: 6px; margin-top: 8px; }
+        .chat-actions button { font-size: 11.5px; padding: 4px 10px; border-radius: 6px; }
+
+        .chat-input-row { display: flex; gap: 8px; }
+        .chat-input-row input {
+            flex: 1;
+            padding: 9px 12px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-family: inherit;
+        }
+        .chat-input-row input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
         footer.top-note { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
         @media (max-width: 760px) {
@@ -292,6 +354,18 @@
             </div>
             <div class="thinking" id="thinkingBox" hidden></div>
             <div class="letter" id="letterBox"><span class="caret"></span></div>
+
+            <div class="chat-panel no-print" id="chatPanel" hidden>
+                <div class="chat-head">
+                    <strong>💬 Modifier / améliorer la lettre</strong>
+                    <button class="btn-ghost" id="chatClearBtn" style="padding:4px 10px;font-size:12px;">🗑️ Vider l'échange</button>
+                </div>
+                <div class="chat-log" id="chatLog"></div>
+                <div class="chat-input-row">
+                    <input type="text" id="chatInput" placeholder="Ex. : raccourcis la lettre, insiste sur mon expérience, change le ton…" disabled autocomplete="off" />
+                    <button class="btn-primary" id="chatSendBtn" disabled style="font-size:13px;padding:9px 16px;">Envoyer</button>
+                </div>
+            </div>
         </section>
 
         <footer class="top-note no-print">
@@ -329,11 +403,30 @@ CONSIGNES STRICTES :
 `;
 
         // ============================================================
+        //  PROMPT SYSTÈME — ÉCHANGE / RÉVISION DE LA LETTRE
+        // ============================================================
+        const CHAT_SYSTEM_PROMPT = `
+Vous êtes un relecteur-rédacteur de lettres de motivation. On vous fournit le ton demandé, l'offre d'emploi, le CV et la lettre actuelle.
+Vous conversez avec l'utilisateur pour modifier, améliorer ou corriger sa lettre.
+
+RÈGLES :
+- Quand l'utilisateur demande une modification (raccourcir, reformuler, insister sur une compétence, changer le ton, corriger, etc.), renvoyez la lettre COMPLÈTE révisée : elle commencera obligatoirement par une ligne « Objet : … », sans introduction ni commentaire avant ou après.
+- Quand l'utilisateur pose une question (ex. « pourquoi cette formule ? », « c'est mieux ainsi ? »), répondez brièvement en 2 à 4 phrases, sans renvoyer la lettre, et terminez par une proposition d'amélioration précise.
+- N'inventez JAMAIS d'expériences, de compétences, de diplômes ou d'informations absents du CV.
+- N'inventez JAMAIS de missions, d'exigences ou de faits absents de l'offre fournie.
+- Gardez une longueur proche de la lettre actuelle (250 à 350 mots) sauf demande contraire explicite.
+- Respectez le ton demandé, restez en français, markdown simple uniquement.
+`;
+
+        // ============================================================
         //  ÉTAT
         // ============================================================
         let apiKey = '';
         let isReady = false;
         const CURRENT_MODEL = 'glm-4.7-flash';
+        let currentLetter = '';
+        let chatHistory = [];
+        let chatBusy = false;
 
         // ============================================================
         //  DOM REFS
@@ -353,6 +446,11 @@ CONSIGNES STRICTES :
         const printBtn = document.getElementById('printBtn');
         const letterBox = document.getElementById('letterBox');
         const thinkingBox = document.getElementById('thinkingBox');
+        const chatPanel = document.getElementById('chatPanel');
+        const chatLog = document.getElementById('chatLog');
+        const chatInput = document.getElementById('chatInput');
+        const chatSendBtn = document.getElementById('chatSendBtn');
+        const chatClearBtn = document.getElementById('chatClearBtn');
 
         // ============================================================
         //  RENDU MARKDOWN MAISON (nœuds DOM, anti-XSS)
@@ -690,6 +788,13 @@ CONSIGNES STRICTES :
                 });
 
                 renderNow();
+                currentLetter = letterText();
+                chatHistory = [];
+                chatLog.replaceChildren();
+                chatPanel.hidden = false;
+                addChatMsg('✅ Lettre générée. Dites-moi quoi modifier : raccourcir, changer le ton, insister sur une compétence…', 'system');
+                chatInput.disabled = false;
+                chatSendBtn.disabled = false;
                 setStatus('✅ Lettre générée', true);
 
                 if (truncated) {
@@ -706,6 +811,192 @@ CONSIGNES STRICTES :
                 clearBtn.disabled = false;
             }
         }
+
+        // ============================================================
+        //  ÉCHANGE POUR MODIFIER / AMÉLIORER LA LETTRE
+        // ============================================================
+        function chatScroll() {
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function addChatMsg(text, type) {
+            const div = document.createElement('div');
+            div.className = 'chat-msg ' + type;
+            if (type === 'assistant') {
+                const content = document.createElement('div');
+                content.className = 'chat-msg-content';
+                content.appendChild(renderMarkdown(text));
+                div.appendChild(content);
+            } else {
+                div.textContent = text;
+            }
+            chatLog.appendChild(div);
+            chatScroll();
+            return div;
+        }
+
+        function isFullLetter(text) {
+            const t = String(text || '').trim();
+            if (!t) return false;
+            const firstLine = t.split('\n').map(l => l.trim()).find(Boolean) || '';
+            const startsLikeLetter = /^#*\s*(objet|à l'attention de|madame|monsieur)\b/i.test(firstLine);
+            const paras = t.split(/\n{2,}/).filter(p => p.trim()).length;
+            return startsLikeLetter || paras >= 3;
+        }
+
+        function applyChatRevision(markdown) {
+            letterBox.replaceChildren();
+            letterBox.appendChild(renderMarkdown(markdown));
+            currentLetter = letterText();
+            setStatus('✅ Lettre révisée', true);
+        }
+
+        function addChatActions(bubble, text) {
+            const actions = document.createElement('div');
+            actions.className = 'chat-actions';
+            const useBtn = document.createElement('button');
+            useBtn.type = 'button';
+            useBtn.className = 'btn-ghost';
+            useBtn.textContent = '📥 Utiliser cette version';
+            useBtn.addEventListener('click', () => applyChatRevision(text));
+            actions.appendChild(useBtn);
+            bubble.appendChild(actions);
+        }
+
+        function resetChatPanel() {
+            chatPanel.hidden = true;
+            chatLog.replaceChildren();
+            chatHistory = [];
+            currentLetter = '';
+            chatInput.disabled = true;
+            chatSendBtn.disabled = true;
+            chatBusy = false;
+        }
+
+        async function sendChatMessage() {
+            const text = chatInput.value.trim();
+            if (!text || chatBusy) return;
+            if (!currentLetter) {
+                addChatMsg('⚠️ Générez d\'abord une lettre pour pouvoir la modifier.', 'system');
+                return;
+            }
+
+            chatBusy = true;
+            chatInput.disabled = true;
+            chatSendBtn.disabled = true;
+            addChatMsg(text, 'user');
+            chatHistory.push({ role: 'user', content: text });
+            chatInput.value = '';
+            setStatus('💬 Révision en cours…', true);
+
+            const context = [
+                'TON DEMANDÉ : ' + toneSelect.value,
+                '',
+                '--- OFFRE D\'EMPLOI ---',
+                offreInput.value.trim(),
+                '',
+                '--- MON CV ---',
+                cvInput.value.trim(),
+                '',
+                '--- LETTRE DE MOTIVATION ACTUELLE ---',
+                currentLetter
+            ].join('\n');
+
+            const messages = [
+                { role: 'system', content: CHAT_SYSTEM_PROMPT },
+                { role: 'user', content: context },
+                ...chatHistory
+            ];
+
+            const bubble = document.createElement('div');
+            bubble.className = 'chat-msg assistant streaming';
+            const thinkDiv = document.createElement('div');
+            thinkDiv.className = 'thinking';
+            thinkDiv.hidden = true;
+            bubble.appendChild(thinkDiv);
+            const content = document.createElement('div');
+            content.className = 'chat-msg-content';
+            bubble.appendChild(content);
+            const caret = document.createElement('span');
+            caret.className = 'caret';
+            bubble.appendChild(caret);
+            chatLog.appendChild(bubble);
+            chatScroll();
+
+            let acc = '', think = '', truncated = false, renderQueued = false;
+            const renderNow = () => {
+                renderQueued = false;
+                content.replaceChildren();
+                content.appendChild(renderMarkdown(acc));
+                chatScroll();
+            };
+            const renderThink = () => {
+                thinkDiv.hidden = think === '';
+                thinkDiv.textContent = think;
+            };
+            const queueRender = () => {
+                if (!renderQueued) { renderQueued = true; requestAnimationFrame(renderNow); }
+            };
+
+            try {
+                await callGLM(messages, (delta) => {
+                    if (acc === '' && delta) setStatus('✍️ Révision en cours…', true);
+                    acc += delta;
+                    queueRender();
+                }, (r) => {
+                    think += r;
+                    renderThink();
+                }, (finish) => {
+                    if (finish === 'length') truncated = true;
+                });
+
+                renderNow();
+                bubble.classList.remove('streaming');
+                bubble.removeChild(caret);
+                if (!acc && !think) throw new Error('Réponse invalide de l\'API.');
+
+                chatHistory.push({ role: 'assistant', content: acc });
+
+                if (isFullLetter(acc)) {
+                    applyChatRevision(acc);
+                } else {
+                    setStatus('✅ Connecté', true);
+                }
+
+                addChatActions(bubble, acc);
+
+                if (truncated) {
+                    const note = document.createElement('div');
+                    note.className = 'chat-msg system';
+                    note.textContent = '⚠️ Réponse interrompue (limite de sortie atteinte). Simplifiez votre demande ou divisez-la en deux.';
+                    chatLog.appendChild(note);
+                    chatScroll();
+                }
+            } catch (err) {
+                if (bubble && bubble.parentNode) bubble.parentNode.removeChild(bubble);
+                addChatMsg('⚠️ ' + err.message, 'system');
+                chatHistory.pop();
+                setStatus('❌ Erreur', false);
+            } finally {
+                chatBusy = false;
+                chatInput.disabled = false;
+                chatSendBtn.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        chatSendBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        });
+        chatClearBtn.addEventListener('click', () => {
+            chatLog.replaceChildren();
+            chatHistory = [];
+            addChatMsg('🗑️ Échange vidé — la lettre actuelle est conservée, vous pouvez continuer à la modifier.', 'system');
+        });
 
         // ============================================================
         //  EXPORT
@@ -760,6 +1051,7 @@ CONSIGNES STRICTES :
             letterBox.replaceChildren();
             thinkingBox.hidden = true;
             thinkingBox.textContent = '';
+            resetChatPanel();
             setStatus('✅ Connecté', true);
         });
 
@@ -816,6 +1108,7 @@ CONSIGNES STRICTES :
             showError('');
             letterBox.replaceChildren();
             thinkingBox.hidden = true;
+            resetChatPanel();
         });
 
         generateBtn.addEventListener('click', generateLetter);
