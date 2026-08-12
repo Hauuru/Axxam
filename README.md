@@ -19,6 +19,7 @@ Axxam/
 ├── index.html              ← Page hub : portail vers tous les sites
 ├── numerique.html          ← Axxam Numérique : création de sites, agents IA, automatisation, dépannage, impression 3D
 ├── llm.html                ← Chatbot « L'esprit de la rivière » (GLM-4.7 Flash, streaming SSE, fond eau animé)
+├── lettre-motivation.html  ← Générateur de lettre de motivation (GLM + recherche web optionnelle)
 ├── hub.css                 ← Feuille de style du portail
 ├── animation/              ← Site axxam.net/animation
 │   ├── index.html          ← Page d'accueil (animations créatives)
@@ -93,6 +94,12 @@ Axxam/
 - **Streaming SSE** : réponse affichée token par token (rendu markdown progressif + caret clignotant) ; parser markdown maison, anti-XSS, liens `http(s)` uniquement
 - Clé API à fournir par l'utilisateur : note dans le chat expliquant l'obtention sur `https://z.ai/manage-apikey/apikey-list`
 - Carte d'accès depuis le portail : `index.html` → « Chatbot GLM »
+
+### Générateur de lettre de motivation (`lettre-motivation.html`)
+- Application 100 % côté navigateur (aucun backend) : saisie du CV, de l'offre, du poste, de l'entreprise et du ton → génération d'une lettre personnalisée par l'API GLM (modèle `glm-4.7-flash`, `chat/completions` en streaming SSE)
+- **Recherche web optionnelle** (case à cocher « 🌐 Rechercher des infos sur l'entreprise ») : utilise l'outil natif `web_search` de l'API GLM (moteur `search_pro`, 5 résultats, sans limite de fraîcheur) pour personnaliser la lettre avec des faits réels sur l'entreprise (activité, actualités, valeurs). Les sources consultées s'affichent sous la lettre (« Sources consultées par l'assistant ») mais ne sont pas insérées dans le texte de la lettre, ni dans les exports (copier/télécharger/print)
+- La recherche est **gratuite** sur les plans Coding (inclus dans le quota) ou de l'ordre de quelques centimes par recherche sur les plans Pay-as-you-go — coût considéré comme négligeable pour un usage personnel ; aucune inscription supplémentaire requise (même clé API que le chatbot)
+- Boutons d'export : copier dans le presse-papiers, télécharger `.md`, impression ; le CV peut être importé depuis un fichier `.txt` ou `.pdf` (pdf.js chargé à la demande, extraction 100 % locale)
 
 ### axxam.net/animation (sous-dossier)
 - Site vitrine d'entrepreneur — **Axxam, animations créatives et durables**

@@ -216,6 +216,33 @@
             margin-top: 14px;
         }
 
+        .search-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .search-toggle input { width: 16px; height: 16px; accent-color: var(--accent); }
+        .search-toggle.disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .sources {
+            margin-top: 14px;
+            font-size: 12px;
+            color: var(--muted);
+            border-top: 1px dashed var(--line);
+            padding-top: 10px;
+        }
+
+        .sources ul { list-style: none; padding: 0; margin: 6px 0 0; }
+        .sources li { margin: 4px 0; line-height: 1.4; }
+        .sources a { color: var(--accent-dark); text-decoration: none; }
+        .sources a:hover { text-decoration: underline; }
+        .sources .src-snippet { display: block; color: var(--muted); }
+
         footer.top-note { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
         @media (max-width: 760px) {
@@ -287,9 +314,13 @@
                 </div>
             </div>
             <div class="actions">
+                <label class="search-toggle no-print" id="searchToggle" title="Recherche des informations réelles sur l'entreprise via le moteur de recherche intégré de l'API GLM">
+                    <input type="checkbox" id="searchCb" /> 🌐 Rechercher des infos sur l'entreprise
+                </label>
                 <button class="btn-success" id="generateBtn">✍️ Générer la lettre</button>
                 <button class="btn-ghost" id="clearBtn">🧹 Effacer</button>
             </div>
+            <div class="note">🌐 <strong>Recherche web</strong> (optionnelle) : l'assistant cherche en ligne des informations factuelles sur l'entreprise — activité, actualités, valeurs — pour personnaliser la lettre. Coût : inclus dans le plan Coding, sinon quelques centimes par recherche au maximum. Le nom de l'entreprise est transmis aux serveurs de l'API.</div>
         </section>
 
         <section class="card paper-card">
@@ -303,10 +334,14 @@
             </div>
             <div class="thinking" id="thinkingBox" hidden></div>
             <div class="letter" id="letterBox"><span class="caret"></span></div>
+            <div class="sources no-print" id="sourcesBox" hidden>
+                <strong>Sources consultées par l'assistant</strong>
+                <ul id="sourcesList"></ul>
+            </div>
         </section>
 
         <footer class="top-note no-print">
-            Modèle : <code>glm-4.7-flash</code> · Appel API <code>open.bigmodel.cn</code> en streaming · Les données (CV, offre) sont envoyées à l'API GLM pour générer la lettre — ne collez pas d'informations sensibles.
+            Modèle : <code>glm-4.7-flash</code> · Appel API <code>open.bigmodel.cn</code> en streaming · La recherche web optionnelle utilise le moteur de recherche intégré de l'API · Les données (CV, offre) sont envoyées à l'API GLM pour générer la lettre — ne collez pas d'informations sensibles.
         </footer>
     </div>
 
@@ -334,6 +369,9 @@ CONSIGNES STRICTES :
 - Ton respecté : le ton demandé.
 - Longueur : 250 à 350 mots environ. Paragraphes complets (pas de listes à puces dans la lettre).
 - Format : markdown simple uniquement (un titre éventuel en niveau 2, des paragraphes, pas de tableaux ni d'images).
+- Si des résultats de recherche web sont fournis (balises [ref_...]), utilisez uniquement les faits factuels et vérifiables qui y figurent (activité, actualités, valeurs, taille, localisation de l'entreprise) pour personnaliser l'accroche et les paragraphes.
+- N'inventez JAMAIS de faits sur l'entreprise : un fait qui ne provient ni du CV ni des résultats de recherche doit être ignoré.
+- Ne mentionnez PAS les sources ni les balises [ref_...] dans le corps de la lettre.
 `;
 
         // ============================================================
@@ -363,6 +401,10 @@ CONSIGNES STRICTES :
         const printBtn = document.getElementById('printBtn');
         const letterBox = document.getElementById('letterBox');
         const thinkingBox = document.getElementById('thinkingBox');
+        const searchToggle = document.getElementById('searchToggle');
+        const searchCb = document.getElementById('searchCb');
+        const sourcesBox = document.getElementById('sourcesBox');
+        const sourcesList = document.getElementById('sourcesList');
 
         // ============================================================
         //  RENDU MARKDOWN MAISON (nœuds DOM, anti-XSS)
@@ -489,7 +531,7 @@ CONSIGNES STRICTES :
         // ============================================================
         //  STREAMING SSE (GLM) — lit aussi reasoning_content
         // ============================================================
-        async function readSSEStream(response, onDelta, onReasoning, onFinish) {
+        async function readSSEStream(response, onDelta, onReasoning, onFinish, onSources) {
             if (!response.body) throw new Error('Le streaming n\'est pas pris en charge par ce navigateur.');
             const reader = response.body.getReader();
             const decoder = new TextDecoder('utf-8');
@@ -501,10 +543,16 @@ CONSIGNES STRICTES :
                 if (data === '[DONE]') return;
                 try {
                     const json = JSON.parse(data);
+                    if (onSources && Array.isArray(json.search_result) && json.search_result.length) {
+                        onSources(json.search_result);
+                    }
                     const choice = json.choices && json.choices[0];
                     if (!choice) return;
                     const delta = choice.delta;
                     if (delta) {
+                        if (onSources && Array.isArray(delta.search_result) && delta.search_result.length) {
+                            onSources(delta.search_result);
+                        }
                         if (onReasoning && typeof delta.reasoning_content === 'string' && delta.reasoning_content.length) {
                             onReasoning(delta.reasoning_content);
                         }
@@ -528,7 +576,7 @@ CONSIGNES STRICTES :
             flush();
         }
 
-        async function callGLM(messages, onDelta, onReasoning, onFinish) {
+        async function callGLM(messages, onDelta, onReasoning, onFinish, onSources, tools) {
             const key = apiKey || sessionStorage.getItem('glm_api_key');
             if (!key) throw new Error('Clé API manquante.');
             const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
@@ -540,7 +588,8 @@ CONSIGNES STRICTES :
                     temperature: 0.7,
                     max_tokens: 4000,
                     top_p: 0.9,
-                    stream: true
+                    stream: true,
+                    ...(tools && tools.length ? { tools } : {})
                 })
             });
             if (!response.ok) {
@@ -551,7 +600,7 @@ CONSIGNES STRICTES :
                 } catch (_) {}
                 throw new Error(msg);
             }
-            await readSSEStream(response, onDelta, onReasoning, onFinish);
+            await readSSEStream(response, onDelta, onReasoning, onFinish, onSources);
         }
 
         // ============================================================
@@ -574,6 +623,44 @@ CONSIGNES STRICTES :
             p.style.color = 'var(--err)';
             p.textContent = '⚠️ ' + msg;
             letterBox.appendChild(p);
+        }
+
+        function mapSources(raw) {
+            const out = [];
+            for (const s of (raw || [])) {
+                if (!s || typeof s !== 'object' || !s.title || !s.link) continue;
+                out.push({ title: s.title, url: s.link, snippet: (s.content || '').trim() });
+            }
+            return out;
+        }
+
+        function renderSources(list) {
+            sourcesList.replaceChildren();
+            if (!list.length) return;
+            for (const s of list) {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = s.url;
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.textContent = s.title;
+                li.appendChild(a);
+                if (s.snippet) {
+                    const sn = document.createElement('span');
+                    sn.className = 'src-snippet';
+                    sn.textContent = s.snippet.slice(0, 200) + (s.snippet.length > 200 ? '…' : '');
+                    li.appendChild(sn);
+                }
+                sourcesList.appendChild(li);
+            }
+            sourcesBox.hidden = false;
+        }
+
+        function updateSearchToggle() {
+            const on = societeInput.value.trim() !== '' || offerInput.value.trim() !== '';
+            searchCb.disabled = !on;
+            searchToggle.classList.toggle('disabled', !on);
+            if (!on) searchCb.checked = false;
         }
 
         // ============================================================
@@ -662,12 +749,45 @@ CONSIGNES STRICTES :
             thinkingBox.hidden = true;
             thinkingBox.textContent = '';
             letterBox.replaceChildren();
+            sourcesBox.hidden = true;
+            sourcesList.replaceChildren();
             const caret = document.createElement('span');
             caret.className = 'caret';
             letterBox.appendChild(caret);
-            setStatus('🔎 L\'assistant lit le CV et l\'offre…', true);
+
+            const doSearch = searchCb.checked;
+            const tools = [];
+            if (doSearch) {
+                tools.push({
+                    type: 'web_search',
+                    web_search: {
+                        enable: 'True',
+                        search_engine: 'search_pro',
+                        search_result: 'True',
+                        search_prompt: 'Tu rédiges une lettre de motivation pour ' + (poste !== '(non précisé)' ? 'le poste de ' + poste : 'un poste') + (societe !== '(non précisée)' ? ' chez ' + societe : '') + '. Recherche des informations factuelles et récentes sur cette entreprise : activité, secteurs, actualités, valeurs, taille, localisation. Résume dans {search_result} uniquement des faits vérifiés et datés, classés par importance. Ignore les informations incertaines ou hypothétiques.',
+                        count: '5',
+                        search_recency_filter: 'noLimit',
+                        content_size: 'medium'
+                    }
+                });
+            }
+
+            setStatus(doSearch ? '🔎 Recherche d\'infos sur l\'entreprise…' : '🔎 L\'assistant lit le CV et l\'offre…', true);
 
             let acc = '', think = '', truncated = false, renderQueued = false;
+            let sources = [];
+            const seenSources = new Set();
+            const addSources = (raw) => {
+                const mapped = mapSources(raw);
+                let added = false;
+                for (const s of mapped) {
+                    if (seenSources.has(s.url)) continue;
+                    seenSources.add(s.url);
+                    sources.push(s);
+                    added = true;
+                }
+                if (added) renderSources(sources);
+            };
             const renderNow = () => {
                 renderQueued = false;
                 letterBox.replaceChildren();
@@ -693,17 +813,17 @@ CONSIGNES STRICTES :
                     { role: 'user', content: userMsg }
                 ], (delta) => {
                     if (acc === '' && delta) setStatus('✍️ Rédaction en cours…', true);
-                    acc += delta;
+                    acc += delta.replace(/\[(?:来源[:：]\s*)?ref_\d+\]/gi, '');
                     queueRender();
                 }, (r) => {
                     think += r;
                     renderThink();
                 }, (finish) => {
                     if (finish === 'length') truncated = true;
-                });
+                }, addSources, tools);
 
                 renderNow();
-                setStatus('✅ Lettre générée', true);
+                setStatus(sources.length ? '✅ Lettre générée · ' + sources.length + ' source' + (sources.length > 1 ? 's' : '') + ' consultée' + (sources.length > 1 ? 's' : '') : '✅ Lettre générée', true);
 
                 if (truncated) {
                     const note = document.createElement('p');
@@ -712,6 +832,8 @@ CONSIGNES STRICTES :
                     letterBox.appendChild(note);
                 }
             } catch (err) {
+                sourcesBox.hidden = true;
+                sourcesList.replaceChildren();
                 setStatus('❌ Erreur', false);
                 showError(err.message);
             } finally {
@@ -773,6 +895,10 @@ CONSIGNES STRICTES :
             letterBox.replaceChildren();
             thinkingBox.hidden = true;
             thinkingBox.textContent = '';
+            sourcesBox.hidden = true;
+            sourcesList.replaceChildren();
+            searchCb.checked = false;
+            updateSearchToggle();
             setStatus('✅ Connecté', true);
         });
 
@@ -833,7 +959,11 @@ CONSIGNES STRICTES :
 
         generateBtn.addEventListener('click', generateLetter);
 
+        societeInput.addEventListener('input', updateSearchToggle);
+        offerInput.addEventListener('input', updateSearchToggle);
+
         window.addEventListener('load', () => {
+            updateSearchToggle();
             const saved = sessionStorage.getItem('glm_api_key');
             if (saved && saved.startsWith('sk-')) {
                 initSession(saved);
