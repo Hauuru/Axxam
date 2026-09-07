@@ -199,6 +199,11 @@
         .field textarea { min-height: 76px; }
         .field textarea.tall { min-height: 120px; }
 
+        input[type="text"].bot-filled, textarea.bot-filled, select.bot-filled {
+            border-color: var(--primary);
+            background: #fbfff7;
+        }
+
         input[type="text"] {
             width: 100%;
             padding: 9px 12px;
@@ -285,6 +290,20 @@
 
         .chat-panel { border-top: 1px dashed var(--line); margin-top: 16px; padding-top: 14px; }
 
+        .chat-card .chat-head { margin-bottom: 12px; }
+
+        .chat-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        .progress-badge {
+            font-size: 11.5px;
+            color: var(--ok);
+            border: 1px solid #86efac;
+            background: var(--ok-soft);
+            padding: 3px 10px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
         .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
 
         .chat-log {
@@ -348,7 +367,7 @@
         <header class="top">
             <div>
                 <h1>Projet d'animation</h1>
-                <div class="sub">Outil interne Axxam — remplissez le formulaire ou laissez le chatbot vous questionner</div>
+                <div class="sub">Le chatbot vous guide et remplit le formulaire à mesure de vos réponses</div>
             </div>
             <a class="back" href="index.html">← Retour au portail Axxam</a>
         </header>
@@ -400,14 +419,18 @@
                     <input type="text" id="dureeInput" placeholder="Ex. : 2 h par séance, 4 séances" />
                 </div>
                 <div class="field">
-                    <label for="animationsSelect">🧩 Animateurs / prestations</label>
+                    <label for="animationsSelect">🎭 Type d'animation / ateliers</label>
                     <select id="animationsSelect">
                         <option value="">— Choisir —</option>
                         <option value="Jeux de société">Jeux de société</option>
                         <option value="Argile / modelage">Argile / modelage</option>
                         <option value="Permaculture / jardinage">Permaculture / jardinage</option>
                         <option value="Poterie / tournage">Poterie / tournage</option>
-                        <option value="Plusieurs prestations">Plusieurs prestations</option>
+                        <option value="Arts créatifs">Arts créatifs</option>
+                        <option value="Activités manuelles">Activités manuelles</option>
+                        <option value="Nature / plein air">Nature / plein air</option>
+                        <option value="Contes / lecture">Contes / lecture</option>
+                        <option value="Plusieurs activités">Plusieurs activités</option>
                         <option value="Autre">Autre</option>
                     </select>
                 </div>
@@ -439,10 +462,25 @@
 
             <div class="actions">
                 <button class="btn-success" id="generateBtn">✍️ Rédiger le projet d'animation</button>
-                <button class="btn-ghost" id="interviewBtn">💬 Le chatbot me pose les questions</button>
+                <button class="btn-ghost" id="interviewBtn">💬 Démarrer le guide</button>
                 <button class="btn-ghost" id="clearBtn">🧹 Effacer</button>
             </div>
-            <div class="note">💬 Cliquez sur « Le chatbot me pose les questions » : il vous interroge un point à la fois et remplit le formulaire à mesure. Seules les données du formulaire sont envoyées à l'API GLM — ne collez pas d'informations sensibles.</div>
+            <div class="note">💬 Le chatbot vous interroge un point à la fois et remplit le formulaire au-dessus à mesure de vos réponses. Seules les données du formulaire sont envoyées à l'API GLM — ne collez pas d'informations sensibles.</div>
+        </section>
+
+        <section class="card chat-card no-print">
+            <div class="chat-head">
+                <div class="chat-title">
+                    <strong>💬 Le guide de votre projet</strong>
+                    <span class="progress-badge" id="progressBadge">0/12 champs</span>
+                </div>
+                <button class="btn-ghost" id="chatClearBtn" style="padding:4px 10px;font-size:12px;">🗑️ Vider l'échange</button>
+            </div>
+            <div class="chat-log" id="chatLog"></div>
+            <div class="chat-input-row">
+                <input type="text" id="chatInput" placeholder="Répondez ici… exemple : « 12 enfants de 6 à 12 ans », ou posez une question." disabled autocomplete="off" />
+                <button class="btn-primary" id="chatSendBtn" disabled style="font-size:13px;padding:9px 16px;">Envoyer</button>
+            </div>
         </section>
 
         <section class="card paper-card">
@@ -456,18 +494,6 @@
             </div>
             <div class="thinking" id="thinkingBox" hidden></div>
             <div class="letter" id="letterBox"><span class="caret"></span></div>
-
-            <div class="chat-panel no-print" id="chatPanel" hidden>
-                <div class="chat-head">
-                    <strong>💬 Modifier / compléter le projet</strong>
-                    <button class="btn-ghost" id="chatClearBtn" style="padding:4px 10px;font-size:12px;">🗑️ Vider l'échange</button>
-                </div>
-                <div class="chat-log" id="chatLog"></div>
-                <div class="chat-input-row">
-                    <input type="text" id="chatInput" placeholder="Ex. : ajoute une activité au 2e objectif, précise le matériel à acheter, affine les critères d'évaluation…" disabled autocomplete="off" />
-                    <button class="btn-primary" id="chatSendBtn" disabled style="font-size:13px;padding:9px 16px;">Envoyer</button>
-                </div>
-            </div>
         </section>
 
         <footer class="top-note no-print">
@@ -490,7 +516,7 @@
         const SYSTEM_PROMPT = `
 Vous êtes un animateur socioculturel expérimenté en France. Vous rédigez des projets d'animation en français pour un usage interne.
 
-À partir du formulaire fourni (équipe, période, thème, public, durée, animateur/prestations, objectifs éventuels, matériel, sorties, motivation), rédigez un projet d'animation structuré EXACTEMENT selon les 7 blocs ci-dessous.
+À partir du formulaire fourni (équipe, période, thème, public, durée, type d'animation/ateliers, objectifs éventuels, matériel, sorties, motivation), rédigez un projet d'animation structuré EXACTEMENT selon les 7 blocs ci-dessous.
 
 CONSIGNES STRICTES :
 - N'inventez JAMAIS d'éléments absents du formulaire (dates, lieux, publics, nombres, matériel…). Pour tout élément manquant, utilisez des crochets : [à préciser].
@@ -548,33 +574,43 @@ AUTRES CONSIGNES :
         //  PROMPT SYSTÈME — ENTRETIEN PAR LE CHATBOT
         // ============================================================
         const INTERVIEW_SYSTEM_PROMPT = `
-Vous êtes un assistant interne qui aide un animateur à remplir un formulaire de projet d'animation, en français.
+Vous êtes un assistant qui aide un animateur à préparer un projet d'animation, en français.
 Vous ne connaissez RIEN du projet : vous posez les questions une à une pour recueillir les informations suivantes, dans cet ordre :
-1. Nom du groupe / équipe d'animation et période du projet
-2. Motivation : pourquoi ce projet
+1. Nom du groupe / équipe d'animation
+2. Période du projet (dates, créneaux)
 3. Thème du projet
-4. Public visé (tranches d'âge, effectif) et durée/créneaux
-5. Prestations d'animation (jeux de société, argile/modelage, permaculture/jardinage, poterie/tournage, autre)
-6. Les 3 objectifs du projet et les activités associées à chacun
-7. Besoins matériels, en distinguant fournitures catalogue et courses/magasin
-8. Sorties et intervenants éventuels
+4. Public visé (tranches d'âge, effectif)
+5. Durée / nombre de séances
+6. Type d'animation / ateliers (jeux de société, argile, permaculture, arts créatifs…)
+7. Les objectifs du projet (1 à 3) et les activités associées
+8. Besoins matériels (fournitures disponibles / à acheter)
+9. Sorties et intervenants éventuels
+10. Motivation, contexte, contraintes
 
 RÈGLES :
-- Posez UNE question à la fois, sous forme de liste numérotée (1/8, 2/8…). Ne posez jamais deux questions dans le même message.
-- Quand l'utilisateur répond, reformulez très brièvement ce que vous avez compris puis passez à la question suivante.
-- Quand les 8 points sont couverts, récapitulez le tout en 6 lignes courtes et dites : « Le formulaire est complet : cliquez sur ✍️ Rédiger le projet d'animation pour générer le document. »
-- Ne remplissez pas vous-même le formulaire : vous restez dans l'échange. Courtes réponses.
+- Posez UNE question à la fois, numérotée (1/10, 2/10…). Ne posez jamais deux questions dans le même message.
+- Quand l'utilisateur répond : reformulez très brièvement ce que vous avez compris, dites « Je mets à jour le formulaire. » puis posez la question suivante.
+- À chaque réponse de l'utilisateur, terminez VOTRE réponse par un bloc JSON décrivant les informations recueillies. Ce bloc sert à remplir le formulaire automatiquement.
+- Le bloc JSON doit être le tout dernier bloc de votre message, entre les balises <FORM> et </FORM>, sur une seule ligne si possible :
+<FORM>{"equipe":"…","periode":"…","theme":"…","public":"…","duree":"…","type":"…","objectif1":"…","objectif2":"…","objectif3":"…","materiel":"…","sorties":"…","notes":"…"}</FORM>
+- N'incluez dans le JSON que les champs réellement renseignés (les autres doivent être absents).
+- Quand l'utilisateur donne plusieurs informations d'un coup (par exemple nom + période), transmettez-les toutes dans le JSON.
+- Quand les 10 points sont couverts, récapitulez en 6 lignes courtes et dites : « Votre projet est complet : cliquez sur ✍️ Rédiger le projet d'animation pour générer le document. »
+- Courtes réponses, en français.
 `;
 
         // ============================================================
         //  PROMPT SYSTÈME — ÉCHANGE / RÉVISION DU PROJET
         // ============================================================
         const CHAT_SYSTEM_PROMPT = `
-Vous êtes un rédacteur de projets d'animation. On vous fournit le formulaire et le projet d'animation actuel (structure en 7 blocs).
-Vous conversez avec l'animateur pour modifier, améliorer ou corriger son projet.
+Vous êtes un guide bienveillant qui aide un animateur à construire un projet d'animation.
+Deux situations possibles :
 
-RÈGLES :
-- Quand l'utilisateur demande une modification (ajouter une activité à un objectif, préciser le matériel à acheter, affiner les critères d'évaluation, reformuler, corriger…), renvoyez le projet COMPLET révisé, en respectant scrupuleusement la structure des 7 blocs (## 1. Groupe / équipe…, ## 2. Motivation…, ## 3. Thème…, ## 4. Objectifs…, ## 5. Besoins matériels…, ## 6. Sorties…, ## 7. Évaluation…), sans introduction ni commentaire avant ou après.
+1) Si le formulaire n'est pas encore complet, vous êtes dans la PHASE D'ENTRETIEN : vous posez les questions une à une (1/10, 2/10…), accompagnez l'utilisateur, et à chaque de ses réponses vous terminez par un bloc JSON entre <FORM> et </FORM> pour remplir le formulaire. Clés possibles : equipe, periode, theme, public, duree, type, objectif1, objectif2, objectif3, materiel, sorties, notes. N'incluez que les champs renseignés.
+
+2) Si le formulaire est complet et que l'utilisateur demande une modification (ajouter une activité, préciser le matériel, reformuler…), renvoyez le projet COMPLET révisé, en respectant la structure des 7 blocs (## 1. Groupe / équipe…, ## 2. Motivation…, ## 3. Thème…, ## 4. Objectifs…, ## 5. Besoins matériels…, ## 6. Sorties…, ## 7. Évaluation…), sans introduction ni commentaire avant ou après.
+
+AUTRES RÈGLES :
 - Quand l'utilisateur pose une question (ex. « c'est réalisable comme planning ? », « il faut une assurance ? »), répondez brièvement en 2 à 4 phrases, sans renvoyer le projet, puis proposez une amélioration précise.
 - N'inventez JAMAIS d'éléments absents du formulaire : utilisez des crochets pour ce qui manque.
 - Les cases à cocher se notent [ ] . Gardez le bloc évaluation avec « à temps / en retard » pour chaque objectif.
@@ -619,7 +655,7 @@ RÈGLES :
         const printBtn = document.getElementById('printBtn');
         const letterBox = document.getElementById('letterBox');
         const thinkingBox = document.getElementById('thinkingBox');
-        const chatPanel = document.getElementById('chatPanel');
+        const progressBadge = document.getElementById('progressBadge');
         const chatLog = document.getElementById('chatLog');
         const chatInput = document.getElementById('chatInput');
         const chatSendBtn = document.getElementById('chatSendBtn');
@@ -635,7 +671,7 @@ RÈGLES :
             if (themInput.value.trim()) parts.push('Thème du projet : ' + themInput.value.trim());
             if (publicInput.value.trim()) parts.push('Public visé : ' + publicInput.value.trim());
             if (dureeInput.value.trim()) parts.push('Durée / créneaux : ' + dureeInput.value.trim());
-            if (animationsSelect.value.trim()) parts.push('Animateurs / prestations : ' + animationsSelect.value.trim());
+            if (animationsSelect.value.trim()) parts.push('Type d\'animation / ateliers : ' + animationsSelect.value.trim());
             if (objectif1Input.value.trim()) parts.push('Objectif 1 : ' + objectif1Input.value.trim());
             if (objectif2Input.value.trim()) parts.push('Objectif 2 : ' + objectif2Input.value.trim());
             if (objectif3Input.value.trim()) parts.push('Objectif 3 : ' + objectif3Input.value.trim());
@@ -643,6 +679,95 @@ RÈGLES :
             if (sortiesInput.value.trim()) parts.push('Sorties et intervenants : ' + sortiesInput.value.trim());
             if (notesInput.value.trim()) parts.push('Motivation et notes : ' + notesInput.value.trim());
             return parts.join('\n');
+        }
+
+        // ============================================================
+        //  REMPLISSAGE AUTOMATIQUE DU FORMULAIRE PAR LE CHATBOT
+        // ============================================================
+        const FORM_FIELDS = [
+            'equipeInput', 'periodeInput', 'themInput', 'publicInput', 'dureeInput',
+            'animationsSelect', 'objectif1Input', 'objectif2Input', 'objectif3Input',
+            'materielInput', 'sortiesInput', 'notesInput'
+        ];
+
+        const FIELD_VALUE_MAP = {
+            equipeInput: v => v,
+            periodeInput: v => v,
+            themInput: v => v,
+            publicInput: v => v,
+            dureeInput: v => v,
+            animationsSelect: v => selectBestOption('animationsSelect', v),
+            objectif1Input: v => v,
+            objectif2Input: v => v,
+            objectif3Input: v => v,
+            materielInput: v => v,
+            sortiesInput: v => v,
+            notesInput: v => v
+        };
+
+        function selectBestOption(selectId, value) {
+            const sel = document.getElementById(selectId);
+            const wanted = String(value || '').trim().toLowerCase();
+            if (!sel || !wanted) return '';
+            for (const opt of sel.options) {
+                if (opt.value.toLowerCase() === wanted) return opt.value;
+            }
+            // correspondance floue : mots-clés dans le libellé
+            for (const opt of sel.options) {
+                if (wanted.split(/\s+/).some(w => w.length > 2 && opt.value.toLowerCase().includes(w))) return opt.value;
+            }
+            return '';
+        }
+
+        function applyFormJSON(json) {
+            if (!json || typeof json !== 'object') return;
+            for (const [fieldId, transform] of Object.entries(FIELD_VALUE_MAP)) {
+                const key = fieldId === 'animationsSelect' ? 'type' : fieldId.replace('Input', '');
+                if (json[key] === undefined || json[key] === null) continue;
+                const el = document.getElementById(fieldId);
+                if (!el) continue;
+                const val = transform(String(json[key]).trim());
+                if (!val) continue;
+                el.value = val;
+                el.classList.add('bot-filled');
+            }
+            updateProgress();
+        }
+
+        function updateProgress() {
+            let filled = 0;
+            for (const fieldId of FORM_FIELDS) {
+                const el = document.getElementById(fieldId);
+                if (el && el.value && el.value.trim() !== '' && !(el.id === 'animationsSelect' && el.value === '')) filled++;
+            }
+            progressBadge.textContent = filled + '/' + FORM_FIELDS.length + ' champs';
+            if (filled === FORM_FIELDS.length) progressBadge.textContent = '✅ Formulaire complet';
+        }
+
+        function extractFormJSON(text) {
+            const raw = String(text || '');
+            let m = raw.match(/<FORM>([\s\S]*?)<\/FORM>/i);
+            if (m) {
+                try { return JSON.parse(m[1].trim()); } catch (_) { /* fall through */ }
+            }
+            m = raw.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i);
+            if (m) {
+                try { return JSON.parse(m[1].trim()); } catch (_) { /* fall through */ }
+            }
+            const objStart = raw.lastIndexOf('{');
+            const objEnd = raw.lastIndexOf('}');
+            if (objStart >= 0 && objEnd > objStart) {
+                try { return JSON.parse(raw.slice(objStart, objEnd + 1)); } catch (_) { return null; }
+            }
+            return null;
+        }
+
+        function stripFormJSON(text) {
+            return String(text || '')
+                .replace(/<FORM>[\s\S]*?<\/FORM>/gi, '')
+                .replace(/```(?:json)?\s*\{[\s\S]*?\}\s*```/gi, '')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
         }
 
         // ============================================================
@@ -980,8 +1105,7 @@ RÈGLES :
                 currentLetter = letterText();
                 chatHistory = [];
                 chatLog.replaceChildren();
-                chatPanel.hidden = false;
-                addChatMsg('✅ Projet généré. Dites-moi quoi modifier : compléter une activité, préciser le matériel à acheter, affiner les critères d\'évaluation…', 'system');
+                addChatMsg('✅ Projet généré. Pour le modifier, describez votre demande ici (ajouter une activité, préciser le matériel…).', 'system');
                 chatInput.disabled = false;
                 chatSendBtn.disabled = false;
                 setStatus('✅ Projet rédigé', true);
@@ -1016,13 +1140,12 @@ RÈGLES :
             interviewBusy = true;
             interviewBtn.disabled = true;
 
-            chatPanel.hidden = false;
             chatLog.replaceChildren();
             chatHistory = [];
             chatInput.disabled = true;
             chatSendBtn.disabled = true;
 
-            addChatMsg('💬 Entretien : le chatbot vous pose les questions une à une pour remplir le formulaire. Vous pouvez aussi répondre directement ici après la première question.', 'system');
+            addChatMsg('💬 Le guide vous pose les questions une à une pour compléter le formulaire. Répondez ici ; le formulaire se remplit automatiquement au-dessus.', 'system');
 
             let acc = '', think = '', truncated = false, renderQueued = false;
             const bubble = document.createElement('div');
@@ -1074,16 +1197,20 @@ RÈGLES :
                 bubble.removeChild(caret);
                 if (!acc && !think) throw new Error('Réponse invalide de l\'API.');
 
+                const formJson = extractFormJSON(acc);
+                acc = stripFormJSON(acc);
+                renderNow();
                 chatHistory.push({ role: 'assistant', content: acc });
+                if (formJson) applyFormJSON(formJson);
                 chatInput.disabled = false;
                 chatSendBtn.disabled = false;
-                setStatus('✅ Entretien démarré — répondez au chatbot', true);
+                setStatus('✅ Guide actif — répondez au chatbot', true);
                 chatInput.focus();
 
                 if (truncated) {
                     const note = document.createElement('div');
                     note.className = 'chat-msg system';
-                    note.textContent = '⚠️ Réponse interrompue. Cliquez de nouveau sur « Le chatbot me pose les questions » pour continuer.';
+                    note.textContent = '⚠️ Réponse interrompue. Cliquez de nouveau sur « Démarrer le guide » pour continuer.';
                     chatLog.appendChild(note);
                     chatScroll();
                 }
@@ -1146,13 +1273,13 @@ RÈGLES :
         }
 
         function resetChatPanel() {
-            chatPanel.hidden = true;
             chatLog.replaceChildren();
             chatHistory = [];
             currentLetter = '';
             chatInput.disabled = true;
             chatSendBtn.disabled = true;
             chatBusy = false;
+            updateProgress();
         }
 
         async function sendChatMessage() {
@@ -1225,7 +1352,11 @@ RÈGLES :
                 bubble.removeChild(caret);
                 if (!acc && !think) throw new Error('Réponse invalide de l\'API.');
 
+                const formJson = extractFormJSON(acc);
+                acc = stripFormJSON(acc);
+                renderNow();
                 chatHistory.push({ role: 'assistant', content: acc });
+                if (formJson) applyFormJSON(formJson);
 
                 if (currentLetter) {
                     if (isFullLetter(acc)) {
@@ -1235,7 +1366,7 @@ RÈGLES :
                     }
                     addChatActions(bubble, acc);
                 } else {
-                    setStatus('✅ Connecté', true);
+                    setStatus('✅ Réponse reçue — continuez', true);
                 }
 
                 if (truncated) {
@@ -1271,7 +1402,7 @@ RÈGLES :
             if (currentLetter) {
                 addChatMsg('🗑️ Échange vidé — le projet actuel est conservé, vous pouvez continuer à le modifier.', 'system');
             } else {
-                addChatMsg('🗑️ Échange vidé. Cliquez sur « Le chatbot me pose les questions » pour relancer l\'entretien.', 'system');
+                addChatMsg('🗑️ Échange vidé. Cliquez sur « Démarrer le guide » pour relancer l\'entretien.', 'system');
             }
         });
 
@@ -1332,10 +1463,15 @@ RÈGLES :
             [equipeInput, periodeInput, themInput, publicInput, dureeInput,
              objectif1Input, objectif2Input, objectif3Input, materielInput,
              sortiesInput, notesInput].forEach(el => { el.value = ''; });
+            FORM_FIELDS.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('bot-filled');
+            });
             letterBox.replaceChildren();
             thinkingBox.hidden = true;
             thinkingBox.textContent = '';
             resetChatPanel();
+            addChatMsg('🧹 Formulaire vidé. Cliquez sur « Démarrer le guide » pour commencer.', 'system');
             setStatus('✅ Connecté', true);
         });
 
@@ -1385,6 +1521,8 @@ RÈGLES :
             } else {
                 sessionStorage.removeItem('glm_api_key');
             }
+            updateProgress();
+            addChatMsg('👋 Bienvenue ! Le chatbot va vous poser les questions une par une pour remplir le formulaire. Cliquez sur « 💬 Démarrer le guide » ci-dessus pour commencer.', 'system');
         });
     </script>
 </body>
