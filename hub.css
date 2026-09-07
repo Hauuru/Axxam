@@ -332,6 +332,26 @@ body {
     box-shadow: 0 10px 30px rgba(255, 152, 0, 0.22);
 }
 
+/* --- Carte Rédaction de projet d'animation : vert foncé / ambre --- */
+.hub-card--proj {
+    border-top: 4px solid #ff8f00;
+}
+
+.hub-card--proj .hub-card-icon {
+    background: linear-gradient(135deg, #1b5e20, #ff8f00);
+    color: #ffffff;
+}
+
+.hub-card--proj h3 { color: #1b5e20; }
+.hub-card--proj .hub-card-type { color: #e65100; }
+.hub-card--proj p { color: #455a64; }
+.hub-card--proj .hub-card-cta { color: #1b5e20; }
+
+.hub-card--proj:hover {
+    border-color: #ff8f00;
+    box-shadow: 0 10px 30px rgba(255, 143, 0, 0.24);
+}
+
 /* --- Carte Poterie : terracotta --- */
 .hub-card--pot {
     background: #fffdf9;
