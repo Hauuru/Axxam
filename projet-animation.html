@@ -3,37 +3,42 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rédaction de projet d'animation assistée — Axxam</title>
-    <meta name="description" content="Décrivez votre événement, le chatbot GLM remplit le formulaire et rédige un projet d'animation structuré : contexte, objectifs, public, déroulé, moyens et budget.">
+    <title>Projet d'animation — Axxam</title>
+    <meta name="description" content="Outil interne Axxam : formulaire métier et rédaction assistée d'un projet d'animation structuré en 7 blocs (équipe, motivation, thème, objectifs, matériel, sorties, évaluation).">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://axxam.net/projet-animation.html">
-    <meta property="og:title" content="Rédaction de projet d'animation assistée — Axxam">
-    <meta property="og:description" content="Un chatbot vous aide à remplir le formulaire et à rédiger votre projet d'animation en streaming.">
+    <meta property="og:title" content="Projet d'animation assisté — Axxam">
+    <meta property="og:description" content="Rédigez un projet d'animation structuré en 7 blocs avec l'assistance GLM.">
     <meta property="og:image" content="https://axxam.net/favicon.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://axxam.net/projet-animation.html">
-    <meta property="twitter:title" content="Rédaction de projet d'animation assistée — Axxam">
-    <meta property="twitter:description" content="Un chatbot vous aide à remplir le formulaire et à rédiger votre projet d'animation en streaming.">
+    <meta property="twitter:title" content="Projet d'animation assisté — Axxam">
+    <meta property="twitter:description" content="Rédigez un projet d'animation structuré en 7 blocs avec l'assistance GLM.">
     <meta property="twitter:image" content="https://axxam.net/favicon.png">
 
     <style>
         :root {
-            --ink: #1f2937;
+            --primary: #4CAF50;
+            --primary-dark: #388E3C;
+            --primary-lighter: #E8F5E9;
+            --secondary: #FF9800;
+            --secondary-lighter: #FFF3E0;
+            --ink: #333333;
             --muted: #6b7280;
             --line: #e5e7eb;
-            --accent: #2e7d32;
-            --accent-dark: #1b5e20;
-            --accent-soft: #dcfce7;
             --paper: #ffffff;
-            --bg: #f3f4f6;
-            --ok: #166534;
-            --ok-soft: #dcfce7;
+            --bg: #f4f6f4;
             --err: #991b1b;
             --err-soft: #fee2e2;
+            --ok: #166534;
+            --ok-soft: #dcfce7;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+            --radius: 12px;
+            --font-heading: Georgia, 'Times New Roman', serif;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -42,12 +47,12 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: var(--bg);
             color: var(--ink);
-            line-height: 1.5;
+            line-height: 1.55;
             min-height: 100vh;
         }
 
         .page {
-            max-width: 980px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 24px 16px 60px;
         }
@@ -62,18 +67,21 @@
         }
 
         header.top h1 {
-            font-size: 22px;
+            font-family: var(--font-heading);
+            font-size: 24px;
             font-weight: 700;
+            color: var(--primary-dark);
             letter-spacing: -0.3px;
         }
 
         header.top .sub {
             color: var(--muted);
             font-size: 13px;
+            margin-top: 2px;
         }
 
         a.back {
-            color: var(--accent-dark);
+            color: var(--primary-dark);
             text-decoration: none;
             font-size: 13px;
             border: 1px solid var(--line);
@@ -82,13 +90,14 @@
             border-radius: 8px;
         }
 
-        a.back:hover { border-color: var(--accent); }
+        a.back:hover { border-color: var(--primary); }
 
         .card {
             background: var(--paper);
             border: 1px solid var(--line);
-            border-radius: 14px;
-            padding: 18px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
             margin-bottom: 18px;
         }
 
@@ -99,7 +108,7 @@
             flex-wrap: wrap;
         }
 
-        .config-row label { font-size: 13px; font-weight: 600; }
+        .config-row label { font-size: 13px; font-weight: 700; }
 
         input[type="password"] {
             flex: 1;
@@ -117,6 +126,7 @@
             padding: 6px 10px;
             border-radius: 999px;
             border: 1px solid var(--line);
+            white-space: nowrap;
         }
 
         .status-badge.active { color: var(--ok); border-color: #86efac; background: var(--ok-soft); }
@@ -135,9 +145,32 @@
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         button:not(:disabled):hover { filter: brightness(1.05); }
 
-        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-success { background: var(--primary-dark); color: #fff; }
         .btn-ghost { background: var(--paper); color: var(--ink); border-color: var(--line); }
-        .btn-success { background: #166534; color: #fff; }
+
+        .note {
+            font-size: 12px;
+            color: var(--muted);
+            background: #f9fafb;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-top: 14px;
+        }
+
+        .block-legend { margin: 14px 0 6px; }
+
+        .block-legend .title { font-weight: 700; font-size: 13px; color: var(--primary-dark); display: block; margin-bottom: 6px; }
+
+        .block-legend ol {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .block-legend ol li { margin-bottom: 2px; }
 
         .form-grid {
             display: grid;
@@ -146,7 +179,7 @@
         }
 
         .field { display: flex; flex-direction: column; gap: 6px; }
-        .field label { font-size: 13px; font-weight: 600; }
+        .field label { font-size: 13px; font-weight: 700; }
         .field .hint { font-size: 11px; color: var(--muted); font-weight: 400; }
 
         textarea {
@@ -160,10 +193,11 @@
             line-height: 1.45;
         }
 
-        textarea:focus, input[type="password"]:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+        textarea:focus, input[type="password"]:focus { outline: 2px solid var(--primary-lighter); border-color: var(--primary); }
 
         .field.full { grid-column: 1 / -1; }
-        .field textarea { min-height: 110px; }
+        .field textarea { min-height: 76px; }
+        .field textarea.tall { min-height: 120px; }
 
         input[type="text"] {
             width: 100%;
@@ -173,7 +207,7 @@
             font-size: 13.5px;
             font-family: inherit;
         }
-        input[type="text"]:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+        input[type="text"]:focus { outline: 2px solid var(--primary-lighter); border-color: var(--primary); }
 
         select {
             padding: 9px 12px;
@@ -194,15 +228,34 @@
             padding: 22px;
             background: #fff;
             min-height: 240px;
-            white-space: normal;
             font-size: 15px;
         }
 
-        .letter:empty::before { content: "Le projet d'animation s'affichera ici (streaming)…"; color: var(--muted); font-style: italic; }
+        .letter:empty::before { content: "Le projet d'animation structuré s'affichera ici (streaming)…"; color: var(--muted); font-style: italic; }
 
-        .letter h1, .letter h2, .letter h3 { font-size: 15px; margin: 10px 0 6px; }
-        .letter p { margin: 0 0 10px; text-align: justify; }
-        .letter ul, .letter ol { margin: 0 0 10px; padding-left: 22px; }
+        /* Rendu par blocs */
+        .letter h1, .letter h2, .letter h3 { font-family: var(--font-heading); margin: 14px 0 6px; color: var(--primary-dark); }
+        .letter h2 { font-size: 16px; border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-top: 18px; }
+        .letter h3 { font-size: 14.5px; margin-top: 12px; }
+        .letter p { margin: 0 0 9px; text-align: justify; }
+        .letter ul, .letter ol { margin: 0 0 9px; padding-left: 22px; }
+        .letter li { margin-bottom: 2px; }
+
+        /* Cases à cocher d'évaluation */
+        .letter li:has(> input[type="checkbox"]),
+        .letter li::marker { display: inline-block; }
+        .letter input[type="checkbox"] { margin-right: 6px; accent-color: var(--primary); transform: scale(1.15); vertical-align: text-bottom; }
+
+        /* Encadrés objectifs */
+        .obj-block {
+            border: 1px solid var(--line);
+            border-left: 4px solid var(--primary);
+            background: #fafcfa;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin: 8px 0;
+        }
+        .obj-block p { margin-bottom: 4px; }
 
         .thinking {
             color: var(--muted);
@@ -224,27 +277,13 @@
             height: 15px;
             vertical-align: -2px;
             border-radius: 2px;
-            background: var(--accent);
+            background: var(--primary);
             animation: blink 0.85s steps(2, start) infinite;
         }
 
         @keyframes blink { 50% { opacity: 0; } }
 
-        .note {
-            font-size: 12px;
-            color: var(--muted);
-            background: #f9fafb;
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            padding: 10px 12px;
-            margin-top: 14px;
-        }
-
-        .chat-panel {
-            border-top: 1px dashed var(--line);
-            margin-top: 16px;
-            padding-top: 14px;
-        }
+        .chat-panel { border-top: 1px dashed var(--line); margin-top: 16px; padding-top: 14px; }
 
         .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
 
@@ -261,16 +300,8 @@
             margin-bottom: 10px;
         }
 
-        .chat-msg {
-            max-width: 88%;
-            padding: 10px 13px;
-            border-radius: 12px;
-            font-size: 13.5px;
-            line-height: 1.5;
-            word-wrap: break-word;
-        }
-
-        .chat-msg.user { align-self: flex-end; background: var(--accent-soft); border-bottom-right-radius: 4px; }
+        .chat-msg { max-width: 88%; padding: 10px 13px; border-radius: 12px; font-size: 13.5px; line-height: 1.5; word-wrap: break-word; }
+        .chat-msg.user { align-self: flex-end; background: var(--primary-lighter); border-bottom-right-radius: 4px; }
         .chat-msg.assistant { align-self: flex-start; background: #fff; border: 1px solid var(--line); border-bottom-left-radius: 4px; }
         .chat-msg.system { align-self: center; max-width: 96%; font-size: 12px; color: var(--muted); text-align: center; background: #f3f4f6; border: 1px solid var(--line); }
 
@@ -281,15 +312,10 @@
         .chat-msg ul, .chat-msg ol { margin: 0 0 6px; padding-left: 20px; }
         .chat-msg blockquote { margin: 0 0 6px; padding-left: 10px; border-left: 3px solid var(--line); color: var(--muted); }
         .chat-msg .caret { vertical-align: -1px; }
-
-        .chat-msg .thinking {
-            margin-bottom: 6px;
-            font-size: 12px;
-            max-height: 120px;
-        }
+        .chat-msg .thinking { margin-bottom: 6px; font-size: 12px; max-height: 120px; }
 
         .chat-actions { display: flex; gap: 6px; margin-top: 8px; }
-        .chat-actions button { font-size: 11.5px; padding: 4px 10px; border-radius: 6px; }
+        .chat-actions button { font-size: 11.5px; padding: 4px 10px; }
 
         .chat-input-row { display: flex; gap: 8px; }
         .chat-input-row input {
@@ -300,21 +326,7 @@
             font-size: 13.5px;
             font-family: inherit;
         }
-        .chat-input-row input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
-
-        .mail-box { margin-top: 12px; }
-        .mail-box textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            font-size: 13.5px;
-            font-family: inherit;
-            line-height: 1.55;
-            resize: vertical;
-            background: #f9fafb;
-        }
-        .mail-box textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); background: #fff; }
+        .chat-input-row input:focus { outline: 2px solid var(--primary-lighter); border-color: var(--primary); }
 
         footer.top-note { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
@@ -326,7 +338,7 @@
         @media print {
             body { background: #fff; }
             .no-print { display: none !important; }
-            .card, .letter { border: none; padding: 0; }
+            .card, .letter { border: none; padding: 0; box-shadow: none; }
             .letter:empty::before { content: ""; }
         }
     </style>
@@ -335,8 +347,8 @@
     <div class="page">
         <header class="top">
             <div>
-                <h1>Rédaction de projet d'animation assistée</h1>
-                <div class="sub">Remplissez le formulaire (ou laissez le chatbot vous questionner) → projet d'animation structuré en streaming</div>
+                <h1>Projet d'animation</h1>
+                <div class="sub">Outil interne Axxam — remplissez le formulaire ou laissez le chatbot vous questionner</div>
             </div>
             <a class="back" href="index.html">← Retour au portail Axxam</a>
         </header>
@@ -353,59 +365,84 @@
         </section>
 
         <section class="card no-print">
+            <div class="block-legend">
+                <span class="title">Le projet généré sera structuré en 7 blocs</span>
+                <ol>
+                    <li><strong>Groupe / équipe d'animation</strong> — nom d'équipe &amp; période du projet</li>
+                    <li><strong>Motivation</strong> — pourquoi ce projet</li>
+                    <li><strong>Thème</strong> — fil conducteur</li>
+                    <li><strong>Objectifs &amp; activités</strong> — 3 objectifs, chacun avec ses activités</li>
+                    <li><strong>Besoins matériels</strong> — répartis fournitures catalogue / courses magasin</li>
+                    <li><strong>Sorties &amp; intervenants</strong> — déplacements, intervenants externes</li>
+                    <li><strong>Évaluation</strong> — critères de réussite par objectif, observations, améliorations</li>
+                </ol>
+            </div>
+
             <div class="form-grid">
                 <div class="field">
-                    <label for="typeEvent">🎪 Type d'événement</label>
-                    <select id="typeEvent">
-                        <option value="">— Choisir —</option>
-                        <option value="Anniversaire">Anniversaire</option>
-                        <option value="Mariage">Mariage</option>
-                        <option value="Événement d'entreprise">Événement d'entreprise</option>
-                        <option value="École / centre de loisirs">École / centre de loisirs</option>
-                        <option value="Association / collectivité">Association / collectivité</option>
-                        <option value="Fête de quartier">Fête de quartier</option>
-                        <option value="Autre">Autre</option>
-                    </select>
+                    <label for="equipeInput">👥 Nom de l'équipe / groupe</label>
+                    <input type="text" id="equipeInput" placeholder="Ex. : Les Argiles du Mercredi" />
                 </div>
                 <div class="field">
-                    <label for="publicInput">👥 Public visé <span class="hint">— tranches d'âge, profil</span></label>
-                    <input type="text" id="publicInput" placeholder="Ex. : enfants de 6 à 12 ans, familles…" />
+                    <label for="periodeInput">📅 Période du projet</label>
+                    <input type="text" id="periodeInput" placeholder="Ex. : 1er au 30 octobre 2026" />
                 </div>
                 <div class="field">
-                    <label for="dateLieuInput">📅 Date et lieu prévus <span class="hint">— plus la date est approximative, plus large est la fenêtre</span></label>
-                    <input type="text" id="dateLieuInput" placeholder="Ex. : samedi après-midi, maison de quartier de Saint-Pierre-des-Corps" />
+                    <label for="themInput">🎨 Thème du projet</label>
+                    <input type="text" id="themInput" placeholder="Ex. : Potager en carré, contes et nature…" />
                 </div>
                 <div class="field">
-                    <label for="dureeInput">⏱️ Durée prévue <span class="hint">— créneaux et pause éventuelle</span></label>
-                    <input type="text" id="dureeInput" placeholder="Ex. : 3 h (14 h – 17 h), avec 15 min de pause" />
+                    <label for="publicInput">👤 Public visé <span class="hint">— tranches d'âge, effectif</span></label>
+                    <input type="text" id="publicInput" placeholder="Ex. : 12 enfants de 6 à 12 ans" />
                 </div>
                 <div class="field">
-                    <label for="participantsInput">👤 Nombre de participants estimé</label>
-                    <input type="text" id="participantsInput" placeholder="Ex. : 12 enfants + 4 adultes" />
+                    <label for="dureeInput">⏱️ Durée / créneaux</label>
+                    <input type="text" id="dureeInput" placeholder="Ex. : 2 h par séance, 4 séances" />
                 </div>
                 <div class="field">
-                    <label for="animationsSelect">🧩 Animations souhaitées</label>
+                    <label for="animationsSelect">🧩 Animateurs / prestations</label>
                     <select id="animationsSelect">
                         <option value="">— Choisir —</option>
                         <option value="Jeux de société">Jeux de société</option>
                         <option value="Argile / modelage">Argile / modelage</option>
                         <option value="Permaculture / jardinage">Permaculture / jardinage</option>
                         <option value="Poterie / tournage">Poterie / tournage</option>
-                        <option value="Plusieurs (préciser dans les objectifs)">Plusieurs (préciser dans les objectifs)</option>
+                        <option value="Plusieurs prestations">Plusieurs prestations</option>
                         <option value="Autre">Autre</option>
                     </select>
                 </div>
                 <div class="field full">
-                    <label for="objectifsInput">🎯 Objectifs et envies <span class="hint">— ce que vous souhaitez, les idées d'ambiance, le matériel ou le lieu disponible</span></label>
-                    <textarea id="objectifsInput" rows="5" placeholder="Ex. : faire découvrir l'argile, favoriser le lien familial, fêter un anniversaire en plein air, moment convivial entre collègues…"></textarea>
+                    <label for="objectif1Input">🎯 Objectif 1 <span class="hint">— un objectif concret et mesurable</span></label>
+                    <input type="text" id="objectif1Input" placeholder="Ex. : Découvrir les gestes de base du modelage" />
+                </div>
+                <div class="field full">
+                    <label for="objectif2Input">🎯 Objectif 2</label>
+                    <input type="text" id="objectif2Input" placeholder="Ex. : Favoriser la coopération entre enfants" />
+                </div>
+                <div class="field full">
+                    <label for="objectif3Input">🎯 Objectif 3 <span class="hint">— facultatif</span></label>
+                    <input type="text" id="objectif3Input" placeholder="Ex. : Sensibiliser au cycle du vivant" />
+                </div>
+                <div class="field full">
+                    <label for="materielInput">🧰 Besoins matériels <span class="hint">— séparez ce qui vient du catalogue de ce qui est à acheter (courses magasin)</span></label>
+                    <textarea id="materielInput" rows="3" placeholder="Ex. : catalogue : plaques de terre, outils de modelage. Magasin : seaux, chiffons, tabliers."></textarea>
+                </div>
+                <div class="field full">
+                    <label for="sortiesInput">🚌 Sorties &amp; intervenants <span class="hint">— déplacements, visites, invités extérieurs éventuels</span></label>
+                    <textarea id="sortiesInput" rows="2" placeholder="Ex. : visite d'un jardin partagé, intervention d'une maraîchère."></textarea>
+                </div>
+                <div class="field full">
+                    <label for="notesInput">📝 Motivation &amp; notes <span class="hint">— pourquoi ce projet, contraintes, lieu, ambiance souhaitée</span></label>
+                    <textarea id="notesInput" rows="3" class="tall" placeholder="Ex. : le centre souhaite ouvrir un coin potager, moment convivial, matériel partiellement disponible sur place…"></textarea>
                 </div>
             </div>
+
             <div class="actions">
                 <button class="btn-success" id="generateBtn">✍️ Rédiger le projet d'animation</button>
                 <button class="btn-ghost" id="interviewBtn">💬 Le chatbot me pose les questions</button>
                 <button class="btn-ghost" id="clearBtn">🧹 Effacer</button>
             </div>
-            <div class="note">💬 Cliquez sur « Le chatbot me pose les questions » : il vous interroge un point à la fois et remplit le formulaire à mesure. Puis cliquez sur « Rédiger le projet d'animation » pour générer le document. Seules les données du formulaire sont envoyées à l'API GLM — ne collez pas d'informations sensibles.</div>
+            <div class="note">💬 Cliquez sur « Le chatbot me pose les questions » : il vous interroge un point à la fois et remplit le formulaire à mesure. Seules les données du formulaire sont envoyées à l'API GLM — ne collez pas d'informations sensibles.</div>
         </section>
 
         <section class="card paper-card">
@@ -427,23 +464,9 @@
                 </div>
                 <div class="chat-log" id="chatLog"></div>
                 <div class="chat-input-row">
-                    <input type="text" id="chatInput" placeholder="Ex. : ajoute un déroulé horaire, propose un budget, allonge la partie moyens…" disabled autocomplete="off" />
+                    <input type="text" id="chatInput" placeholder="Ex. : ajoute une activité au 2e objectif, précise le matériel à acheter, affine les critères d'évaluation…" disabled autocomplete="off" />
                     <button class="btn-primary" id="chatSendBtn" disabled style="font-size:13px;padding:9px 16px;">Envoyer</button>
                 </div>
-            </div>
-        </section>
-
-        <section class="card no-print">
-            <div class="paper-head">
-                <strong>📧 Demande de devis à Axxam</strong>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn-primary" id="mailGenBtn" disabled>📧 Générer le corps d'e-mail</button>
-                    <button class="btn-ghost" id="mailCopyBtn" disabled>📋 Copier</button>
-                </div>
-            </div>
-            <div class="note">Corps d'e-mail à envoyer à <strong>contact@axxam.net</strong> pour demander un devis, avec votre <strong>projet d'animation</strong> en pièce jointe. Modifiable avant de copier.</div>
-            <div class="mail-box">
-                <textarea id="mailBody" rows="9" placeholder="Générez d'abord votre projet, puis cliquez sur « Générer le corps d'e-mail »."></textarea>
             </div>
         </section>
 
@@ -462,81 +485,100 @@
         }
 
         // ============================================================
-        //  PROMPT SYSTÈME — RÉDACTION DU PROJET D'ANIMATION
+        //  PROMPT SYSTÈME — RÉDACTION DU PROJET D'ANIMATION (7 BLOCS)
         // ============================================================
         const SYSTEM_PROMPT = `
-Vous êtes un expert de l'animation socioculturelle et événementielle en France. Vous rédigez des projets d'animation en français.
+Vous êtes un animateur socioculturel expérimenté en France. Vous rédigez des projets d'animation en français pour un usage interne.
 
-À partir du formulaire fourni, rédigez un projet d'animation structuré et professionnel.
+À partir du formulaire fourni (équipe, période, thème, public, durée, animateur/prestations, objectifs éventuels, matériel, sorties, motivation), rédigez un projet d'animation structuré EXACTEMENT selon les 7 blocs ci-dessous.
 
 CONSIGNES STRICTES :
-- N'inventez JAMAIS d'éléments absents du formulaire (dates, lieux, publics, nombres, tarifs, matériel…). Pour tout élément manquant, utilisez des crochets : [date à préciser], [lieu à préciser], [nombre de participants].
-- Structure attendue (titres en markdown niveau 2) :
-    ## Contexte
-    Pourquoi ce projet ? Type d'événement, lieu, public.
-    ## Objectifs
-    3 à 5 objectifs concrets et mesurables.
-    ## Public visé
-    Tranches d'âge, effectif estimé, répartition éventuelle.
-    ## Déroulé de l'animation
-    Déroulement étape par étape avec horaires indicatifs, selon la durée fournie.
-    ## Moyens humains et matériels
-    Animateur(s), matériel nécessaire, aménagement éventuel.
-    ## Budget prévisionnel
-    Postes de dépenses et tarif si un budget est esquissé ; sinon crochets.
-    ## Évaluation
-    Critères simples pour mesurer la réussite (satisfaction, participation, réalisations…).
-- Pour la tarification, référez-vous aux tarifs courants de l'animateur : heures, demi-journées, journées, forfait travail régulier. N'inventez pas de chiffres précis : proposez une fourchette générique [ex. : X € / heure] ou reprenez les éléments fournis.
-- Restez en français. Format : markdown simple uniquement (titres, paragraphes, listes à puces éventuelles), pas de tableaux ni d'images.
-- Ne mentionnez PAS de liens ni d'URL dans le corps du document.
-- Longueur : 350 à 500 mots environ.
-`;
+- N'inventez JAMAIS d'éléments absents du formulaire (dates, lieux, publics, nombres, matériel…). Pour tout élément manquant, utilisez des crochets : [à préciser].
+- Respectez impérativement cette structure. Titres principaux en markdown niveau 2 :
 
-        // ============================================================
-        //  PROMPT SYSTÈME — ÉCHANGE / RÉVISION DU PROJET
-        // ============================================================
-        const CHAT_SYSTEM_PROMPT = `
-Vous êtes un rédacteur de projets d'animation. On vous fournit le formulaire et le projet d'animation actuel.
-Vous conversez avec l'utilisateur pour modifier, améliorer ou corriger son projet.
+## 1. Groupe / équipe d'animation et période
+Nom de l'équipe [ou à préciser], nombre d'animateurs, et période du projet.
 
-RÈGLES :
-- Quand l'utilisateur demande une modification (ajouter un déroulé horaire, proposer un budget, allonger les moyens, reformuler, corriger…), renvoyez le projet COMPLET révisé, commençant par « ## Contexte », sans introduction ni commentaire avant ou après.
-- Quand l'utilisateur pose une question (ex. « c'est crédible comme budget ? », « il faut une assurance ? »), répondez brièvement en 2 à 4 phrases, sans renvoyer le projet, et terminez par une proposition d'amélioration précise.
-- N'inventez JAMAIS d'éléments absents du formulaire : utilisez des crochets pour ce qui manque.
-- Restez en français, markdown simple uniquement (titres, paragraphes, listes, pas de tableaux ni d'images).
+## 2. Motivation
+Pourquoi ce projet ? Enjeux, contexte, intention pédagogique ou festive. Reprenez les notes fournies.
+
+## 3. Thème
+Présentez le thème central du projet en une ou deux phrases, et son fil conducteur.
+
+## 4. Objectifs et activités associées
+Rédigez 3 objectifs concrets et mesurables. S'ils sont fournis dans le formulaire, réutilisez-les. Pour CHAQUE objectif, présentez un bloc dédié :
+### Objectif 1 : [énoncé de l'objectif]
+- Activité A : [description]
+- Activité B : [description]
+- Activité C : [description]
+
+### Objectif 2 : [énoncé]
+- [activités associées]
+
+### Objectif 3 : [énoncé]
+- [activités associées — si le 3e objectif manque, indiquez [à préciser]]
+
+## 5. Besoins matériels
+Répartissez le matériel en deux listes :
+#### Fournitures catalogue
+- [liste la plus fidèle possible à ce qui est fourni ; sinon crochets]
+#### Courses / magasin
+- [liste des achats à prévoir ; sinon crochets]
+
+## 6. Sorties et intervenants
+Listez les sorties éventuelles et les intervenants externes (visites, invités, prestataires). Utilisez des crochets pour ce qui manque.
+
+## 7. Évaluation
+Pour CHACUN des 3 objectifs, donnez :
+### Objectif 1 — Comment savoir s'il est réalisé ?
+- Critères de réussite observables et mesurables
+- Observations (espace à remplir, préfixé par "- Observations : ")
+- Améliorations possibles (préfixé par "- Améliorations : ")
+- Case à cocher à temps/en retard, formulée ainsi : "- [ ] À temps  [ ] En retard"
+
+Répétez ce sous-bloc pour les objectifs 2 et 3.
+
+AUTRES CONSIGNES :
+- Restez en français. Format markdown simple (titres, paragraphes, listes à puces). Pas de tableaux, pas d'images, pas de liens.
+- Les cases à cocher se notent [ ] (case vide).
+- Longueur : 500 à 800 mots environ. Le document doit être directement utilisable comme fiche de projet.
 `;
 
         // ============================================================
         //  PROMPT SYSTÈME — ENTRETIEN PAR LE CHATBOT
         // ============================================================
         const INTERVIEW_SYSTEM_PROMPT = `
-Vous êtes un assistant qui aide à remplir un formulaire de projet d'animation, en français.
-Vous ne connaissez RIEN de l'événement : vous posez les questions une à une pour recueillir les informations suivantes, dans cet ordre :
-1. Type d'événement (anniversaire, mariage, entreprise, école/centre de loisirs, association/collectivité, fête de quartier, autre)
-2. Public visé (tranches d'âge, profil) et nombre de participants estimé
-3. Date et lieu prévus (même approximatifs), et durée prévue
-4. Animations souhaitées (jeux de société, argile/modelage, permaculture/jardinage, poterie/tournage, autre)
-5. Objectifs et envies (ambiance, matériel disponible, contraintes, budget souhaité)
+Vous êtes un assistant interne qui aide un animateur à remplir un formulaire de projet d'animation, en français.
+Vous ne connaissez RIEN du projet : vous posez les questions une à une pour recueillir les informations suivantes, dans cet ordre :
+1. Nom du groupe / équipe d'animation et période du projet
+2. Motivation : pourquoi ce projet
+3. Thème du projet
+4. Public visé (tranches d'âge, effectif) et durée/créneaux
+5. Prestations d'animation (jeux de société, argile/modelage, permaculture/jardinage, poterie/tournage, autre)
+6. Les 3 objectifs du projet et les activités associées à chacun
+7. Besoins matériels, en distinguant fournitures catalogue et courses/magasin
+8. Sorties et intervenants éventuels
 
 RÈGLES :
-- Posez UNE question à la fois, sous forme de liste à puces (1/5, 2/5…). Ne posez jamais deux questions dans le même message.
+- Posez UNE question à la fois, sous forme de liste numérotée (1/8, 2/8…). Ne posez jamais deux questions dans le même message.
 - Quand l'utilisateur répond, reformulez très brièvement ce que vous avez compris puis passez à la question suivante.
-- Quand les 5 points sont couverts, récapitulez le tout en 5 lignes courtes et dites : « Le formulaire est complet : cliquez sur ✍️ Rédiger le projet d'animation pour générer le document. »
+- Quand les 8 points sont couverts, récapitulez le tout en 6 lignes courtes et dites : « Le formulaire est complet : cliquez sur ✍️ Rédiger le projet d'animation pour générer le document. »
 - Ne remplissez pas vous-même le formulaire : vous restez dans l'échange. Courtes réponses.
 `;
 
         // ============================================================
-        //  PROMPT SYSTÈME — CORPS DE L'E-MAIL DE DEVIS
+        //  PROMPT SYSTÈME — ÉCHANGE / RÉVISION DU PROJET
         // ============================================================
-        const EMAIL_SYSTEM_PROMPT = `
-Vous rédigez le corps d'un e-mail de demande de devis en français, destiné à l'animateur Axxam (contact@axxam.net).
-On vous fournit le formulaire et le projet d'animation.
+        const CHAT_SYSTEM_PROMPT = `
+Vous êtes un rédacteur de projets d'animation. On vous fournit le formulaire et le projet d'animation actuel (structure en 7 blocs).
+Vous conversez avec l'animateur pour modifier, améliorer ou corriger son projet.
 
 RÈGLES :
-- E-mail bref et professionnel (80 à 140 mots environ).
-- Structure : objet (ligne « Objet : … »), salutation, une phrase de contexte (événement + date/lieu approximatifs), une phrase qui annonce le projet d'animation en pièce jointe, une phrase qui demande un devis et précise le nombre de participants, un remerciement, formule de politesse et signature avec des crochets : [Prénom Nom], [téléphone], [email].
-- N'inventez JAMAIS d'informations absentes du formulaire ou du projet.
-- Texte simple, sans markdown.
+- Quand l'utilisateur demande une modification (ajouter une activité à un objectif, préciser le matériel à acheter, affiner les critères d'évaluation, reformuler, corriger…), renvoyez le projet COMPLET révisé, en respectant scrupuleusement la structure des 7 blocs (## 1. Groupe / équipe…, ## 2. Motivation…, ## 3. Thème…, ## 4. Objectifs…, ## 5. Besoins matériels…, ## 6. Sorties…, ## 7. Évaluation…), sans introduction ni commentaire avant ou après.
+- Quand l'utilisateur pose une question (ex. « c'est réalisable comme planning ? », « il faut une assurance ? »), répondez brièvement en 2 à 4 phrases, sans renvoyer le projet, puis proposez une amélioration précise.
+- N'inventez JAMAIS d'éléments absents du formulaire : utilisez des crochets pour ce qui manque.
+- Les cases à cocher se notent [ ] . Gardez le bloc évaluation avec « à temps / en retard » pour chaque objectif.
+- Restez en français, markdown simple uniquement (titres, paragraphes, listes, pas de tableaux ni d'images).
 `;
 
         // ============================================================
@@ -548,7 +590,6 @@ RÈGLES :
         let currentLetter = '';
         let chatHistory = [];
         let chatBusy = false;
-        let mailBusy = false;
         let interviewBusy = false;
 
         // ============================================================
@@ -558,13 +599,18 @@ RÈGLES :
         const saveKeyBtn = document.getElementById('saveKeyBtn');
         const resetKeyBtn = document.getElementById('resetKeyBtn');
         const statusBadge = document.getElementById('statusBadge');
-        const typeEvent = document.getElementById('typeEvent');
+        const equipeInput = document.getElementById('equipeInput');
+        const periodeInput = document.getElementById('periodeInput');
+        const themInput = document.getElementById('themInput');
         const publicInput = document.getElementById('publicInput');
-        const dateLieuInput = document.getElementById('dateLieuInput');
         const dureeInput = document.getElementById('dureeInput');
-        const participantsInput = document.getElementById('participantsInput');
         const animationsSelect = document.getElementById('animationsSelect');
-        const objectifsInput = document.getElementById('objectifsInput');
+        const objectif1Input = document.getElementById('objectif1Input');
+        const objectif2Input = document.getElementById('objectif2Input');
+        const objectif3Input = document.getElementById('objectif3Input');
+        const materielInput = document.getElementById('materielInput');
+        const sortiesInput = document.getElementById('sortiesInput');
+        const notesInput = document.getElementById('notesInput');
         const generateBtn = document.getElementById('generateBtn');
         const interviewBtn = document.getElementById('interviewBtn');
         const clearBtn = document.getElementById('clearBtn');
@@ -578,27 +624,30 @@ RÈGLES :
         const chatInput = document.getElementById('chatInput');
         const chatSendBtn = document.getElementById('chatSendBtn');
         const chatClearBtn = document.getElementById('chatClearBtn');
-        const mailGenBtn = document.getElementById('mailGenBtn');
-        const mailCopyBtn = document.getElementById('mailCopyBtn');
-        const mailBody = document.getElementById('mailBody');
 
         // ============================================================
         //  FORMULAIRE → TEXTE
         // ============================================================
         function formText() {
             const parts = [];
-            if (typeEvent.value.trim()) parts.push('Type d\'événement : ' + typeEvent.value.trim());
+            if (equipeInput.value.trim()) parts.push('Nom de l\'équipe / groupe : ' + equipeInput.value.trim());
+            if (periodeInput.value.trim()) parts.push('Période du projet : ' + periodeInput.value.trim());
+            if (themInput.value.trim()) parts.push('Thème du projet : ' + themInput.value.trim());
             if (publicInput.value.trim()) parts.push('Public visé : ' + publicInput.value.trim());
-            if (dateLieuInput.value.trim()) parts.push('Date et lieu prévus : ' + dateLieuInput.value.trim());
-            if (dureeInput.value.trim()) parts.push('Durée prévue : ' + dureeInput.value.trim());
-            if (participantsInput.value.trim()) parts.push('Nombre de participants estimé : ' + participantsInput.value.trim());
-            if (animationsSelect.value.trim()) parts.push('Animations souhaitées : ' + animationsSelect.value.trim());
-            if (objectifsInput.value.trim()) parts.push('Objectifs et envies : ' + objectifsInput.value.trim());
+            if (dureeInput.value.trim()) parts.push('Durée / créneaux : ' + dureeInput.value.trim());
+            if (animationsSelect.value.trim()) parts.push('Animateurs / prestations : ' + animationsSelect.value.trim());
+            if (objectif1Input.value.trim()) parts.push('Objectif 1 : ' + objectif1Input.value.trim());
+            if (objectif2Input.value.trim()) parts.push('Objectif 2 : ' + objectif2Input.value.trim());
+            if (objectif3Input.value.trim()) parts.push('Objectif 3 : ' + objectif3Input.value.trim());
+            if (materielInput.value.trim()) parts.push('Besoins matériels : ' + materielInput.value.trim());
+            if (sortiesInput.value.trim()) parts.push('Sorties et intervenants : ' + sortiesInput.value.trim());
+            if (notesInput.value.trim()) parts.push('Motivation et notes : ' + notesInput.value.trim());
             return parts.join('\n');
         }
 
         // ============================================================
         //  RENDU MARKDOWN MAISON (nœuds DOM, anti-XSS)
+        //  Version étendue : gère les cases à cocher et encadrés objectifs
         // ============================================================
         function renderInline(node, text) {
             const patterns = [
@@ -640,22 +689,54 @@ RÈGLES :
             renderInline(node, text.slice(m.index + m[0].length));
         }
 
+        // Render a list item line, detecting one or more checkboxes "[ ]"/"[x]"
+        function renderLineAsListItem(text) {
+            const li = document.createElement('li');
+            const tokens = [];
+            const re = /\[([ xX])\]/g;
+            let m, last = 0;
+            while ((m = re.exec(text)) !== null) {
+                tokens.push({ text: text.slice(last, m.index), checked: m[1].toLowerCase() === 'x' });
+                last = m.index + m[0].length;
+            }
+            tokens.push({ text: text.slice(last) });
+            tokens.forEach(t => {
+                if (t.checked !== undefined) {
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.checked = t.checked;
+                    cb.disabled = true;
+                    li.appendChild(cb);
+                }
+                if (t.text.trim() !== '') renderInline(li, t.text);
+            });
+            return li;
+        }
+
         function renderMarkdown(text) {
             const frag = document.createDocumentFragment();
             const lines = text.replace(/\r\n/g, '\n').split('\n');
             let codeBlock = null, listType = null, currentList = null, currentParagraph = null;
+
+            // Clôture d'un bloc "objectif" en cours (détecté par titre "### Objectif N :")
+            let currentObj = null;
+
             const flushParagraph = () => {
                 if (currentParagraph) {
-                    if (currentParagraph.textContent.trim() !== '') frag.appendChild(currentParagraph);
+                    if (currentParagraph.textContent.trim() !== '' || currentParagraph.childElementCount > 0) frag.appendChild(currentParagraph);
                     currentParagraph = null;
                 }
             };
             const flushList = () => {
-                if (currentList) { frag.appendChild(currentList); currentList = null; listType = null; }
+                if (currentList) { if (currentObj) currentObj.appendChild(currentList); else frag.appendChild(currentList); currentList = null; listType = null; }
             };
+            const closeObj = () => {
+                if (currentObj) { frag.appendChild(currentObj); currentObj = null; }
+            };
+
             for (const line of lines) {
                 if (/^```/.test(line)) {
-                    flushParagraph(); flushList();
+                    flushParagraph(); flushList(); closeObj();
                     if (codeBlock === null) {
                         const pre = document.createElement('pre');
                         pre.appendChild(document.createElement('code'));
@@ -669,27 +750,44 @@ RÈGLES :
                     codeEl.textContent += line;
                     continue;
                 }
-                const heading = line.match(/^(#{1,3})\s+(.*)$/);
+
+                const heading = line.match(/^(#{1,6})\s+(.*)$/);
                 if (heading) {
                     flushParagraph(); flushList();
-                    const h = document.createElement('h' + (heading[1].length + 1));
-                    renderInline(h, heading[2]);
-                    frag.appendChild(h);
+                    const level = Math.min(heading[1].length, 6);
+                    const objMatch = heading[2].match(/^Objectif\s*\d+\s*:/i);
+                    // Les sous-blocs "### Objectif N :" sont encadrés
+                    if (heading[1].length === 3 && objMatch) {
+                        closeObj();
+                        currentObj = document.createElement('div');
+                        currentObj.className = 'obj-block';
+                        const h = document.createElement('h3');
+                        renderInline(h, heading[2]);
+                        currentObj.appendChild(h);
+                    } else {
+                        closeObj();
+                        const h = document.createElement('h' + level);
+                        renderInline(h, heading[2]);
+                        frag.appendChild(h);
+                    }
                     continue;
                 }
+
                 if (/^\s*---+\s*$/.test(line)) {
-                    flushParagraph(); flushList();
+                    flushParagraph(); flushList(); closeObj();
                     frag.appendChild(document.createElement('hr'));
                     continue;
                 }
+
                 const quote = line.match(/^>\s?(.*)$/);
                 if (quote) {
-                    flushParagraph(); flushList();
+                    flushParagraph(); flushList(); closeObj();
                     const bq = document.createElement('blockquote');
                     renderInline(bq, quote[1]);
                     frag.appendChild(bq);
                     continue;
                 }
+
                 const ulMatch = line.match(/^\s*[-*•]\s+(.*)$/);
                 const olMatch = line.match(/^\s*\d+\.\s+(.*)$/);
                 if (ulMatch || olMatch) {
@@ -700,11 +798,10 @@ RÈGLES :
                         currentList = document.createElement(isUl ? 'ul' : 'ol');
                         listType = isUl ? 'ul' : 'ol';
                     }
-                    const li = document.createElement('li');
-                    renderInline(li, isUl ? ulMatch[1] : olMatch[1]);
-                    currentList.appendChild(li);
+                    currentList.appendChild(renderLineAsListItem(isUl ? ulMatch[1] : olMatch[1]));
                     continue;
                 }
+
                 if (line.trim() === '') { flushParagraph(); flushList(); continue; }
                 flushList();
                 if (!currentParagraph) {
@@ -716,11 +813,12 @@ RÈGLES :
             }
             flushParagraph();
             flushList();
+            closeObj();
             return frag;
         }
 
         // ============================================================
-        //  STREAMING SSE (GLM) — lit aussi reasoning_content
+        //  STREAMING SSE (GLM)
         // ============================================================
         async function readSSEStream(response, onDelta, onReasoning, onFinish) {
             if (!response.body) throw new Error('Le streaming n\'est pas pris en charge par ce navigateur.');
@@ -771,7 +869,7 @@ RÈGLES :
                     model: CURRENT_MODEL,
                     messages,
                     temperature: 0.7,
-                    max_tokens: 4000,
+                    max_tokens: 6000,
                     top_p: 0.9,
                     stream: true
                 })
@@ -850,7 +948,6 @@ RÈGLES :
                 letterBox.replaceChildren();
                 letterBox.appendChild(renderMarkdown(acc));
                 if (acc === '') {
-                    letterBox.appendChild(document.createElement('span'));
                     const c = document.createElement('span');
                     c.className = 'caret';
                     letterBox.appendChild(c);
@@ -884,10 +981,9 @@ RÈGLES :
                 chatHistory = [];
                 chatLog.replaceChildren();
                 chatPanel.hidden = false;
-                addChatMsg('✅ Projet généré. Dites-moi quoi modifier : compléter les moyens, proposer un budget, ajouter un déroulé horaire…', 'system');
+                addChatMsg('✅ Projet généré. Dites-moi quoi modifier : compléter une activité, préciser le matériel à acheter, affiner les critères d\'évaluation…', 'system');
                 chatInput.disabled = false;
                 chatSendBtn.disabled = false;
-                mailButtonsState();
                 setStatus('✅ Projet rédigé', true);
 
                 if (truncated) {
@@ -1027,8 +1123,7 @@ RÈGLES :
         function isFullLetter(text) {
             const t = String(text || '').trim();
             if (!t) return false;
-            const paras = t.split(/\n{2,}/).filter(p => p.trim()).length;
-            return /^#*\s*#{1,2}\s*contexte\b/i.test(t) || paras >= 4;
+            return /^#*\s*#{1,2}\s*1\.\s*groupe/i.test(t) || /^#*\s*#{1,2}\s*1\.\s*équipe/i.test(t);
         }
 
         function applyChatRevision(markdown) {
@@ -1181,86 +1276,19 @@ RÈGLES :
         });
 
         // ============================================================
-        //  CORPS DE L'E-MAIL DE DEVIS
-        // ============================================================
-        function mailButtonsState() {
-            mailGenBtn.disabled = !currentLetter || mailBusy;
-            mailCopyBtn.disabled = mailBusy || !mailBody.value.trim();
-        }
-
-        function resetMailPanel() {
-            mailBusy = false;
-            mailBody.value = '';
-            mailButtonsState();
-        }
-
-        async function generateMail() {
-            if (mailBusy) return;
-            if (!currentLetter) {
-                showError('Générez d\'abord le projet d\'animation pour préparer le corps de l\'e-mail.');
-                return;
-            }
-            const form = formText();
-
-            mailBusy = true;
-            mailGenBtn.disabled = true;
-            mailCopyBtn.disabled = true;
-            mailBody.value = '';
-            setStatus('📧 Rédaction de l\'e-mail…', true);
-
-            const userMsg = [
-                '--- FORMULAIRE ---',
-                form || '(formulaire vide)',
-                '',
-                '--- PROJET D\'ANIMATION ---',
-                currentLetter
-            ].join('\n');
-
-            let acc = '';
-            try {
-                await callGLM([
-                    { role: 'system', content: EMAIL_SYSTEM_PROMPT },
-                    { role: 'user', content: userMsg }
-                ], (delta) => {
-                    acc += delta;
-                    mailBody.value = acc;
-                    mailBody.scrollTop = mailBody.scrollHeight;
-                }, null, null);
-                setStatus('✅ Corps d\'e-mail généré', true);
-            } catch (err) {
-                setStatus('❌ Erreur', false);
-                showError(err.message);
-            } finally {
-                mailBusy = false;
-                mailButtonsState();
-            }
-        }
-
-        mailGenBtn.addEventListener('click', generateMail);
-
-        mailCopyBtn.addEventListener('click', async () => {
-            const text = mailBody.value.trim();
-            if (!text) return;
-            try {
-                await navigator.clipboard.writeText(text);
-                mailCopyBtn.textContent = '✅ Copié';
-                setTimeout(() => { mailCopyBtn.textContent = '📋 Copier'; }, 1500);
-            } catch (_) {
-                showError('Impossible de copier dans le presse-papiers (autorisation requise).');
-            }
-        });
-
-        mailBody.addEventListener('input', mailButtonsState);
-
-        // ============================================================
         //  EXPORT
         // ============================================================
         function letterText() {
+            // Extrait le texte markdown depuis le DOM affiché
+            // (cases à cocher rendues comme [ ] / [x])
             const out = [];
             (function walk(node) {
                 node.childNodes.forEach(c => {
                     if (c.nodeType === Node.TEXT_NODE) out.push(c.textContent);
                     else {
+                        if (c.tagName === 'INPUT' && c.type === 'checkbox') {
+                            out.push(c.checked ? '[x] ' : '[ ] ');
+                        }
                         if (/^(P|H[1-6]|LI|BLOCKQUOTE)$/.test(c.tagName)) out.push('\n');
                         if (/^(LI)$/.test(c.tagName)) out.push('- ');
                         walk(c);
@@ -1290,7 +1318,7 @@ RÈGLES :
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'projet-d-animation.md';
+            a.download = 'projet-animation.md';
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -1300,13 +1328,14 @@ RÈGLES :
         printBtn.addEventListener('click', () => window.print());
 
         clearBtn.addEventListener('click', () => {
-            [typeEvent, animationsSelect].forEach(el => { el.value = ''; });
-            [publicInput, dateLieuInput, dureeInput, participantsInput, objectifsInput].forEach(el => { el.value = ''; });
+            [animationsSelect].forEach(el => { el.value = ''; });
+            [equipeInput, periodeInput, themInput, publicInput, dureeInput,
+             objectif1Input, objectif2Input, objectif3Input, materielInput,
+             sortiesInput, notesInput].forEach(el => { el.value = ''; });
             letterBox.replaceChildren();
             thinkingBox.hidden = true;
             thinkingBox.textContent = '';
             resetChatPanel();
-            resetMailPanel();
             setStatus('✅ Connecté', true);
         });
 
@@ -1345,7 +1374,6 @@ RÈGLES :
             letterBox.replaceChildren();
             thinkingBox.hidden = true;
             resetChatPanel();
-            resetMailPanel();
         });
 
         generateBtn.addEventListener('click', generateProject);
