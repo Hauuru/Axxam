@@ -390,7 +390,7 @@
                     <li><strong>Groupe / équipe d'animation</strong> — nom d'équipe &amp; période du projet</li>
                     <li><strong>Motivation</strong> — pourquoi ce projet</li>
                     <li><strong>Thème</strong> — fil conducteur</li>
-                    <li><strong>Objectifs &amp; activités</strong> — 3 objectifs, chacun avec ses activités</li>
+                    <li><strong>Objectifs &amp; activités</strong> — 3 objectifs, chacun avec ses activités et son évaluation</li>
                     <li><strong>Besoins matériels</strong> — répartis fournitures catalogue / courses magasin</li>
                     <li><strong>Sorties &amp; intervenants</strong> — déplacements, intervenants externes</li>
                     <li><strong>Évaluation</strong> — critères de réussite par objectif, observations, améliorations</li>
@@ -423,12 +423,24 @@
                     <input type="text" id="objectif1Input" placeholder="Ex. : Découvrir les gestes de base du modelage" />
                 </div>
                 <div class="field full">
+                    <label for="eval1Input">🔎 Évaluation de l'objectif 1 <span class="hint">— critères de réussite, comment savoir s'il est atteint</span></label>
+                    <textarea id="eval1Input" rows="2" placeholder="Ex. : chaque enfant réalise un gobelet en terre autonome, gestes de base acquis."></textarea>
+                </div>
+                <div class="field full">
                     <label for="objectif2Input">🎯 Objectif 2</label>
                     <input type="text" id="objectif2Input" placeholder="Ex. : Favoriser la coopération entre enfants" />
                 </div>
                 <div class="field full">
+                    <label for="eval2Input">🔎 Évaluation de l'objectif 2 <span class="hint">— critères de réussite, comment savoir s'il est atteint</span></label>
+                    <textarea id="eval2Input" rows="2" placeholder="Ex. : les enfants travaillent par binômes et s'entraident sur au moins un exercice."></textarea>
+                </div>
+                <div class="field full">
                     <label for="objectif3Input">🎯 Objectif 3 <span class="hint">— facultatif</span></label>
                     <input type="text" id="objectif3Input" placeholder="Ex. : Sensibiliser au cycle du vivant" />
+                </div>
+                <div class="field full">
+                    <label for="eval3Input">🔎 Évaluation de l'objectif 3 <span class="hint">— critères de réussite, comment savoir s'il est atteint</span></label>
+                    <textarea id="eval3Input" rows="2" placeholder="Ex. : chaque enfant verbalise un apprentissage sur le cycle du vivant."></textarea>
                 </div>
                 <div class="field full">
                     <label for="materielInput">🧰 Besoins matériels <span class="hint">— séparez ce qui vient du catalogue de ce qui est à acheter (courses magasin)</span></label>
@@ -500,7 +512,7 @@
         const SYSTEM_PROMPT = `
 Vous êtes un animateur socioculturel expérimenté en France. Vous rédigez des projets d'animation en français pour un usage interne.
 
-À partir du formulaire fourni (équipe, période, thème, public, durée, objectifs éventuels, matériel, sorties, motivation), rédigez un projet d'animation structuré EXACTEMENT selon les 7 blocs ci-dessous.
+À partir du formulaire fourni (équipe, période, thème, public, durée, objectifs éventuels, évaluations des objectifs, matériel, sorties, motivation), rédigez un projet d'animation structuré EXACTEMENT selon les 7 blocs ci-dessous.
 
 CONSIGNES STRICTES :
 - N'inventez JAMAIS d'éléments absents du formulaire (dates, lieux, publics, nombres, matériel…). Pour tout élément manquant, utilisez des crochets : [à préciser].
@@ -541,12 +553,12 @@ Listez les sorties éventuelles et les intervenants externes (visites, invités,
 ## 7. Évaluation
 Pour CHACUN des 3 objectifs, donnez :
 ### Objectif 1 — Comment savoir s'il est réalisé ?
-- Critères de réussite observables et mesurables
+- Critères de réussite observables et mesurables, en reprenant l'évaluation fournie dans le formulaire si présente
 - Observations (espace à remplir, préfixé par "- Observations : ")
 - Améliorations possibles (préfixé par "- Améliorations : ")
 - Case à cocher à temps/en retard, formulée ainsi : "- [ ] À temps  [ ] En retard"
 
-Répétez ce sous-bloc pour les objectifs 2 et 3.
+Répétez ce sous-bloc pour les objectifs 2 et 3, en reprenant leurs évaluations du formulaire.
 
 AUTRES CONSIGNES :
 - Restez en français. Format markdown simple (titres, paragraphes, listes à puces). Pas de tableaux, pas d'images, pas de liens.
@@ -566,19 +578,20 @@ Vous ne connaissez RIEN du projet : vous posez les questions une à une pour rec
 4. Public visé (tranches d'âge, effectif)
 5. Durée / nombre de séances
 6. Les objectifs du projet (1 à 3) et les activités associées
-7. Besoins matériels (fournitures disponibles / à acheter)
-8. Sorties et intervenants éventuels
-9. Motivation, contexte, contraintes
+7. L'évaluation de chaque objectif (comment mesurer sa réussite : critères observables)
+8. Besoins matériels (fournitures disponibles / à acheter)
+9. Sorties et intervenants éventuels
+10. Motivation, contexte, contraintes
 
 RÈGLES :
-- Posez UNE question à la fois, numérotée (1/9, 2/9…). Ne posez jamais deux questions dans le même message.
+- Posez UNE question à la fois, numérotée (1/10, 2/10…). Ne posez jamais deux questions dans le même message.
 - Quand l'utilisateur répond : reformulez très brièvement ce que vous avez compris, dites « Je mets à jour le formulaire. » puis posez la question suivante.
 - À chaque réponse de l'utilisateur, terminez VOTRE réponse par un bloc JSON décrivant les informations recueillies. Ce bloc sert à remplir le formulaire automatiquement.
 - Le bloc JSON doit être le tout dernier bloc de votre message, entre les balises <FORM> et </FORM>, sur une seule ligne si possible :
-<FORM>{"equipe":"…","periode":"…","theme":"…","public":"…","duree":"…","objectif1":"…","objectif2":"…","objectif3":"…","materiel":"…","sorties":"…","notes":"…"}</FORM>
+<FORM>{"equipe":"…","periode":"…","theme":"…","public":"…","duree":"…","objectif1":"…","objectif2":"…","objectif3":"…","eval1":"…","eval2":"…","eval3":"…","materiel":"…","sorties":"…","notes":"…"}</FORM>
 - N'incluez dans le JSON que les champs réellement renseignés (les autres doivent être absents).
 - Quand l'utilisateur donne plusieurs informations d'un coup (par exemple nom + période), transmettez-les toutes dans le JSON.
-- Quand les 9 points sont couverts, récapitulez en 6 lignes courtes et dites : « Votre projet est complet : cliquez sur ✍️ Rédiger le projet d'animation pour générer le document. »
+- Quand les 10 points sont couverts, récapitulez en 6 lignes courtes et dites : « Votre projet est complet : cliquez sur ✍️ Rédiger le projet d'animation pour générer le document. »
 - Courtes réponses, en français.
 `;
 
@@ -589,7 +602,7 @@ RÈGLES :
 Vous êtes un guide bienveillant qui aide un animateur à construire un projet d'animation.
 Deux situations possibles :
 
-1) Si le formulaire n'est pas encore complet, vous êtes dans la PHASE D'ENTRETIEN : vous posez les questions une à une (1/10, 2/10…), accompagnez l'utilisateur, et à chaque de ses réponses vous terminez par un bloc JSON entre <FORM> et </FORM> pour remplir le formulaire. Clés possibles : equipe, periode, theme, public, duree, type, objectif1, objectif2, objectif3, materiel, sorties, notes. N'incluez que les champs renseignés.
+1) Si le formulaire n'est pas encore complet, vous êtes dans la PHASE D'ENTRETIEN : vous posez les questions une à une (1/10, 2/10…), accompagnez l'utilisateur, et à chaque de ses réponses vous terminez par un bloc JSON entre <FORM> et </FORM> pour remplir le formulaire. Clés possibles : equipe, periode, theme, public, duree, objectif1, eval1, objectif2, eval2, objectif3, eval3, materiel, sorties, notes. N'incluez que les champs renseignés.
 
 2) Si le formulaire est complet et que l'utilisateur demande une modification (ajouter une activité, préciser le matériel, reformuler…), renvoyez le projet COMPLET révisé, en respectant la structure des 7 blocs (## 1. Groupe / équipe…, ## 2. Motivation…, ## 3. Thème…, ## 4. Objectifs…, ## 5. Besoins matériels…, ## 6. Sorties…, ## 7. Évaluation…), sans introduction ni commentaire avant ou après.
 
@@ -626,6 +639,9 @@ AUTRES RÈGLES :
         const objectif1Input = document.getElementById('objectif1Input');
         const objectif2Input = document.getElementById('objectif2Input');
         const objectif3Input = document.getElementById('objectif3Input');
+        const eval1Input = document.getElementById('eval1Input');
+        const eval2Input = document.getElementById('eval2Input');
+        const eval3Input = document.getElementById('eval3Input');
         const materielInput = document.getElementById('materielInput');
         const sortiesInput = document.getElementById('sortiesInput');
         const notesInput = document.getElementById('notesInput');
@@ -654,8 +670,11 @@ AUTRES RÈGLES :
             if (publicInput.value.trim()) parts.push('Public visé : ' + publicInput.value.trim());
             if (dureeInput.value.trim()) parts.push('Durée / créneaux : ' + dureeInput.value.trim());
             if (objectif1Input.value.trim()) parts.push('Objectif 1 : ' + objectif1Input.value.trim());
+            if (eval1Input.value.trim()) parts.push('Évaluation de l\'objectif 1 : ' + eval1Input.value.trim());
             if (objectif2Input.value.trim()) parts.push('Objectif 2 : ' + objectif2Input.value.trim());
+            if (eval2Input.value.trim()) parts.push('Évaluation de l\'objectif 2 : ' + eval2Input.value.trim());
             if (objectif3Input.value.trim()) parts.push('Objectif 3 : ' + objectif3Input.value.trim());
+            if (eval3Input.value.trim()) parts.push('Évaluation de l\'objectif 3 : ' + eval3Input.value.trim());
             if (materielInput.value.trim()) parts.push('Besoins matériels : ' + materielInput.value.trim());
             if (sortiesInput.value.trim()) parts.push('Sorties et intervenants : ' + sortiesInput.value.trim());
             if (notesInput.value.trim()) parts.push('Motivation et notes : ' + notesInput.value.trim());
@@ -667,7 +686,7 @@ AUTRES RÈGLES :
         // ============================================================
         const FORM_FIELDS = [
             'equipeInput', 'periodeInput', 'themInput', 'publicInput', 'dureeInput',
-            'objectif1Input', 'objectif2Input', 'objectif3Input',
+            'objectif1Input', 'eval1Input', 'objectif2Input', 'eval2Input', 'objectif3Input', 'eval3Input',
             'materielInput', 'sortiesInput', 'notesInput'
         ];
 
@@ -678,8 +697,11 @@ AUTRES RÈGLES :
             publicInput: v => v,
             dureeInput: v => v,
             objectif1Input: v => v,
+            eval1Input: v => v,
             objectif2Input: v => v,
+            eval2Input: v => v,
             objectif3Input: v => v,
+            eval3Input: v => v,
             materielInput: v => v,
             sortiesInput: v => v,
             notesInput: v => v
@@ -1426,7 +1448,9 @@ AUTRES RÈGLES :
 
         clearBtn.addEventListener('click', () => {
             [equipeInput, periodeInput, themInput, publicInput, dureeInput,
-             objectif1Input, objectif2Input, objectif3Input, materielInput,
+             objectif1Input, objectif2Input, objectif3Input,
+             eval1Input, eval2Input, eval3Input,
+             materielInput,
              sortiesInput, notesInput].forEach(el => { el.value = ''; });
             FORM_FIELDS.forEach(id => {
                 const el = document.getElementById(id);
