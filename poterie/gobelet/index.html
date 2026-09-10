@@ -215,8 +215,8 @@
             <div class="controls-header">
                 <h1 class="controls-title">🏺 Générateur de Gobelets 5.0</h1>
                 <div class="tabs">
-                    <button class="tab active" onclick="showTab('dimensions', this)">Dimensions</button>
-                    <button class="tab" onclick="showTab('anneaux', this)">Anneaux</button>
+                    <button class="tab active" onclick="showTab('dimensions', this)">Tournage</button>
+                    <button class="tab" onclick="showTab('anneaux', this)">Tournassage</button>
                     <button class="tab" onclick="showTab('materiau', this)">Matériau</button>
                     <button class="tab" onclick="showTab('etats', this)">États</button>
                     <button class="tab" onclick="showTab('export', this)">Export</button>
@@ -234,10 +234,10 @@
                 
                 <!-- Onglet Anneaux -->
                 <div id="anneaux" class="param-group">
-                    <div class="info-box">Les dimensions des anneaux correspondent à l'état <strong>CUITE</strong></div>
+                    <div class="info-box">Creusez des gorges dans la paroi extérieure. Les dimensions correspondent à l'état <strong>CUITE</strong>.</div>
                     
                     <div class="param">
-                        <label>Nombre d'anneaux <span>0-4</span></label>
+                        <label>Nombre de gorges <span>0-4</span></label>
                         <div class="slider-container">
                             <input id="n_r" type="range" min="0" max="4" step="1" value="4" oninput="updateParam('n', this.value)">
                             <input id="n_n" type="number" min="0" max="4" step="1" value="4" oninput="updateParam('n', this.value)">
@@ -245,23 +245,23 @@
                     </div>
                     
                     <div class="param">
-                        <label>Hauteur 1er anneau <span>mm (cuit)</span></label>
+                        <label>Hauteur 1re gorge <span>mm (cuit)</span></label>
                         <div class="slider-container">
                             <input id="Hd_r" type="range" min="0" max="400" value="20" step="1" oninput="updateParam('Hd', this.value)">
                             <input id="Hd_n" type="number" min="0" max="400" value="20" step="1" oninput="updateParam('Hd', this.value)">
                         </div>
                     </div>
                     
-                    <!-- Espacements des anneaux -->
+                    <!-- Espacements des gorges -->
                     <div id="espacements-content"></div>
                     
-                    <div class="section-title">Paramètres individuels des anneaux</div>
+                    <div class="section-title">Paramètres individuels des gorges</div>
                     <table class="ring-table">
                         <thead>
                             <tr>
-                                <th>Anneau</th>
+                                <th>Gorge</th>
                                 <th>Largeur (mm)</th>
-                                <th>Saillie (mm)</th>
+                                <th>Profondeur (mm)</th>
                             </tr>
                         </thead>
                         <tbody id="anneaux-body"></tbody>
@@ -297,14 +297,6 @@
                     <div class="section-title">Export JPG (A4, 300 DPI)</div>
                     
                     <div class="param">
-                        <label>Contenu</label>
-                        <div class="option-group compact">
-                            <label><input type="radio" name="jpg-content" value="gobelet" checked> Gobelet</label>
-                            <label><input type="radio" name="jpg-content" value="gobelet-with-rings"> Avec anneaux</label>
-                        </div>
-                    </div>
-                    
-                    <div class="param">
                         <label>Annotations <span>(dimensions + date)</span></label>
                         <div class="option-group compact">
                             <label><input type="checkbox" id="jpg-annotation" checked> Afficher les annotations</label>
@@ -322,14 +314,6 @@
                     
                     <!-- Section STL -->
                     <div class="section-title" style="margin-top: 25px;">Export STL 3D</div>
-                    
-                    <div class="param">
-                        <label>Modèle</label>
-                        <div class="option-group compact">
-                            <label><input type="radio" name="stl-content" value="gobelet-only" checked> Gobelet seul</label>
-                            <label><input type="radio" name="stl-content" value="gobelet-with-rings"> Avec anneaux</label>
-                        </div>
-                    </div>
                     
                     <div class="param">
                         <label>Format</label>
@@ -417,7 +401,7 @@
         const CONFIG = {
             segments: 64,
             ringSegments: 24,
-            profileSegments: 32,
+            profileSegments: 96,
             jpg: { dpi: 300, quality: 0.95, a4Width: 3508, a4Height: 2480 },
             stl: { defaultColor: 0x808080 }
         };
@@ -430,7 +414,7 @@
             densiteCru: 1.76, densiteSec: 1.55, densiteCuit: 2.5,
             // Retraits
             retraitSec: 4.8, retraitCuit: 7,
-            // Anneaux
+            // Gorges de tournassage
             n: 4, Hd: 20,
             Es1: 20, Es2: 20, Es3: 20,
             La: [10, 10, 10, 10],
@@ -610,13 +594,13 @@
             // Générer les paramètres dimensions
             generateParamSection('dimensions-content', paramDefinitions.dimensions);
             
-            // Générer les espacements d'anneaux
+            // Générer les espacements des gorges
             generateParamSection('espacements-content', paramDefinitions.espacements);
             
             // Générer les paramètres matériau
             generateParamSection('materiau-content', paramDefinitions.materiau);
             
-            // Générer le tableau des anneaux
+            // Générer le tableau des gorges
             generateAnneauxTable();
             
             // Refléter l'état (éventuellement chargé) dans les champs fixes n / Hd
@@ -781,7 +765,7 @@
         }
 
         // ============ FONCTIONS GÉOMÉTRIQUES ============
-        function getRayonExterieurGobelet(h) {
+        function getRayonExterieurBrut(h) {
             const f = state.facteurCourant;
             const rB = (state.DB / 2) * f;
             const rH = (state.DO / 2) * f;
@@ -800,8 +784,54 @@
             return rB + (rH - rB) * t + (rH - rB) * cv * Math.sin(t * Math.PI);
         }
 
+        function getPositionsTournassage() {
+            const f = state.facteurCourant;
+            const espacements = [state.Es1, state.Es2, state.Es3];
+            const positions = [];
+            let position = state.Hd * f;
+
+            for (let i = 0; i < state.n; i++) {
+                positions.push(position);
+                position += (espacements[i] || 0) * f;
+            }
+            return positions;
+        }
+
+        function getProfondeurTournassage(h) {
+            const f = state.facteurCourant;
+            // Une gorge ne peut pas traverser la paroi : 0,5 mm de matière
+            // restent toujours dans la pièce finale.
+            const profondeurMax = Math.max(state.Ep * f - 0.5 * f, 0);
+            let profondeur = 0;
+
+            getPositionsTournassage().forEach((centre, index) => {
+                const demiLargeur = (state.La[index] * f) / 2;
+                if (demiLargeur <= 0) return;
+                const distance = Math.abs(h - centre);
+                if (distance >= demiLargeur) return;
+
+                const profil = 1 - distance / demiLargeur;
+                const profondeurGorge = Math.min(state.Sa[index] * f, profondeurMax) * profil;
+                profondeur = Math.max(profondeur, profondeurGorge);
+            });
+
+            return profondeur;
+        }
+
+        function getRayonExterieurGobelet(h) {
+            return Math.max(
+                getRayonExterieurBrut(h) - getProfondeurTournassage(h),
+                state.Ep * state.facteurCourant
+            );
+        }
+
         function getRayonInterieurGobelet(h) {
-            return Math.max(getRayonExterieurGobelet(h) - (state.Ep * state.facteurCourant), state.Ep * state.facteurCourant);
+            // Le tournassage enlève de la matière à l'extérieur : la cavité
+            // intérieure et donc la capacité du gobelet ne changent pas.
+            return Math.max(
+                getRayonExterieurBrut(h) - (state.Ep * state.facteurCourant),
+                state.Ep * state.facteurCourant
+            );
         }
 
         function genererProfilGobelet() {
@@ -870,9 +900,6 @@
                 console.error("Erreur création gobelet:", e);
             }
             
-            // Construire les anneaux
-            buildRings();
-            
             // Appliquer le clipping si activé
             applyClippingToMaterials();
             
@@ -882,55 +909,6 @@
             // Mettre à jour les indicateurs
             updateEtatInfo();
             updateInfoConversion();
-        }
-
-        function buildRings() {
-            // Nettoyer les anciens anneaux
-            while (ringsGroup.children.length > 0) {
-                const child = ringsGroup.children[0];
-                child.geometry.dispose();
-                child.material.dispose();
-                ringsGroup.remove(child);
-            }
-            
-            // Calculer les positions des anneaux
-            const es = [];
-            if (state.n > 1) es.push(state.Es1 || 20);
-            if (state.n > 2) es.push(state.Es2 || 20);
-            if (state.n > 3) es.push(state.Es3 || 20);
-            
-            const positions = [state.Hd * state.facteurCourant];
-            for (let i = 0; i < Math.min(es.length, state.n - 1); i++) {
-                positions.push(positions[positions.length - 1] + es[i] * state.facteurCourant);
-            }
-            
-            // Créer chaque anneau
-            positions.forEach((h, i) => {
-                if (i >= state.n || h < state.Ep * state.facteurCourant || h > state.H * state.facteurCourant) return;
-                
-                const la = state.La[i] * state.facteurCourant;
-                const sa = state.Sa[i] * state.facteurCourant;
-                const rayonExterieur = getRayonExterieurGobelet(h);
-                
-                // Profil triangulaire de l'anneau
-                const profile = [
-                    new THREE.Vector2(rayonExterieur, h - la/2),
-                    new THREE.Vector2(rayonExterieur + sa, h),
-                    new THREE.Vector2(rayonExterieur, h + la/2)
-                ];
-                
-                try {
-                    const ringGeometry = new THREE.LatheGeometry(profile, CONFIG.ringSegments);
-                    const ringMaterial = new THREE.MeshLambertMaterial({ 
-                        color: 0xFF8C00, side: THREE.DoubleSide, transparent: true, opacity: 0.95 
-                    });
-                    
-                    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-                    ringsGroup.add(ring);
-                } catch (e) {
-                    console.error("Erreur création anneau", i, ":", e);
-                }
-            });
         }
 
         // ============ VUE EN COUPE ============
@@ -1121,13 +1099,9 @@
                 ExportSystem.isExporting = true;
                 ExportSystem.updateProgress('jpg-progress', 10, 'Préparation de la capture...');
                 
-                const content = document.querySelector('input[name="jpg-content"]:checked').value;
                 const annotations = document.getElementById('jpg-annotation').checked;
                 
                 ExportSystem.updateProgress('jpg-progress', 30, 'Configuration de la scène...');
-                
-                const originalRingVisibility = ringsGroup ? ringsGroup.visible : true;
-                if (ringsGroup) ringsGroup.visible = (content === 'gobelet-with-rings');
                 
                 ExportSystem.updateProgress('jpg-progress', 50, 'Rendu haute résolution...');
                 
@@ -1149,12 +1123,9 @@
                 };
                 const originalControlTarget = controls ? controls.target.clone() : null;
                 
-                // Boîte englobante SANS réparenter les meshes (un add() les
-                // retirerait de la scène : le gobelet et une partie des anneaux
-                // disparaîtraient après l'export)
+                // Boîte englobante du gobelet tournassé.
                 const frameBox = new THREE.Box3();
                 frameBox.expandByObject(gobeletMesh);
-                if (ringsGroup && ringsGroup.visible) ringsGroup.children.forEach(r => frameBox.expandByObject(r));
                 
                 const boxSize = frameBox.getSize(new THREE.Vector3());
                 const boxCenter = frameBox.getCenter(new THREE.Vector3());
@@ -1207,7 +1178,6 @@
                 camera.far = originalCameraState.far;
                 camera.updateProjectionMatrix();
                 if (controls && originalControlTarget) controls.target.copy(originalControlTarget);
-                if (ringsGroup) ringsGroup.visible = originalRingVisibility;
                 renderer.render(scene, camera);
                 
                 ExportSystem.updateProgress('jpg-progress', 90, 'Préparation du téléchargement...');
@@ -1218,7 +1188,7 @@
                 const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
                 const annotationText = annotations ? '_annoté' : '';
                 const cutawayText = state.clippingEnabled ? '_coupe' : '';
-                link.download = `gobelet_${content}${cutawayText}${annotationText}_${date}_${time}.jpg`;
+                link.download = `gobelet_tournasse${cutawayText}${annotationText}_${date}_${time}.jpg`;
                 link.href = imageData;
                 link.click();
                 
@@ -1250,21 +1220,11 @@
             try {
                 ExportSystem.updateProgress('stl-progress', 10, 'Préparation de l\'export...');
                 
-                const content = document.querySelector('input[name="stl-content"]:checked').value;
                 const format = document.querySelector('input[name="stl-format"]:checked').value;
                 
                 ExportSystem.updateProgress('stl-progress', 30, 'Fusion des géométries...');
                 
-                let meshToExport;
-                
-                if (content === 'gobelet-only') {
-                    meshToExport = gobeletMesh ? gobeletMesh.clone() : null;
-                } else if (content === 'gobelet-with-rings') {
-                    const exportGroup = new THREE.Group();
-                    if (gobeletMesh) exportGroup.add(gobeletMesh.clone());
-                    if (ringsGroup) ringsGroup.children.forEach(ring => exportGroup.add(ring.clone()));
-                    meshToExport = exportGroup;
-                }
+                const meshToExport = gobeletMesh ? gobeletMesh.clone() : null;
                 
                 if (!meshToExport) throw new Error('Aucune géométrie à exporter');
                 
@@ -1288,18 +1248,14 @@
                 const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
                 const extension = 'stl';
                 
-                let fileName = '';
-                switch(content) {
-                    case 'gobelet-only': fileName = `gobelet_seul_${date}_${time}.${extension}`; break;
-                    case 'gobelet-with-rings': fileName = `gobelet_complet_${date}_${time}.${extension}`; break;
-                }
+                const fileName = `gobelet_tournasse_${date}_${time}.${extension}`;
                 
                 link.download = fileName;
                 link.href = URL.createObjectURL(blob);
                 link.click();
                 
                 ExportSystem.updateProgress('stl-progress', 100, 'Export STL terminé !');
-                ExportSystem.showNotification('Export STL avec anneaux terminé !');
+                ExportSystem.showNotification('Export STL terminé !');
                 
                 setTimeout(() => {
                     URL.revokeObjectURL(link.href);
@@ -1363,7 +1319,7 @@
             y += lineHeight;
             ctx.fillText(`Épaisseur: ${state.Ep} mm`, padding + 25 * scale, y);
             y += lineHeight;
-            ctx.fillText(`Anneaux: ${state.n}`, padding + 25 * scale, y);
+            ctx.fillText(`Gorges: ${state.n}`, padding + 25 * scale, y);
             y += lineHeight;
             
             // État
