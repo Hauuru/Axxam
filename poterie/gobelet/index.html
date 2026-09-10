@@ -129,8 +129,12 @@
         .viewer { flex: 1; background: #f0f0f0; position: relative; height: 100vh; overflow: hidden; }
         #scene-container { width: 100%; height: 100%; overscroll-behavior: contain; }
         #scene-container canvas { display: block; touch-action: none; }
-        #profile-view { position: absolute; inset: 0; width: 100%; height: 100%; background: #fff; display: none; }
+        #profile-view { position: absolute; inset: 0; width: 100%; height: 100%; background: #fff; display: none; touch-action: none; cursor: grab; }
+        #profile-view:active { cursor: grabbing; }
         #profile-view.active { display: block; }
+        .viewer.profile-mode .help-bar, .viewer.profile-mode #etat-indicator, .viewer.profile-mode #cutaway-indicator { display: none !important; }
+        .profile-toolbar { position:absolute; right:10px; bottom:10px; z-index:1001; display:none; gap:6px; padding:7px; border-radius:7px; background:rgba(255,255,255,.94); box-shadow:0 2px 10px rgba(0,0,0,.15); }
+        .viewer.profile-mode .profile-toolbar { display:flex; }
         .profile-options label { display:flex; gap:8px; align-items:center; padding:7px 0; font-size:13px; }
         
         /* ============ CONTROLES DE COUPE ============ */
@@ -375,6 +379,11 @@
         <div class="viewer">
             <div id="scene-container"></div>
             <svg id="profile-view" aria-label="Profil de fabrication du gobelet"></svg>
+            <div class="profile-toolbar" aria-label="Navigation du profil">
+                <button class="control-btn" onclick="zoomProfile(-1)" title="Dézoomer">−</button>
+                <button class="control-btn" onclick="zoomProfile(1)" title="Zoomer">+</button>
+                <button class="control-btn" onclick="resetProfileView()">Centrer</button>
+            </div>
             
             <!-- Indicateurs -->
             <div id="etat-indicator"></div>
@@ -602,6 +611,7 @@
         let gobeletMesh, ringsGroup;
         let updateTimer, isGridVisible = false, gridHelper = null;
         let sceneResizeObserver = null;
+        const profileNavigation = { width: 0, height: 0, x: 0, y: 0, zoom: 1, pointer: null };
 
         // ============ DÉFINITIONS DES PARAMÈTRES ============
         const paramDefinitions = {
@@ -894,11 +904,37 @@
         function setViewMode(mode) {
             state.viewMode = mode;
             const isProfile = mode === 'profile';
+            document.querySelector('.viewer').classList.toggle('profile-mode', isProfile);
             document.getElementById('scene-container').style.display = isProfile ? 'none' : 'block';
             document.getElementById('profile-view').classList.toggle('active', isProfile);
             document.getElementById('view-3d').classList.toggle('active', !isProfile);
             document.getElementById('view-profile').classList.toggle('active', isProfile);
             if (isProfile) renderProfile(); else onResize();
+        }
+
+        function applyProfileViewBox() {
+            const svg = document.getElementById('profile-view');
+            if (!svg || !profileNavigation.width) return;
+            const visibleWidth = profileNavigation.width / profileNavigation.zoom;
+            const visibleHeight = profileNavigation.height / profileNavigation.zoom;
+            svg.setAttribute('viewBox', `${profileNavigation.x} ${profileNavigation.y} ${visibleWidth} ${visibleHeight}`);
+        }
+
+        function resetProfileView() {
+            profileNavigation.x = 0; profileNavigation.y = 0; profileNavigation.zoom = 1;
+            applyProfileViewBox();
+        }
+
+        function zoomProfile(direction) {
+            if (!profileNavigation.width) return;
+            const oldWidth = profileNavigation.width / profileNavigation.zoom;
+            const oldHeight = profileNavigation.height / profileNavigation.zoom;
+            profileNavigation.zoom = Math.min(8, Math.max(1, profileNavigation.zoom * (direction > 0 ? 1.25 : .8)));
+            const newWidth = profileNavigation.width / profileNavigation.zoom;
+            const newHeight = profileNavigation.height / profileNavigation.zoom;
+            profileNavigation.x += (oldWidth - newWidth) / 2;
+            profileNavigation.y += (oldHeight - newHeight) / 2;
+            applyProfileViewBox();
         }
 
         function setProfileOption(key, value) {
@@ -930,7 +966,13 @@
             if (state.profileThickness) { const h = H * .55, x = axis + getRayonExterieurGobelet(h); dimensions += `<line class="dimension" x1="${x - e}" y1="${top + H - h - 4}" x2="${x}" y2="${top + H - h - 4}"/>${text(x + 4, top + H - h - 2, `e ${Math.round(e * 10) / 10} mm`)}`; }
             if (state.profileGrooves) getPositionsTournassage().forEach((h, i) => { if (h <= H) dimensions += `${text(axis + getRayonExterieurBrut(h) + 8, top + H - h + 2, `G${i + 1}: ${Math.round(h)} / ${state.La[i]} / ${state.Sa[i]} mm`)}`; });
             svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-            svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+            const sizeKey = `${width}:${height}`;
+            if (svg.dataset.sizeKey !== sizeKey) {
+                profileNavigation.width = width; profileNavigation.height = height;
+                profileNavigation.x = 0; profileNavigation.y = 0; profileNavigation.zoom = 1;
+                svg.dataset.sizeKey = sizeKey;
+            }
+            applyProfileViewBox();
             svg.setAttribute('width', `${width}mm`);
             svg.setAttribute('height', `${height}mm`);
             svg.innerHTML = `<style>.wall{fill:#e8c2b8;stroke:#743426;stroke-width:.8}.axis{stroke:#667085;stroke-width:.45;stroke-dasharray:2 2}.dimension{stroke:#2563a8;stroke-width:.45}.dimension-text{font:4px system-ui;fill:#17324d}.title{font:bold 5px system-ui;fill:#17324d}</style><rect width="100%" height="100%" fill="white"/><text x="${axis}" y="12" class="title">PROFIL DE FABRICATION — DEMI-COUPE DROITE</text><line class="axis" x1="${axis}" y1="${top}" x2="${axis}" y2="${top + H}"/><path class="wall" d="${wall}"/>${dimensions}`;
@@ -938,12 +980,48 @@
 
         function exportProfileSVG() {
             renderProfile();
+            resetProfileView();
             const svg = document.getElementById('profile-view').outerHTML;
             const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob); link.download = 'profil-gobelet.svg'; link.click();
             setTimeout(() => URL.revokeObjectURL(link.href), 2000);
             ExportSystem.showNotification('Profil SVG exporté');
+        }
+
+        function initializeProfileNavigation() {
+            const svg = document.getElementById('profile-view');
+            svg.addEventListener('wheel', event => {
+                event.preventDefault();
+                const rect = svg.getBoundingClientRect();
+                if (!rect.width || !profileNavigation.width) return;
+                const oldWidth = profileNavigation.width / profileNavigation.zoom;
+                const oldHeight = profileNavigation.height / profileNavigation.zoom;
+                const pointerX = profileNavigation.x + (event.clientX - rect.left) / rect.width * oldWidth;
+                const pointerY = profileNavigation.y + (event.clientY - rect.top) / rect.height * oldHeight;
+                profileNavigation.zoom = Math.min(8, Math.max(1, profileNavigation.zoom * (event.deltaY < 0 ? 1.15 : .87)));
+                const newWidth = profileNavigation.width / profileNavigation.zoom;
+                const newHeight = profileNavigation.height / profileNavigation.zoom;
+                profileNavigation.x = pointerX - (event.clientX - rect.left) / rect.width * newWidth;
+                profileNavigation.y = pointerY - (event.clientY - rect.top) / rect.height * newHeight;
+                applyProfileViewBox();
+            }, { passive: false });
+            svg.addEventListener('pointerdown', event => {
+                profileNavigation.pointer = { id: event.pointerId, x: event.clientX, y: event.clientY };
+                svg.setPointerCapture(event.pointerId);
+            });
+            svg.addEventListener('pointermove', event => {
+                const pointer = profileNavigation.pointer;
+                if (!pointer || pointer.id !== event.pointerId) return;
+                const rect = svg.getBoundingClientRect();
+                const visibleWidth = profileNavigation.width / profileNavigation.zoom;
+                const visibleHeight = profileNavigation.height / profileNavigation.zoom;
+                profileNavigation.x -= (event.clientX - pointer.x) / rect.width * visibleWidth;
+                profileNavigation.y -= (event.clientY - pointer.y) / rect.height * visibleHeight;
+                pointer.x = event.clientX; pointer.y = event.clientY;
+                applyProfileViewBox();
+            });
+            ['pointerup', 'pointercancel'].forEach(type => svg.addEventListener(type, () => { profileNavigation.pointer = null; }));
         }
 
         // ============ CONSTRUCTION 3D ============
@@ -1536,6 +1614,7 @@
                 initializeInterface();
                 initializeClipping();
                 updateEtatInfo();
+                initializeProfileNavigation();
                 
                 // Configurer les événements
                 window.addEventListener('resize', onResize);
