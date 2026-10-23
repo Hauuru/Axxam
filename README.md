@@ -19,7 +19,8 @@ Axxam/
 ├── index.html              ← Page hub : portail vers tous les sites
 ├── numerique.html          ← Axxam Numérique : création de sites, agents IA, automatisation, dépannage, impression 3D
 ├── llm.html                ← Chatbot « L'esprit de la rivière » (GLM-4.7 Flash, streaming SSE, fond eau animé)
-├── lettre-motivation.html  ← Générateur de lettre de motivation (GLM, offre collée par l'utilisateur)
+├── lettre-motivation.html  ← Générateur de lettre de motivation
+├── projet-animation.html  ← Générateur de projet d'animation (7 blocs, assistant IA) (GLM, offre collée par l'utilisateur)
 ├── hub.css                 ← Feuille de style du portail
 ├── animation/              ← Site axxam.net/animation
 │   ├── index.html          ← Page d'accueil (animations créatives)
@@ -257,17 +258,10 @@ Attendre 1-2 minutes, puis les sites sont accessibles.
 - **`/boxingclubspdc/README.md`** – Documentation du site Boxing Club SPDC (structure, formulaire, maintenance)
 - **`/vesemt.org/README.md`** – Documentation du site vesemt.org (installation, structure, déploiement)
 - **`/tmp/opencode/README.md`** – README maître (handover) de l'espace de travail : vue d'ensemble, rubriques, adressage des URLs et bases de données (base de connaissances de l'agent + bases anyclaw/Turso)
-- **`/vesemt.org/RAPPORT_ANALYSE.md`** – Rapport d'analyse détaillé et recommandations
+- **`/vesemt.org/RAPPORT_ANALYSE.md`**
+- **`/vesemt.org/RAPPORT-DEPLOIEMENT-AXXAM.md`** – Rapport d'analyse détaillé et recommandations
 - **`/vesemt.org/JOURNAL-MODIFICATIONS.md`** – Historique des modifications du site vesemt.org
 - **`/chateauambulant/README.md`** – Documentation du site Château Ambulant
-
----
-
-## 🔧 Scripts utiles
-
-Dans `/vesemt.org/` :
-- `deploy.sh` – Script de déploiement automatisé
-- `add-footer-credits.sh` – Ajoute des crédits dans le footer
 
 ---
 
