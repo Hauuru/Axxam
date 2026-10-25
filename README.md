@@ -1,196 +1,167 @@
 # Axxam – Dépôt Multi-Sites
 
-Bienvenue dans le dépôt **Axxam**, qui contient plusieurs projets web distincts :
-
-1. **`/`** – **Portail Axxam** : page hub unifiée donnant accès à tous les sites de l'univers Axxam
-2. **`/numerique.html`** – **Axxam Numérique** : activités numériques (création de sites web, agents IA locaux, automatisation, dépannage, impression 3D)
-3. **`/animation/`** – Site **axxam.net/animation** : site professionnel d'entrepreneur (services en catalogue, page tarifs)
-4. **`/poterie/`** – Site **Poterie Axxam Touraine** : tourneur potier, gobelets, cuisson et émaux + générateur de gobelets 3D
-5. **`/vesemt.org/`** – Site **vesemt.org** : conversion HTML+CSS du site WordPress politique
-6. **`/boxingclubspdc/`** – Site **Boxing Club SPDC** : one-page du club de boxe (refondu août 2026)
-7. **`/chateauambulant/`** – Site **Château Ambulant** : grimoire documentant le système multi-agents « Foyer de Calcifère »
+Bienvenue dans le dépôt **Axxam**, qui regroupe plusieurs projets web distincts : sites vitrines, applications interactives et documentation technique. Tous les sites sont déployés via GitHub Pages et accessibles sur le domaine principal `axxam.net`.
 
 ---
 
-## 📦 Structure du dépôt
+## 🎯 Architecture du dépôt
 
-```
-Axxam/
-├── index.html              ← Page hub : portail vers tous les sites
-├── numerique.html          ← Axxam Numérique : création de sites, agents IA, automatisation, dépannage, impression 3D
-├── llm.html                ← Chatbot « L'esprit de la rivière » (GLM-4.7 Flash, streaming SSE, fond eau animé)
-├── lettre-motivation.html  ← Générateur de lettre de motivation
-├── projet-animation.html  ← Générateur de projet d'animation (7 blocs, assistant IA) (GLM, offre collée par l'utilisateur)
-├── hub.css                 ← Feuille de style du portail
-├── animation/              ← Site axxam.net/animation
-│   ├── index.html          ← Page d'accueil (animations créatives)
-│   ├── a-propos.html       ← À propos
-│   ├── contact.html        ← Contact
-│   ├── services.html       ← Services en catalogue (axxam.net/animation)
-│   ├── tarifs.html         ← Page tarifs (axxam.net/animation)
-│   ├── gobelet/            ← Générateur de gobelets paramétrique (dans services)
-│   ├── style.css           ← Feuille de style principale
-│   └── favicon.png, logo.jpg  ← Ressources
-├── a-propos.html, services.html, tarifs.html, contact.html  ← Redirections vers /animation/
-├── poterie/                ← Site Poterie Axxam Touraine (axxam.net/poterie/)
-│   ├── index.html          ← Accueil : présentation + pièces + encart générateur
-│   ├── pratique.html       ← Tournage, cuisson, émaux
-│   ├── galerie.html        ← Grille filtrable + lightbox
-│   ├── gobelet/            ← Générateur de gobelets paramétrique (axxam.net/poterie/gobelet/)
-│   ├── style.css           ← Thème graphite/terracotta
-│   ├── js/galerie.js       ← Filtres + lightbox
-│   └── img/                ← Placeholders SVG (à remplacer par photos Instagram)
-├── CNAME, robots.txt, sitemap.xml  ← Configuration
-│
-├── vesemt.org/             ← Site HTML+CSS de vesemt.org
-│   ├── index.html
-│   ├── articles/
-│   ├── images/
-│   ├── vesemt-css/style.css
-│   ├── README.md           ← Documentation détaillée du site vesemt.org
-│   ├── RAPPORT_ANALYSE.md
-│   └── ... (20 pages HTML)
-│
-├── boxingclubspdc/         ← Site PWA du Boxing Club SPDC
-│   ├── index.html
-│   ├── styles.css
-│   ├── js/main.js
-│   ├── manifest.json, service-worker.js
-│   ├── images/
-│   ├── README.md           ← Documentation détaillée du site SPDC
-│   └── ...
-│
-└── chateauambulant/        ← Site grimoire du Foyer de Calcifère
-    ├── index.html
-    ├── architecture.html
-    ├── securite.html
-    ├── poesie.html
-    ├── memoire.html
-    ├── script.js, styles.css
-    └── README.md           ← Documentation détaillée du Château Ambulant
-```
+Le dépôt est organisé autour d'un **portail central** (à la racine) et de **5 sous-dossiers**, chacun contenant un site complet :
+
+| Sous-dossier | Site | Déployé sur |
+|-------------|------|-------------|
+| `./` (racine) | Portail Axxam | https://axxam.net |
+| `animation/` | axxam.net/animation | https://axxam.net/animation/ |
+| `poterie/` | Poterie Axxam Touraine | https://axxam.net/poterie/ |
+| `vesemt.org/` | Site VESEMT | https://axxam.net/vesemt.org/ |
+| `boxingclubspdc/` | Boxing Club SPDC | https://axxam.net/boxingclubspdc/ |
+| `chateauambulant/` | Château Ambulant | https://axxam.net/chateauambulant/ |
+
+Trois **outils internes** sont également accessibles depuis la racine :
+- `llm.html` – Chatbot « L'esprit de la rivière » (GLM-4.7 Flash)
+- `lettre-motivation.html` – Générateur de lettres de motivation assisté par IA
+- `projet-animation.html` – Générateur de projets d'animation (7 blocs)
 
 ---
 
-## 🌐 Sites hébergés
+## 📂 Structure détaillée du dépôt
+
+### Racine (`./`)
+
+| Fichier | Rôle |
+|---------|------|
+| `index.html` | Page hub du portail Axxam |
+| `numerique.html` | Page Axxam Numérique (création sites, agents IA, automatisation, impression 3D) |
+| `llm.html` | Chatbot « L'esprit de la rivière » |
+| `lettre-motivation.html` | Générateur de lettre de motivation |
+| `projet-animation.html` | Générateur de projet d'animation |
+| `jeu-des-mots.html` | Page de jeu des mots |
+| `a-propos.html` → redirige vers `animation/` | Redirection legacy |
+| `services.html` → redirige vers `animation/` | Redirection legacy |
+| `tarifs.html` → redirige vers `animation/` | Redirection legacy |
+| `contact.html` → redirige vers `animation/` | Redirection legacy |
+| `hub.css` | Feuille de style du portail |
+| `numerique.css` | Feuille de style de numerique.html |
+| `CNAME` | Configuration domaine axxam.net |
+| `robots.txt` | Configuration robots |
+| `sitemap.xml` | Plan du site |
+| `favicon.png` | Favicon principal |
+| `logo.jpg` | Logo Axxam |
+| `googlead63fcf620184b01.html` | Vérification Google Search Console |
+| `Thia.pdf` | Document PDF |
+| `README.md` | Ce fichier |
+
+---
+
+## 🌐 Présentation des sites
 
 ### Portail Axxam (racine)
-- **Page hub** : donne accès à tous les sites de l'univers Axxam via une grille de cartes
-- **Section Axxam Numérique** : activités numériques (création de sites web, agents IA locaux, automatisation, dépannage, impression 3D) avec page dédiée `numerique.html`
-- HTML+CSS simple et léger, sans framework
-- Les anciennes URLs (`/a-propos.html`, `/services.html`, `/tarifs.html`, `/contact.html`) redirigent vers `/animation/`
-- Déployé via GitHub Pages sur `https://hauuru.github.io/Axxam/`
-- Domaine personnalisé : `https://axxam.net` (via fichier CNAME)
+Page d'accueil unifiée avec grille de cartes donnant accès à tous les sites de l'univers Axxam. Technologie : HTML5 + CSS3 simple, sans framework.
 
-### Axxam Numérique (`numerique.html`)
-- Page dédiée aux activités numériques : création de pages web HTML/CSS, initiation aux agents IA hébergés sur l'ordinateur (Nanobot, OpenClaw…), automatisation de tâches simples, dépannage informatique, impression 3D
-- Étapes « Comment ça se passe ? » + bandeau contact
-- Accessible sur `https://axxam.net/numerique.html`
+### axxam.net/animation (`animation/`)
+Site vitrine d'entrepreneur pour **Axxam, animations créatives et durables**.
+- Services en catalogue avec prix (Dès 50 €/heure)
+- Page tarifs dédiée (50€/h, 100€/2h, 150€/demi-journée, 250€/journée)
+- Fichiers : `index.html`, `a-propos.html`, `contact.html`, `services.html`, `tarifs.html`, `style.css`, `favicon.png`, `logo.jpg`, `logo.rar`
 
-### Chatbot « L'esprit de la rivière » (`llm.html`)
-- Assistant IA propulsé par les modèles GLM (Zhipu AI), modèle unique **GLM-4.7 Flash** (sans sélecteur)
-- Persona « l'esprit de la rivière » : présente les services d'Axxam et redirige vers les pages officielles (contexte `CUSTOM_CONTEXT`)
-- **Fond eau animé** (canvas 2D) : vagues sinusoïdales horizontales bleu foncé / bleu beige / bleu pâle dont la vitesse suit l'état du modèle (rapide quand il cherche, active pendant le stream, lente quand il a répondu) ; respect de `prefers-reduced-motion`
-- Interface ouverte : bulles flottantes translucides (verre dépoli, `backdrop-filter`), sans carte opaque
-- **Streaming SSE** : réponse affichée token par token (rendu markdown progressif + caret clignotant) ; parser markdown maison, anti-XSS, liens `http(s)` uniquement
-- Clé API à fournir par l'utilisateur : note dans le chat expliquant l'obtention sur `https://z.ai/manage-apikey/apikey-list`
-- Carte d'accès depuis le portail : `index.html` → « Chatbot GLM »
+### axxam.net/poterie (`poterie/`)
+Site du **tourneur potier Axxam Touraine** : gobelets, cuisson, émaux.
+- Galerie filtrable + lightbox
+- **Générateur de gobelets 3D** intégré (`poterie/gobelet/`, Three.js via CDN, exports JPG/STL)
+- Thème graphite/terracotta, titres Cormorant Garamond
+- Fichiers : `index.html`, `pratique.html`, `galerie.html`, `style.css`, `js/galerie.js`, `img/` (placeholders SVG)
 
-### Générateur de lettre de motivation (`lettre-motivation.html`)
-- Application 100 % côté navigateur (aucun backend) : saisie du CV (collage ou import d'un fichier `.txt` / `.md` / `.pdf`), **collage du texte de l'offre d'emploi** et choix du ton → génération d'une lettre personnalisée par l'API GLM (modèle `glm-4.7-flash`, `chat/completions` en streaming SSE)
-- **L'offre est fournie manuellement par l'utilisateur** : il colle le texte complet de l'offre (intitulé, missions, profil recherché, entreprise) — aucune recherche web automatique, aucun champ « poste » / « ville »
-- Flux en 1 étape : rédaction streaming sur `glm-4.7-flash` basée sur l'offre collée + le CV (l'assistant fait le lien entre les exigences de l'offre et les compétences du CV)
-- **Échange de révision** : après la génération, un panneau de conversation permet de modifier/améliorer la lettre (raccourcir, changer le ton, insister sur une compétence…). Le contexte envoyé inclut le CV, l'offre et la lettre actuelle ; chaque réponse de l'assistant est mise en forme (streaming), remplace automatiquement la lettre si c'est une version complète révisée, et peut être appliquée manuellement via « 📥 Utiliser cette version »
-- **Corps de l'e-mail d'envoi** : bouton « 📧 Générer le corps d'e-mail » (actif après la génération de la lettre) → texte d'accompagnement bref (objet, contexte, annonce des pièces jointes CV + lettre, signature) à envoyer avec les fichiers ; résultat affiché dans un champ éditable et copiable
-- Si le CV ou l'offre manquent → message d'erreur explicite : pas de lettre générique
-- Boutons d'export : copier dans le presse-papiers, télécharger `.md`, impression ; le CV peut être importé depuis un fichier `.txt` ou `.pdf` (pdf.js chargé à la demande, extraction 100 % locale)
+### vesemt.org (`vesemt.org/`)
+Conversion statique HTML+CSS du site WordPress politique VESEMT (Vivre Surtout Ensemble et Si Possible Solidaires en Métropole Tourangelle).
+- 20 pages HTML, 20 images, 1 feuille CSS
+- Responsive design, aucun JavaScript (site purement statique)
+- Fichiers : `index.html`, `qui-sommes-nous.html`, `politique-confidentialite.html`, `agent.html`, `contacter-reseaux.html`, `elections-municipales-2026.html`, `articles/`, `images/`, `vesemt-css/`, `documentation/`, `tools/`
+- Documentation : `README.md`, `RAPPORT_ANALYSE.md`, `JOURNAL-MODIFICATIONS.md`, `RAPPORT-DEPLOIEMENT-AXXAM.md`, `VALIDATION-FOOTER.md`
 
-### axxam.net/animation (sous-dossier)
-- Site vitrine d'entrepreneur — **Axxam, animations créatives et durables**
-- Services présentés en **catalogue** avec prix (Dès 50 €/heure)
-- **Page tarifs** : 50€/h, 100€/2h, 150€/demi-journée, 250€/journée, forfait travail régulier ; matériel facturé en plus
-- HTML+CSS simple et léger, sans framework
-- Accessible sur `https://axxam.net/animation/`
+### axxam.net/boxingclubspdc (`boxingclubspdc/`)
+Site PWA du Boxing Club SPDC (Saint-Pierre-des-Corps), refondu en août 2026.
+- One-page : disciplines, offres (45€/55€/mois), équipe, événements, galerie filtrable
+- Thème noir/rouge (Oswald + Roboto), animations au scroll
+- PWA opérationnelle : `manifest.json` + `service-worker.js` en chemins relatifs
+- Fichiers : `index.html`, `styles.css`, `js/main.js`, `manifest.json`, `service-worker.js`, `images/`
 
-### poterie (sous-dossier) — Axxam Touraine
-- Site **Poterie Axxam Touraine** : tourneur potier (gobelets, ergonomie, cuisson, émaux)
-- Multi-pages : accueil, la pratique (tournage/cuisson/émaux), galerie filtrable + lightbox
-- **Générateur de gobelets 3D** intégré dans le site (`/poterie/gobelet/`, ex-`/gobelet/`)
-- Thème graphite/terracotta, titres Cormorant Garamond, JS vanilla
-- Images : placeholders SVG — à remplacer par les photos Instagram `@axxamtouraine`
-- Accessible sur `https://axxam.net/poterie/`
-
-### vesemt.org (sous-dossier)
-- Conversion statique du site WordPress politique **VESEMT** (Vivre Surtout Ensemble et Si Possible Solidaires en Métropole Tourangelle)
-- 20 pages HTML + 20 images + 1 feuille CSS
-- Contenu fidèle au site WordPress original
-- Responsive design
-- Documentation complète dans `/vesemt.org/README.md`
-
-### boxingclubspdc (sous-dossier)
-- Site **Boxing Club SPDC** (Saint-Pierre-des-Corps), refondu en août 2026
-- One-page : disciplines, offres (45€/55€/mois), équipe, événements, horaires 2026-2027, galerie filtrable + lightbox, TikTok, témoignages, contact
-- Thème unifié noir/rouge (Oswald + Roboto), responsive, animations au scroll
-- Photos réelles (Unsplash) + favicons/icônes PWA générées
-- PWA opérationnelle : manifest + service-worker en chemins relatifs (déploiement sous-sous-dossier)
-- Formulaire : envoi réel par email pré-rempli (mailto), plus de Formspree fictif
-- Documentation complète dans `/boxingclubspdc/README.md`
-
-### chateauambulant (sous-dossier)
-- **Château Ambulant** : grimoire littéraire documentant le système multi-agents « Foyer de Calcifère »
+### chateauambulant (`chateauambulant/`)
+Grimoire littéraire documentant le système multi-agents « Foyer de Calcifère ».
 - Architecture multi-agents, sécurité (SSRF, cercles d'influence), poésie technique, mémoire
-- Documentation complète dans `/chateauambulant/README.md`
+- Thème grimoire (parchemin/or, fontes UnifrakturMaguntia + Cinzel)
+- Diagrammes Mermaid.js, mode nuit via localStorage
+- Fichiers : `index.html`, `architecture.html`, `securite.html`, `poesie.html`, `memoire.html`, `script.js`, `styles.css`, `README.md`
 
 ---
 
-## 🔄 Workflow de synchronisation
+## 🛠️ Outils internes (racine)
 
-Le dossier `/vesemt.org/` est une **copie HTML+CSS** du site WordPress `vesemt.org`. Lorsque le site WordPress évolue (nouveaux articles, modifications de design), les changements sont **manuellement reflétés** dans cette version statique :
+### Chatbot « L'esprit de la rivière » (`llm.html`)
+- Assistant IA par GLM-4.7 Flash (Zhipu AI), streaming SSE
+- Fond eau animé (canvas 2D) respectant `prefers-reduced-motion`
+- Parser markdown maison, anti-XSS, liens http(s) uniquement
+- Clé API fournie par l'utilisateur
 
-1. Vérifier les modifications sur le WordPress original
-2. Appliquer les changements dans les fichiers HTML/CSS du dossier `vesemt.org/`
-3. Tester en local
-4. Commiter et pousser sur GitHub
-5. GitHub Pages déploie automatiquement
+### Générateur de lettre de motivation (`lettre-motivation.html`)
+- Application 100% navigateur, aucun backend
+- Import CV (.txt/.md/.pdf) + collage offre d'emploi
+- Génération streaming, échange de révision, corps d'e-mail d'envoi
+- Export : presse-papiers, `.md`, impression
+
+### Générateur de projet d'animation (`projet-animation.html`)
+- Assistant IA pour rédiger des projets d'animation (7 blocs structurés)
+- Formulaire interactif + chatbot guide par étape
+- Explication des objectifs, activités, matériel, évaluation
+- Export : presse-papiers, `.md`, impression
 
 ---
 
 ## 🛠️ Technologies utilisées
 
-### axxam.net/animation
-- HTML5
-- CSS3
-- Aucun framework
-- Responsive design (media queries)
-- Catalogue de services avec prix + page tarifs dédiée
+| Site / Outil | Technologies |
+|-------------|--------------|
+| Portail Axxam | HTML5, CSS3 (sans framework) |
+| animation/ | HTML5, CSS3, responsive |
+| potery/ | HTML5, CSS3, JS Vanilla, Three.js (CDN), Google Fonts |
+| vesemt.org | HTML5 sémantique, CSS3 (dossier `vesemt-css/`), sans JavaScript |
+| boxingclubspdc | HTML5 sémantique, CSS3, JS ES6+, PWA (Service Worker v2, manifest relatif) |
+| chateauambulant | HTML5, CSS3, JS Vanilla, Mermaid.js |
+| llm.html | HTML5, CSS3, JS Vanilla, SSE streaming, GLM-4.7 Flash |
+| lettre-motivation.html | HTML5, CSS3, JS Vanilla, pdf.js, GLM-4.7 Flash |
+| projet-animation.html | HTML5, CSS3, JS Vanilla, SSE streaming, GLM-4.7 Flash |
 
-### llm.html (Chatbot « L'esprit de la rivière »)
-- HTML5 + CSS3 (palette eau, `backdrop-filter`, animations CSS)
-- JavaScript Vanilla : canvas 2D animé (vagues + miettes de lumière), fetch SSE (streaming), parser markdown maison (nœuds DOM, anti-XSS)
-- API : `chat/completions` de Zhipu AI (GLM), modèle `glm-4.7-flash` en streaming
+---
 
-### poterie
-- HTML5 + CSS3 (Flexbox, Grid, Variables CSS, animations)
-- JavaScript Vanilla (filtres galerie + lightbox)
-- Génome paramétrique : gobelets 3D (Three.js via CDN), exports JPG/STL
-- Responsive design, SEO (Open Graph, sitemap)
-- Google Fonts (Cormorant Garamond)
+## 📝 Comment modifier les sites
 
-### vesemt.org
-- HTML5 sémantique
-- CSS3 (dossier `vesemt-css/`)
-- Responsive design intégré
-- Aucun JavaScript (site purement statique)
+### Portail Axxam (racine)
+- Éditer `index.html` (structure) et `hub.css` (styles)
+- Les redirections legacy (`a-propos.html`, `services.html`, etc.) pointent vers `animation/`
 
-### boxingclubspdc
-- HTML5 sémantique + CSS3 (Flexbox, Grid, Variables CSS, animations)
-- JavaScript Vanilla (ES6+) + PWA (Service Worker v2, manifest relatif)
-- Galerie filtrable + lightbox, formulaire mailto
-- SEO (Schema.org, Open Graph, sitemap, robots)
+### animation/
+- Éditer `animation/index.html`, `animation/services.html`, `animation/tarifs.html`
+- Modifier `animation/style.css` pour le style global
+- Les fichiers `a-propos.html`, `contact.html`, `services.html`, `tarifs.html` à la racine redirigent vers `animation/`
 
-### chateauambulant
-- HTML5 + CSS3 (thème grimoire : parchemin/or, fontes UnifrakturMaguntia + Cinzel)
-- JavaScript Vanilla (mode nuit localStorage) + Mermaid.js (diagrammes)
+### potery/
+- Éditer `poterie/index.html`, `poterie/pratique.html`, `poterie/galerie.html`
+- Modifier `poterie/style.css` et `poterie/js/galerie.js`
+- Le générateur de gobelets vit dans `poterie/gobelet/`
+- Remplacer les placeholders SVG dans `poterie/img/` par les vraies photos
+
+### vesemt.org/
+- Éditer les 20 pages HTML dans `vesemt.org/`
+- Modifier `vesemt.org/vesemt-css/style.css`
+- Synchronisation manuelle avec le WordPress original (voir workflow ci-dessous)
+
+### boxingclubspdc/
+- Éditer `boxingclubspdc/index.html`
+- Modifier `boxingclubspdc/styles.css` et `boxingclubspdc/js/main.js`
+- Ajouter photos dans `boxingclubspdc/images/`
+
+### chateauambulant/
+- Éditer `chateauambulant/index.html`, `architecture.html`, `securite.html`, `poesie.html`, `memoire.html`
+- Modifier `chateauambulant/styles.css` et `chateauambulant/script.js`
 
 ---
 
@@ -198,90 +169,62 @@ Le dossier `/vesemt.org/` est une **copie HTML+CSS** du site WordPress `vesemt.o
 
 Les sites sont déployés via **GitHub Pages** :
 
-1. **Portail Axxam** : Racine du dépôt → `https://hauuru.github.io/Axxam/`
-2. **axxam.net/animation** : Sous-dossier → `https://hauuru.github.io/Axxam/animation/`
-3. **poterie** : Sous-dossier → `https://hauuru.github.io/Axxam/poterie/`
-4. **vesemt.org** : Sous-dossier → `https://hauuru.github.io/Axxam/vesemt.org/`
-5. **boxingclubspdc** : Sous-dossier → `https://hauuru.github.io/Axxam/boxingclubspdc/`
-6. **chateauambulant** : Sous-dossier → `https://hauuru.github.io/Axxam/chateauambulant/`
+1. Aller dans **Settings → Pages** du dépôt
+2. Branche source : `main`
+3. Dossier : `/ (root)`
+4. Sauvegarder
 
-### Activation GitHub Pages
-- Aller dans **Settings → Pages** du dépôt
-- Branche source : `main`
-- Dossier : `/ (root)`
-- Sauvegarder
+Les sites sont ensuite accessibles sous 1-2 minutes :
 
-Attendre 1-2 minutes, puis les sites sont accessibles.
-
----
-
-## 📝 Modification des sites
-
-### Pour **axxam.net** (racine et sous-dossier `animation/`)
-- Le **portail** : éditer `index.html` (racine) et `hub.css`
-- Le **site animation** : éditer `animation/index.html`, `animation/services.html`, etc.
-- Modifier `animation/style.css` pour le style global du site animation
-- Commit & push
-
-### Pour **llm.html** (chatbot)
-- Éditer `llm.html` : structure, styles (palette eau), JavaScript (fond animé, streaming SSE, parser markdown) et le contexte `CUSTOM_CONTEXT`
-- La carte d'accès vit dans `index.html` (classe `hub-card--llm`)
-- Commit & push
-
-### Pour **poterie**
-- Éditer les fichiers HTML dans `/poterie/` (index, pratique, galerie)
-- Modifier `/poterie/style.css` et `/poterie/js/galerie.js`
-- Remplacer les placeholders `/poterie/img/*.svg` par les photos réelles (Instagram @axxamtouraine)
-- Le générateur vit dans `/poterie/gobelet/` (bouton « ← Retour » déjà intégré)
-- Commit & push
-
-### Pour **vesemt.org**
-- Éditer les fichiers HTML dans `/vesemt.org/`
-- Modifier `/vesemt.org/vesemt-css/style.css`
-- Voir le `/vesemt.org/README.md` pour la documentation complète
-
-### Pour **boxingclubspdc**
-- Éditer les fichiers HTML dans `/boxingclubspdc/` (one-page `index.html`)
-- Modifier `/boxingclubspdc/styles.css` et `/boxingclubspdc/js/main.js`
-- Ajouter les photos dans `/boxingclubspdc/images/`
-- Voir le `/boxingclubspdc/README.md` pour la documentation complète
-
-### Pour **chateauambulant**
-- Éditer les fichiers HTML dans `/chateauambulant/`
-- Modifier `/chateauambulant/styles.css` et `/chateauambulant/script.js`
-- Voir le `/chateauambulant/README.md` pour la documentation complète
+| Site | URL GitHub Pages | URL domaine |
+|------|-----------------|-------------|
+| Portail | https://hauuru.github.io/Axxam/ | https://axxam.net |
+| Animation | https://hauuru.github.io/Axxam/animation/ | https://axxam.net/animation/ |
+| Potery | https://hauuru.github.io/Axxam/poterie/ | https://axxam.net/poterie/ |
+| Vesemt | https://hauuru.github.io/Axxam/vesemt.org/ | https://axxam.net/vesemt.org/ |
+| Boxing Club | https://hauuru.github.io/Axxam/boxingclubspdc/ | https://axxam.net/boxingclubspdc/ |
+| Château Ambulant | https://hauuru.github.io/Axxam/chateauambulant/ | https://axxam.net/chateauambulant/ |
 
 ---
 
-## 📚 Documentation
+## 🔄 Workflow de synchronisation (vesemt.org)
 
-- **`/boxingclubspdc/README.md`** – Documentation du site Boxing Club SPDC (structure, formulaire, maintenance)
-- **`/vesemt.org/README.md`** – Documentation du site vesemt.org (installation, structure, déploiement)
-- **`/tmp/opencode/README.md`** – README maître (handover) de l'espace de travail : vue d'ensemble, rubriques, adressage des URLs et bases de données (base de connaissances de l'agent + bases anyclaw/Turso)
-- **`/vesemt.org/RAPPORT_ANALYSE.md`**
-- **`/vesemt.org/RAPPORT-DEPLOIEMENT-AXXAM.md`** – Rapport d'analyse détaillé et recommandations
-- **`/vesemt.org/JOURNAL-MODIFICATIONS.md`** – Historique des modifications du site vesemt.org
-- **`/chateauambulant/README.md`** – Documentation du site Château Ambulant
+Le dossier `vesemt.org/` est une copie HTML+CSS statique du site WordPress `vesemt.org`. Lorsqu'il évolue :
+
+1. Vérifier les modifications sur le WordPress original
+2. Appliquer les changements dans les fichiers HTML/CSS de `vesemt.org/`
+3. Tester en local
+4. Commiter et pousser sur GitHub
+5. GitHub Pages déploie automatiquement
 
 ---
 
-## 🤝 Contribution
+## 📚 Documentation interne
 
-Pour modifier ces sites :
-1. Fork le dépôt
-2. Créer une branche (`git checkout -b feature/ma-modif`)
-3. Commiter (`git commit -m 'Ajout de X'`)
-4. Pousser (`git push origin feature/ma-modif`)
-5. Ouvrir une Pull Request
+| Fichier | Contenu |
+|---------|---------|
+| `/vesemt.org/README.md` | Installation et structure de vesemt.org |
+| `/vesemt.org/RAPPORT_ANALYSE.md` | Rapport d'analyse détaillé |
+| `/vesemt.org/JOURNAL-MODIFICATIONS.md` | Historique des modifications |
+| `/vesemt.org/RAPPORT-DEPLOIEMENT-AXXAM.md` | Rapport de déploiement |
+| `/boxingclubspdc/README.md` | Documentation du site SPDC |
+| `/chateauambulant/README.md` | Documentation du Château Ambulant |
+
+---
+
+## 🔧 Scripts et outils utiles
+
+- `googlead63fcf620184b01.html` – Vérification Google Search Console
+- `robots.txt`, `sitemap.xml` – SEO et indexation
 
 ---
 
 ## ⚖️ Licence et droits d'auteur
 
-- **axxam.net** : Contenu propriétaire de l'entrepreneur
-- **vesemt.org** : Basé sur le contenu original de VESEMT – respecter les droits d'auteur originaux
-- **boxingclubspdc** : Contenu du club – respecter les droits d'auteur originaux
-- **chateauambulant** : Contenu du Foyer de Calcifère
+- **axxam.net** : contenu propriétaire de l'entrepreneur
+- **vesemt.org** : basé sur le contenu WordPress original VESEMT – respecter les droits d'auteur originaux
+- **boxingclubspdc** : contenu du club – respecter les droits d'auteur originaux
+- **chateauambulant** : contenu du Foyer de Calcifère
 
 ---
 
@@ -289,9 +232,9 @@ Pour modifier ces sites :
 
 Pour toute question sur le dépôt ou les sites :
 - Contacter **hauuru** (propriétaire du dépôt)
-- Pour le site vesemt.org : voir la page `vesemt.org/contacter-reseaux.html`
+- Pour vesemt.org : voir la page `vesemt.org/contacter-reseaux.html`
 
 ---
 
-**Dernière mise à jour** : 10 août 2026
-**Statut** : ✅ Opérationnel, déployé via GitHub Pages — portail axxam.net, site animation/, poterie (avec générateur de gobelets), boxingclubspdc et chatbot « L'esprit de la rivière » en ligne
+**Dernière mise à jour** : 10 septembre 2026  
+**Statut** : ✅ Opérationnel, déployé via GitHub Pages — 6 sites et 3 outils internes en ligne
