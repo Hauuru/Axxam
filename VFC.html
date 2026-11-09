@@ -22,9 +22,16 @@
   }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
   button.secondary { background: #334155; }
+  .video-container {
+    width: 100%; max-width: 320px; height: 240px;
+    background: #000; border-radius: 12px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  #preview { width: 100%; height: 100%; object-fit: cover; }
   .timer { font-size: 3rem; font-variant-numeric: tabular-nums; font-weight: 700; color: #3b82f6; }
   #waveform { width: 100%; max-width: 500px; height: 120px; background: #1e293b; border-radius: 12px; }
-  .status { font-size: 0.9rem; color: #94a3b8; max-width: 340px; }
+  .status { font-size: 0.9rem; color: #94a3b8; max-width: 340px; min-height: 2.4em; }
   .results { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
   .metric { display: flex; justify-content: space-between; padding: 16px 20px; background: #1e293b; border-radius: 12px; }
   .metric-label { color: #94a3b8; }
@@ -37,8 +44,10 @@
     background: #1e293b; padding: 16px; border-radius: 12px;
     font-family: 'Courier New', monospace; font-size: 0.85rem;
     word-break: break-word; width: 100%; max-width: 400px; color: #cbd5e1;
+    white-space: pre-wrap;
   }
   .error { color: #ef4444; padding: 16px; max-width: 340px; }
+  .debug { font-size: 0.75rem; color: #64748b; max-width: 400px; word-break: break-all; }
 </style>
 </head>
 <body>
@@ -51,6 +60,9 @@
 
 <div id="screen-measure" class="screen">
   <div class="timer" id="timer">45s</div>
+  <div class="video-container">
+    <video id="preview" autoplay playsinline muted></video>
+  </div>
   <canvas id="waveform" width="500" height="120"></canvas>
   <div class="status" id="status">Initialisation…</div>
   <button id="btn-stop" class="secondary">Arrêter</button>
@@ -77,6 +89,7 @@
     </div>
   </div>
   <div id="summary"></div>
+  <div class="debug" id="debug-info"></div>
   <button id="btn-copy">Copier le résumé</button>
   <button id="btn-restart" class="secondary">Nouvelle mesure</button>
 </div>
@@ -84,6 +97,7 @@
 <div id="screen-error" class="screen">
   <h1>Erreur</h1>
   <p class="error" id="error-msg"></p>
+  <div class="debug" id="error-debug"></div>
   <button id="btn-back">Retour</button>
 </div>
 
@@ -94,7 +108,9 @@ const DURATION = 45;
 let ppg = null, running = false, startTime = 0;
 let canvas, ctx;
 let waveformSamples = [];
-const MAX_WAVEFORM_POINTS = 300; // Affiche les 10 dernières secondes environ
+const MAX_WAVEFORM_POINTS = 300;
+let lastMetrics = null;
+let lastState = 'NO_FINGER';
 const $ = id => document.getElementById(id);
 
 function showScreen(name) {
@@ -108,22 +124,41 @@ async function startMeasurement() {
     canvas = $('waveform');
     ctx = canvas.getContext('2d');
     waveformSamples = [];
+    lastMetrics = null;
+    lastState = 'NO_FINGER';
     $('status').textContent = 'Demande d\'accès à la caméra…';
 
-    // Initialisation de ppg-js
-    ppg = new PPG();
+    const videoEl = $('preview');
+    
+    // Initialisation de ppg-js avec notre élément vidéo pour l'aperçu
+    ppg = new PPG({ video: videoEl });
 
-    // Suivi de l'état du doigt
-    ppg.addEventListener('state', (e) => {
-      const { state, reason } = e.detail;
-      if (state === 'NO_FINGER') $('status').textContent = 'Pose ton doigt sur la caméra…';
-      else if (state === 'SETTLING') $('status').textContent = 'Initialisation du signal… reste immobile.';
-      else if (state === 'MEASURING') $('status').textContent = 'Mesure en cours…';
-      else $('status').textContent = `État : ${state} (${reason || ''})`;
+    ppg.addEventListener('ready', (e) => {
+      const d = e.detail;
+      console.log('Ready:', d);
+      if (!d.torchSupported) {
+        $('status').textContent = 'Flash non supporté par ce navigateur. Éclaire avec une lampe.';
+      } else {
+        $('status').textContent = 'Caméra prête. Pose ton doigt…';
+      }
     });
 
-    // Réception des métriques
+    ppg.addEventListener('state', (e) => {
+      const { state, reason } = e.detail;
+      lastState = state;
+      if (state === 'NO_FINGER') {
+        $('status').textContent = 'Pose ton doigt sur la caméra et le flash…';
+      } else if (state === 'SETTLING') {
+        $('status').textContent = 'Initialisation du signal… reste immobile.';
+      } else if (state === 'MEASURING') {
+        $('status').textContent = 'Mesure en cours…';
+      } else {
+        $('status').textContent = `État : ${state} (${reason || ''})`;
+      }
+    });
+
     ppg.addEventListener('metrics', (e) => {
+      lastMetrics = e.detail;
       const m = e.detail;
       if (m.quality && m.quality.good) {
         $('status').textContent = `Mesure en cours… FC: ${Math.round(m.heartRate)} bpm`;
@@ -132,7 +167,6 @@ async function startMeasurement() {
       }
     });
 
-    // Réception de la waveform (un échantillon par frame)
     ppg.addEventListener('waveform', (e) => {
       const sample = e.detail;
       if (typeof sample === 'number') {
@@ -144,20 +178,18 @@ async function startMeasurement() {
       }
     });
 
-    // Gestion des erreurs
     ppg.addEventListener('error', (e) => {
       console.error('Erreur ppg-js:', e.detail);
-      $('status').textContent = `Erreur : ${e.detail.message || e.detail}`;
+      $('status').textContent = `Erreur : ${e.detail.message || e.detail.code || e.detail}`;
     });
 
-    // Démarrage de la capture
     await ppg.start();
     running = true;
     startTime = performance.now();
     loopTimer();
 
   } catch (err) {
-    showError(err.message || String(err));
+    showError(err.message || String(err), err.stack);
   }
 }
 
@@ -200,29 +232,35 @@ async function stopMeasurement() {
     try { await ppg.stop(); } catch (e) { console.warn(e); }
   }
 
-  // Récupération des métriques finales via l'API
-  let result = null;
-  if (ppg && typeof ppg.getMetrics === 'function') {
-    try {
-      result = ppg.getMetrics();
-    } catch (e) {
-      console.warn('getMetrics a échoué', e);
-    }
+  let summary = null;
+  try {
+    summary = ppg.getSessionSummary();
+  } catch (e) {
+    console.warn('getSessionSummary a échoué', e);
   }
 
-  if (!result || result.heartRate === undefined || result.rmssd === undefined || result.sdnn === undefined) {
-    showError('Les données de mesure sont incomplètes. Vérifie que le doigt couvre bien la caméra et le flash, et reste immobile.');
+  // Si le résumé n'est pas disponible, on tente avec les dernières métriques
+  if (!summary || summary.heartRate === undefined) {
+    summary = lastMetrics;
+  }
+
+  // Vérification stricte des données
+  if (!summary || summary.heartRate === undefined || summary.rmssd === undefined || summary.sdnn === undefined) {
+    const debugInfo = `Dernier état : ${lastState}\n` +
+                      `Dernières métriques : ${JSON.stringify(lastMetrics)}\n` +
+                      `Résumé session : ${JSON.stringify(summary)}`;
+    showError('Les données de mesure sont incomplètes. Le signal n\'a probablement pas été jugé valide (doigt mal positionné, flash absent, ou mouvement).', debugInfo);
     return;
   }
 
-  displayResult(result);
+  displayResult(summary);
 }
 
 function displayResult(result) {
   const hr = result.heartRate;
   const rmssd = result.rmssd;
   const sdnn = result.sdnn;
-  const q = result.quality ? (result.quality.good ? 'bonne' : (result.quality.reason || 'mauvaise')) : 'mauvaise';
+  const q = result.quality ? (result.quality.good ? 'bonne' : (result.quality.reason || result.quality.code || 'mauvaise')) : 'mauvaise';
 
   const qClass = q === 'bonne' ? 'quality-good' : (q === 'moyenne' ? 'quality-medium' : 'quality-bad');
 
@@ -234,11 +272,22 @@ function displayResult(result) {
   const date = new Date().toISOString().slice(0, 10);
   $('summary').textContent = `VFC ${date}: RMSSD=${Math.round(rmssd)}ms, SDNN=${Math.round(sdnn)}ms, FC=${Math.round(hr * 10) / 10}bpm, qualité=${q}`;
 
+  // Affichage des infos de debug utiles
+  let debugStr = '';
+  if (result.quality && result.quality.code) {
+    debugStr += `Code qualité : ${result.quality.code}\n`;
+  }
+  if (result.rmssdFloorMs) {
+    debugStr += `Plancher de bruit RMSSD : ${Math.round(result.rmssdFloorMs)} ms\n`;
+  }
+  $('debug-info').textContent = debugStr;
+
   showScreen('result');
 }
 
-function showError(msg) {
+function showError(msg, debug = '') {
   $('error-msg').textContent = msg;
+  $('error-debug').textContent = debug;
   showScreen('error');
 }
 
@@ -250,6 +299,8 @@ $('btn-restart').addEventListener('click', () => {
     ppg = null;
   }
   waveformSamples = [];
+  lastMetrics = null;
+  lastState = 'NO_FINGER';
   showScreen('home');
 });
 $('btn-back').addEventListener('click', () => showScreen('home'));
