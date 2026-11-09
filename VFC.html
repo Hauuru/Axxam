@@ -1,323 +1,504 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Mesure VFC</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #0f172a; color: #e2e8f0;
-    min-height: 100vh; display: flex; flex-direction: column; padding: 20px;
-  }
-  .screen { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 20px; text-align: center; }
-  .screen.active { display: flex; }
-  h1 { font-size: 1.5rem; font-weight: 600; }
-  p { color: #94a3b8; font-size: 0.95rem; line-height: 1.5; max-width: 340px; }
-  button {
-    background: #3b82f6; color: white; border: none;
-    padding: 16px 32px; border-radius: 12px; font-size: 1rem; font-weight: 600;
-    cursor: pointer; transition: opacity 0.2s;
-  }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
-  button.secondary { background: #334155; }
-  .video-container {
-    width: 100%; max-width: 320px; height: 240px;
-    background: #000; border-radius: 12px; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    position: relative;
-  }
-  #preview { width: 100%; height: 100%; object-fit: cover; }
-  .timer { font-size: 3rem; font-variant-numeric: tabular-nums; font-weight: 700; color: #3b82f6; }
-  #waveform { width: 100%; max-width: 500px; height: 120px; background: #1e293b; border-radius: 12px; }
-  .status { font-size: 0.9rem; color: #94a3b8; max-width: 340px; min-height: 2.4em; }
-  .results { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
-  .metric { display: flex; justify-content: space-between; padding: 16px 20px; background: #1e293b; border-radius: 12px; }
-  .metric-label { color: #94a3b8; }
-  .metric-value { font-weight: 700; font-variant-numeric: tabular-nums; }
-  .metric-unit { color: #64748b; margin-left: 4px; font-weight: 400; font-size: 0.85em; }
-  .quality-good { color: #22c55e; }
-  .quality-medium { color: #eab308; }
-  .quality-bad { color: #ef4444; }
-  #summary {
-    background: #1e293b; padding: 16px; border-radius: 12px;
-    font-family: 'Courier New', monospace; font-size: 0.85rem;
-    word-break: break-word; width: 100%; max-width: 400px; color: #cbd5e1;
-    white-space: pre-wrap;
-  }
-  .error { color: #ef4444; padding: 16px; max-width: 340px; }
-  .debug { font-size: 0.75rem; color: #64748b; max-width: 400px; word-break: break-all; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesure VFC - Tracker EM/SFC</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #e2e8f0;
+            --accent: #38bdf8;
+            --danger: #f87171;
+            --success: #4ade80;
+            --muted: #94a3b8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+        .container {
+            background: var(--card);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: #000;
+            border-radius: 1rem;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            border: 2px solid #334155;
+        }
+        #cameraPreview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #waveformCanvas {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 30%;
+            background: rgba(0,0,0,0.5);
+            border-top: 1px solid #475569;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            color: var(--muted);
+        }
+        .state-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+        .state-NO_FINGER { background: #7f1d1d; color: #fca5a5; }
+        .state-SETTLING { background: #78350f; color: #fcd34d; }
+        .state-MEASURING { background: #14532d; color: #86efac; }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .metric {
+            background: #0f172a;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            text-align: center;
+        }
+        .metric .label {
+            font-size: 0.75rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .metric .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 0.25rem;
+        }
+        .metric .unit {
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+        button {
+            width: 100%;
+            padding: 0.875rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:active { opacity: 0.8; }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #startBtn {
+            background: var(--accent);
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+        #copyBtn {
+            background: #334155;
+            color: var(--text);
+            margin-top: 0.5rem;
+        }
+        #copyBtn:not(:disabled) {
+            background: var(--success);
+            color: #0f172a;
+        }
+        .message-box {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            display: none;
+        }
+        .message-box.error {
+            display: block;
+            background: #450a0a;
+            border: 1px solid var(--danger);
+            color: #fca5a5;
+        }
+        .message-box.info {
+            display: block;
+            background: #0c4a6e;
+            border: 1px solid var(--accent);
+            color: #bae6fd;
+        }
+        .timer {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-variant-numeric: tabular-nums;
+        }
+        .hidden { display: none; }
+    </style>
 </head>
 <body>
+<div class="container">
+    <h1>📊 Mesure VFC</h1>
 
-<div id="screen-home" class="screen active">
-  <h1>Mesure VFC</h1>
-  <p>Pose ton doigt sur la caméra arrière avec le flash allumé. Reste immobile.</p>
-  <button id="btn-start">Démarrer la mesure</button>
-</div>
+    <div class="video-wrapper">
+        <video id="cameraPreview" playsinline muted autoplay></video>
+        <canvas id="waveformCanvas"></canvas>
+    </div>
 
-<div id="screen-measure" class="screen">
-  <div class="timer" id="timer">45s</div>
-  <div class="video-container">
-    <video id="preview" autoplay playsinline muted></video>
-  </div>
-  <canvas id="waveform" width="500" height="120"></canvas>
-  <div class="status" id="status">Initialisation…</div>
-  <button id="btn-stop" class="secondary">Arrêter</button>
-</div>
+    <div class="status-bar">
+        <span>État du doigt :</span>
+        <span id="stateBadge" class="state-badge state-NO_FINGER">NO_FINGER</span>
+    </div>
 
-<div id="screen-result" class="screen">
-  <h1>Résultat</h1>
-  <div class="results">
-    <div class="metric">
-      <span class="metric-label">Fréquence cardiaque</span>
-      <span class="metric-value" id="res-hr">—</span>
-    </div>
-    <div class="metric">
-      <span class="metric-label">RMSSD</span>
-      <span class="metric-value" id="res-rmssd">—</span>
-    </div>
-    <div class="metric">
-      <span class="metric-label">SDNN</span>
-      <span class="metric-value" id="res-sdnn">—</span>
-    </div>
-    <div class="metric">
-      <span class="metric-label">Qualité du signal</span>
-      <span class="metric-value" id="res-quality">—</span>
-    </div>
-  </div>
-  <div id="summary"></div>
-  <div class="debug" id="debug-info"></div>
-  <button id="btn-copy">Copier le résumé</button>
-  <button id="btn-restart" class="secondary">Nouvelle mesure</button>
-</div>
+    <div class="timer" id="timerDisplay">45s</div>
 
-<div id="screen-error" class="screen">
-  <h1>Erreur</h1>
-  <p class="error" id="error-msg"></p>
-  <div class="debug" id="error-debug"></div>
-  <button id="btn-back">Retour</button>
+    <div class="metrics-grid">
+        <div class="metric">
+            <div class="label">FC</div>
+            <div class="value" id="heartRate">--</div>
+            <div class="unit">bpm</div>
+        </div>
+        <div class="metric">
+            <div class="label">RMSSD</div>
+            <div class="value" id="rmssd">--</div>
+            <div class="unit">ms</div>
+        </div>
+        <div class="metric">
+            <div class="label">SDNN</div>
+            <div class="value" id="sdnn">--</div>
+            <div class="unit">ms</div>
+        </div>
+        <div class="metric">
+            <div class="label">Qualité</div>
+            <div class="value" id="quality">--</div>
+            <div class="unit">&nbsp;</div>
+        </div>
+    </div>
+
+    <button id="startBtn">Démarrer la mesure (45s)</button>
+    <button id="copyBtn" disabled>📋 Copier le résumé</button>
+
+    <div id="messageBox" class="message-box"></div>
 </div>
 
 <script type="module">
-import { PPG } from 'https://esm.sh/@sontakey/ppg-js';
+    import { PPG } from 'https://esm.sh/@sontakey/ppg-js';
 
-const DURATION = 45;
-let ppg = null, running = false, startTime = 0;
-let canvas, ctx;
-let waveformSamples = [];
-const MAX_WAVEFORM_POINTS = 300;
-let lastMetrics = null;
-let lastState = 'NO_FINGER';
-const $ = id => document.getElementById(id);
+    // ---- DOM ----
+    const video = document.getElementById('cameraPreview');
+    const canvas = document.getElementById('waveformCanvas');
+    const ctx = canvas.getContext('2d');
+    const stateBadge = document.getElementById('stateBadge');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const heartRateEl = document.getElementById('heartRate');
+    const rmssdEl = document.getElementById('rmssd');
+    const sdnnEl = document.getElementById('sdnn');
+    const qualityEl = document.getElementById('quality');
+    const startBtn = document.getElementById('startBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const messageBox = document.getElementById('messageBox');
 
-function showScreen(name) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  $(`screen-${name}`).classList.add('active');
-}
+    // ---- Variables ----
+    let ppg = null;
+    let measurementActive = false;
+    let timerInterval = null;
+    let remainingSeconds = 45;
+    let latestMetrics = null;
+    let lastState = 'NO_FINGER';
+    let waveformData = []; // buffer des échantillons pour le canvas
+    const MAX_WAVEFORM_POINTS = 200;
 
-async function startMeasurement() {
-  try {
-    showScreen('measure');
-    canvas = $('waveform');
-    ctx = canvas.getContext('2d');
-    waveformSamples = [];
-    lastMetrics = null;
-    lastState = 'NO_FINGER';
-    $('status').textContent = 'Demande d\'accès à la caméra…';
+    // ---- Canvas ----
+    function resizeCanvas() {
+        canvas.width = canvas.clientWidth * window.devicePixelRatio;
+        canvas.height = canvas.clientHeight * window.devicePixelRatio;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-    const videoEl = $('preview');
-    
-    // Initialisation de ppg-js avec notre élément vidéo pour l'aperçu
-    ppg = new PPG({ video: videoEl });
+    function drawWaveform() {
+        const w = canvas.clientWidth;
+        const h = canvas.clientHeight;
+        ctx.clearRect(0, 0, w, h);
 
-    ppg.addEventListener('ready', (e) => {
-      const d = e.detail;
-      console.log('Ready:', d);
-      if (!d.torchSupported) {
-        $('status').textContent = 'Flash non supporté par ce navigateur. Éclaire avec une lampe.';
-      } else {
-        $('status').textContent = 'Caméra prête. Pose ton doigt…';
-      }
-    });
+        if (waveformData.length < 2) return;
 
-    ppg.addEventListener('state', (e) => {
-      const { state, reason } = e.detail;
-      lastState = state;
-      if (state === 'NO_FINGER') {
-        $('status').textContent = 'Pose ton doigt sur la caméra et le flash…';
-      } else if (state === 'SETTLING') {
-        $('status').textContent = 'Initialisation du signal… reste immobile.';
-      } else if (state === 'MEASURING') {
-        $('status').textContent = 'Mesure en cours…';
-      } else {
-        $('status').textContent = `État : ${state} (${reason || ''})`;
-      }
-    });
+        // Normalisation simple
+        const min = Math.min(...waveformData);
+        const max = Math.max(...waveformData);
+        const range = max - min || 1;
 
-    ppg.addEventListener('metrics', (e) => {
-      lastMetrics = e.detail;
-      const m = e.detail;
-      if (m.quality && m.quality.good) {
-        $('status').textContent = `Mesure en cours… FC: ${Math.round(m.heartRate)} bpm`;
-      } else if (m.quality && m.quality.reason) {
-        $('status').textContent = `Signal : ${m.quality.reason}`;
-      }
-    });
+        ctx.beginPath();
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
 
-    ppg.addEventListener('waveform', (e) => {
-      const sample = e.detail;
-      if (typeof sample === 'number') {
-        waveformSamples.push(sample);
-        if (waveformSamples.length > MAX_WAVEFORM_POINTS) {
-          waveformSamples.shift();
+        for (let i = 0; i < waveformData.length; i++) {
+            const x = (i / (waveformData.length - 1)) * w;
+            const y = h - ((waveformData[i] - min) / range) * (h * 0.8) - h * 0.1;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
         }
-        drawWaveform();
-      }
+        ctx.stroke();
+    }
+
+    // ---- Messages ----
+    function showMessage(text, type = 'info') {
+        messageBox.textContent = text;
+        messageBox.className = `message-box ${type}`;
+    }
+
+    function hideMessage() {
+        messageBox.className = 'message-box';
+        messageBox.textContent = '';
+    }
+
+    // ---- Initialisation PPG ----
+    function initPPG() {
+        if (ppg) return;
+
+        ppg = new PPG({
+            video: video, // La bibliothèque gère la caméra et le flash
+        });
+
+        // Événement : état du doigt (NO_FINGER, SETTLING, MEASURING)
+        ppg.addEventListener('state', (e) => {
+            const { state, reason } = e.detail;
+            lastState = state;
+            stateBadge.textContent = state;
+            stateBadge.className = `state-badge state-${state}`;
+            if (state === 'NO_FINGER') {
+                showMessage('Placez votre doigt sur la caméra arrière et le flash.', 'info');
+            } else if (state === 'SETTLING') {
+                showMessage('Signal en cours de stabilisation... Ne bougez plus.', 'info');
+            } else if (state === 'MEASURING') {
+                hideMessage();
+            }
+        });
+
+        // Événement : forme d'onde (un échantillon par frame)
+        ppg.addEventListener('waveform', (e) => {
+            const sample = e.detail; // valeur numérique unique
+            if (typeof sample === 'number' && !isNaN(sample)) {
+                waveformData.push(sample);
+                if (waveformData.length > MAX_WAVEFORM_POINTS) {
+                    waveformData.shift();
+                }
+                drawWaveform();
+            }
+        });
+
+        // Événement : métriques en temps réel
+        ppg.addEventListener('metrics', (e) => {
+            const m = e.detail;
+            latestMetrics = m;
+
+            if (m.heartRate && m.heartRate > 0) {
+                heartRateEl.textContent = Math.round(m.heartRate);
+            }
+            if (m.rmssd !== undefined && m.rmssd > 0) {
+                rmssdEl.textContent = Math.round(m.rmssd);
+            }
+            if (m.sdnn !== undefined && m.sdnn > 0) {
+                sdnnEl.textContent = Math.round(m.sdnn);
+            }
+            if (m.quality) {
+                qualityEl.textContent = m.quality.good ? 'Bonne' : 'Faible';
+                qualityEl.style.color = m.quality.good ? 'var(--success)' : 'var(--danger)';
+            }
+        });
+
+        // Événement : erreur
+        ppg.addEventListener('error', (e) => {
+            const err = e.detail;
+            console.error('PPG Error:', err);
+            showMessage(`Erreur : ${err.message || err.code || 'Inconnue'}`, 'error');
+            stopMeasurement();
+        });
+    }
+
+    // ---- Démarrer la mesure ----
+    async function startMeasurement() {
+        hideMessage();
+        initPPG();
+
+        // Réinitialiser l'interface
+        waveformData = [];
+        heartRateEl.textContent = '--';
+        rmssdEl.textContent = '--';
+        sdnnEl.textContent = '--';
+        qualityEl.textContent = '--';
+        qualityEl.style.color = 'var(--accent)';
+        copyBtn.disabled = true;
+        latestMetrics = null;
+
+        try {
+            await ppg.start();
+        } catch (err) {
+            console.error('Erreur de démarrage:', err);
+            showMessage(`Impossible de démarrer la caméra : ${err.message || err.code}`, 'error');
+            return;
+        }
+
+        measurementActive = true;
+        startBtn.disabled = true;
+        remainingSeconds = 45;
+        timerDisplay.textContent = `${remainingSeconds}s`;
+
+        // Activer le flash si possible (la bibliothèque le fait souvent, mais on force via l'API)
+        try {
+            const stream = video.srcObject;
+            if (stream) {
+                const track = stream.getVideoTracks()[0];
+                if (track) {
+                    const capabilities = track.getCapabilities();
+                    if (capabilities.torch) {
+                        await track.applyConstraints({ advanced: [{ torch: true }] });
+                    }
+                }
+            }
+        } catch (flashErr) {
+            console.warn('Flash non disponible:', flashErr);
+        }
+
+        // Minuteur
+        timerInterval = setInterval(() => {
+            remainingSeconds--;
+            timerDisplay.textContent = `${remainingSeconds}s`;
+            if (remainingSeconds <= 0) {
+                stopMeasurement();
+            }
+        }, 1000);
+    }
+
+    // ---- Arrêter la mesure ----
+    function stopMeasurement() {
+        if (!measurementActive) return;
+        measurementActive = false;
+        clearInterval(timerInterval);
+        startBtn.disabled = false;
+
+        // Arrêter la caméra
+        if (ppg) {
+            try { ppg.stop(); } catch (e) { /* ignore */ }
+        }
+
+        // Éteindre le flash
+        try {
+            const stream = video.srcObject;
+            if (stream) {
+                const track = stream.getVideoTracks()[0];
+                if (track) {
+                    track.applyConstraints({ advanced: [{ torch: false }] });
+                }
+            }
+        } catch (e) { /* ignore */ }
+
+        // Générer le résumé
+        generateSummary();
+    }
+
+    // ---- Générer le résumé ----
+    function generateSummary() {
+        if (!ppg) {
+            showMessage('Aucune session PPG active.', 'error');
+            return;
+        }
+
+        let summary;
+        try {
+            summary = ppg.getSessionSummary();
+        } catch (e) {
+            console.error('getSessionSummary a échoué:', e);
+            showMessage(`Erreur lors de la récupération du résumé : ${e.message}`, 'error');
+            return;
+        }
+
+        // Vérifier que le signal est exploitable
+        if (!summary || !summary.quality || !summary.quality.good) {
+            const reason = summary?.quality?.reason || 'signal_non_exploitable';
+            const guidance = summary?.quality?.guidanceMessage || 'Assurez-vous que le doigt couvre bien la caméra et le flash, et restez immobile.';
+            showMessage(
+                `Mesure échouée (${reason}). ${guidance}\n` +
+                `Dernier état : ${lastState}.`,
+                'error'
+            );
+            return;
+        }
+
+        const date = new Date().toISOString().slice(0, 10);
+        const hr = Math.round(summary.heartRate || 0);
+        const rmssd = Math.round(summary.rmssd || 0);
+        const sdnn = Math.round(summary.sdnn || 0);
+        const qualityLabel = summary.quality.good ? 'bonne' : 'faible';
+
+        const text = `VFC ${date}: RMSSD=${rmssd}ms, SDNN=${sdnn}ms, FC=${hr}bpm, qualité=${qualityLabel}`;
+
+        // Afficher le résumé et activer le bouton copier
+        showMessage(`Résumé prêt :\n${text}`, 'info');
+
+        copyBtn.disabled = false;
+        copyBtn.onclick = async () => {
+            try {
+                await navigator.clipboard.writeText(text);
+                copyBtn.textContent = '✅ Copié !';
+                setTimeout(() => { copyBtn.textContent = '📋 Copier le résumé'; }, 2000);
+            } catch (err) {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                copyBtn.textContent = '✅ Copié !';
+                setTimeout(() => { copyBtn.textContent = '📋 Copier le résumé'; }, 2000);
+            }
+        };
+    }
+
+    // ---- Événements UI ----
+    startBtn.addEventListener('click', startMeasurement);
+
+    // Nettoyage
+    window.addEventListener('beforeunload', () => {
+        if (ppg) try { ppg.destroy(); } catch (e) { /* ignore */ }
     });
-
-    ppg.addEventListener('error', (e) => {
-      console.error('Erreur ppg-js:', e.detail);
-      $('status').textContent = `Erreur : ${e.detail.message || e.detail.code || e.detail}`;
-    });
-
-    await ppg.start();
-    running = true;
-    startTime = performance.now();
-    loopTimer();
-
-  } catch (err) {
-    showError(err.message || String(err), err.stack);
-  }
-}
-
-function loopTimer() {
-  if (!running) return;
-  const elapsed = (performance.now() - startTime) / 1000;
-  const remaining = Math.max(0, DURATION - elapsed);
-  $('timer').textContent = Math.ceil(remaining) + 's';
-  if (remaining <= 0) {
-    stopMeasurement();
-    return;
-  }
-  requestAnimationFrame(loopTimer);
-}
-
-function drawWaveform() {
-  if (!canvas || waveformSamples.length < 2) return;
-  const w = canvas.width, h = canvas.height;
-  ctx.fillStyle = '#1e293b';
-  ctx.fillRect(0, 0, w, h);
-
-  const min = Math.min(...waveformSamples);
-  const max = Math.max(...waveformSamples);
-  const range = max - min || 1;
-
-  ctx.strokeStyle = '#3b82f6';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  waveformSamples.forEach((v, i) => {
-    const x = (i / (waveformSamples.length - 1)) * w;
-    const y = h - ((v - min) / range) * (h - 20) - 10;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
-  ctx.stroke();
-}
-
-async function stopMeasurement() {
-  running = false;
-  if (ppg) {
-    try { await ppg.stop(); } catch (e) { console.warn(e); }
-  }
-
-  let summary = null;
-  try {
-    summary = ppg.getSessionSummary();
-  } catch (e) {
-    console.warn('getSessionSummary a échoué', e);
-  }
-
-  // Si le résumé n'est pas disponible, on tente avec les dernières métriques
-  if (!summary || summary.heartRate === undefined) {
-    summary = lastMetrics;
-  }
-
-  // Vérification stricte des données
-  if (!summary || summary.heartRate === undefined || summary.rmssd === undefined || summary.sdnn === undefined) {
-    const debugInfo = `Dernier état : ${lastState}\n` +
-                      `Dernières métriques : ${JSON.stringify(lastMetrics)}\n` +
-                      `Résumé session : ${JSON.stringify(summary)}`;
-    showError('Les données de mesure sont incomplètes. Le signal n\'a probablement pas été jugé valide (doigt mal positionné, flash absent, ou mouvement).', debugInfo);
-    return;
-  }
-
-  displayResult(summary);
-}
-
-function displayResult(result) {
-  const hr = result.heartRate;
-  const rmssd = result.rmssd;
-  const sdnn = result.sdnn;
-  const q = result.quality ? (result.quality.good ? 'bonne' : (result.quality.reason || result.quality.code || 'mauvaise')) : 'mauvaise';
-
-  const qClass = q === 'bonne' ? 'quality-good' : (q === 'moyenne' ? 'quality-medium' : 'quality-bad');
-
-  $('res-hr').innerHTML = `${Math.round(hr * 10) / 10} <span class="metric-unit">bpm</span>`;
-  $('res-rmssd').innerHTML = `${Math.round(rmssd)} <span class="metric-unit">ms</span>`;
-  $('res-sdnn').innerHTML = `${Math.round(sdnn)} <span class="metric-unit">ms</span>`;
-  $('res-quality').innerHTML = `<span class="${qClass}">${q}</span>`;
-
-  const date = new Date().toISOString().slice(0, 10);
-  $('summary').textContent = `VFC ${date}: RMSSD=${Math.round(rmssd)}ms, SDNN=${Math.round(sdnn)}ms, FC=${Math.round(hr * 10) / 10}bpm, qualité=${q}`;
-
-  // Affichage des infos de debug utiles
-  let debugStr = '';
-  if (result.quality && result.quality.code) {
-    debugStr += `Code qualité : ${result.quality.code}\n`;
-  }
-  if (result.rmssdFloorMs) {
-    debugStr += `Plancher de bruit RMSSD : ${Math.round(result.rmssdFloorMs)} ms\n`;
-  }
-  $('debug-info').textContent = debugStr;
-
-  showScreen('result');
-}
-
-function showError(msg, debug = '') {
-  $('error-msg').textContent = msg;
-  $('error-debug').textContent = debug;
-  showScreen('error');
-}
-
-$('btn-start').addEventListener('click', startMeasurement);
-$('btn-stop').addEventListener('click', stopMeasurement);
-$('btn-restart').addEventListener('click', () => {
-  if (ppg) {
-    try { ppg.destroy(); } catch (e) {}
-    ppg = null;
-  }
-  waveformSamples = [];
-  lastMetrics = null;
-  lastState = 'NO_FINGER';
-  showScreen('home');
-});
-$('btn-back').addEventListener('click', () => showScreen('home'));
-$('btn-copy').addEventListener('click', async () => {
-  const text = $('summary').textContent;
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch {
-    const r = document.createRange();
-    r.selectNode($('summary'));
-    window.getSelection().removeAllRanges();
-    window.getSelection().addRange(r);
-    document.execCommand('copy');
-  }
-  $('btn-copy').textContent = 'Copié !';
-  setTimeout(() => { $('btn-copy').textContent = 'Copier le résumé'; }, 1500);
-});
 </script>
 </body>
 </html>
