@@ -93,7 +93,8 @@ import { PPG } from 'https://esm.sh/@sontakey/ppg-js';
 const DURATION = 45;
 let ppg = null, running = false, startTime = 0;
 let canvas, ctx;
-let lastMetrics = null;
+let waveformSamples = [];
+const MAX_WAVEFORM_POINTS = 300; // Affiche les 10 dernières secondes environ
 const $ = id => document.getElementById(id);
 
 function showScreen(name) {
@@ -106,12 +107,13 @@ async function startMeasurement() {
     showScreen('measure');
     canvas = $('waveform');
     ctx = canvas.getContext('2d');
+    waveformSamples = [];
     $('status').textContent = 'Demande d\'accès à la caméra…';
 
     // Initialisation de ppg-js
     ppg = new PPG();
 
-    // Suivi de l'état du doigt (NO_FINGER -> SETTLING -> MEASURING)
+    // Suivi de l'état du doigt
     ppg.addEventListener('state', (e) => {
       const { state, reason } = e.detail;
       if (state === 'NO_FINGER') $('status').textContent = 'Pose ton doigt sur la caméra…';
@@ -122,7 +124,6 @@ async function startMeasurement() {
 
     // Réception des métriques
     ppg.addEventListener('metrics', (e) => {
-      lastMetrics = e.detail;
       const m = e.detail;
       if (m.quality && m.quality.good) {
         $('status').textContent = `Mesure en cours… FC: ${Math.round(m.heartRate)} bpm`;
@@ -131,9 +132,16 @@ async function startMeasurement() {
       }
     });
 
-    // Réception du signal pour dessiner la waveform
+    // Réception de la waveform (un échantillon par frame)
     ppg.addEventListener('waveform', (e) => {
-      drawWaveform(e.detail);
+      const sample = e.detail;
+      if (typeof sample === 'number') {
+        waveformSamples.push(sample);
+        if (waveformSamples.length > MAX_WAVEFORM_POINTS) {
+          waveformSamples.shift();
+        }
+        drawWaveform();
+      }
     });
 
     // Gestion des erreurs
@@ -142,7 +150,7 @@ async function startMeasurement() {
       $('status').textContent = `Erreur : ${e.detail.message || e.detail}`;
     });
 
-    // Démarrage de la capture (nécessite un geste utilisateur, ce qui est le cas ici)
+    // Démarrage de la capture
     await ppg.start();
     running = true;
     startTime = performance.now();
@@ -165,25 +173,21 @@ function loopTimer() {
   requestAnimationFrame(loopTimer);
 }
 
-function drawWaveform(data) {
-  if (!canvas || !data) return;
+function drawWaveform() {
+  if (!canvas || waveformSamples.length < 2) return;
   const w = canvas.width, h = canvas.height;
   ctx.fillStyle = '#1e293b';
   ctx.fillRect(0, 0, w, h);
 
-  // data peut être un tableau de valeurs ou un objet contenant un tableau
-  const vals = Array.isArray(data) ? data : (data.samples || []);
-  if (vals.length < 2) return;
-
-  const min = Math.min(...vals);
-  const max = Math.max(...vals);
+  const min = Math.min(...waveformSamples);
+  const max = Math.max(...waveformSamples);
   const range = max - min || 1;
 
   ctx.strokeStyle = '#3b82f6';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  vals.forEach((v, i) => {
-    const x = (i / (vals.length - 1)) * w;
+  waveformSamples.forEach((v, i) => {
+    const x = (i / (waveformSamples.length - 1)) * w;
     const y = h - ((v - min) / range) * (h - 20) - 10;
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
@@ -196,21 +200,18 @@ async function stopMeasurement() {
     try { await ppg.stop(); } catch (e) { console.warn(e); }
   }
 
-  // Récupération du résumé de session ou des dernières métriques
+  // Récupération des métriques finales via l'API
   let result = null;
-  if (ppg && typeof ppg.getSessionSummary === 'function') {
+  if (ppg && typeof ppg.getMetrics === 'function') {
     try {
-      result = ppg.getSessionSummary();
+      result = ppg.getMetrics();
     } catch (e) {
-      console.warn('getSessionSummary a échoué, utilisation des dernières métriques.', e);
+      console.warn('getMetrics a échoué', e);
     }
   }
-  if (!result && lastMetrics) {
-    result = lastMetrics;
-  }
 
-  if (!result) {
-    showError('Aucune mesure exploitable. Vérifie que le doigt couvre bien la caméra et que le flash est actif.');
+  if (!result || result.heartRate === undefined || result.rmssd === undefined || result.sdnn === undefined) {
+    showError('Les données de mesure sont incomplètes. Vérifie que le doigt couvre bien la caméra et le flash, et reste immobile.');
     return;
   }
 
@@ -222,11 +223,6 @@ function displayResult(result) {
   const rmssd = result.rmssd;
   const sdnn = result.sdnn;
   const q = result.quality ? (result.quality.good ? 'bonne' : (result.quality.reason || 'mauvaise')) : 'mauvaise';
-
-  if (hr === undefined || rmssd === undefined || sdnn === undefined) {
-    showError('Les données de mesure sont incomplètes. Réessaie en gardant le doigt plus immobile.');
-    return;
-  }
 
   const qClass = q === 'bonne' ? 'quality-good' : (q === 'moyenne' ? 'quality-medium' : 'quality-bad');
 
@@ -253,7 +249,7 @@ $('btn-restart').addEventListener('click', () => {
     try { ppg.destroy(); } catch (e) {}
     ppg = null;
   }
-  lastMetrics = null;
+  waveformSamples = [];
   showScreen('home');
 });
 $('btn-back').addEventListener('click', () => showScreen('home'));
