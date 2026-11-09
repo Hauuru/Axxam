@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Mesure VFC</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f172a; color: #e2e8f0;
+    min-height: 100vh; display: flex; flex-direction: column; padding: 20px;
+  }
+  .screen { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 20px; text-align: center; }
+  .screen.active { display: flex; }
+  h1 { font-size: 1.5rem; font-weight: 600; }
+  p { color: #94a3b8; font-size: 0.95rem; line-height: 1.5; max-width: 340px; }
+  button {
+    background: #3b82f6; color: white; border: none;
+    padding: 16px 32px; border-radius: 12px; font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: opacity 0.2s;
+  }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.secondary { background: #334155; }
+  #video { display: none; }
+  .timer { font-size: 3rem; font-variant-numeric: tabular-nums; font-weight: 700; color: #3b82f6; }
+  #waveform { width: 100%; max-width: 500px; height: 120px; background: #1e293b; border-radius: 12px; }
+  .status { font-size: 0.9rem; color: #94a3b8; max-width: 340px; }
+  .results { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
+  .metric { display: flex; justify-content: space-between; padding: 16px 20px; background: #1e293b; border-radius: 12px; }
+  .metric-label { color: #94a3b8; }
+  .metric-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .metric-unit { color: #64748b; margin-left: 4px; font-weight: 400; font-size: 0.85em; }
+  .quality-good { color: #22c55e; }
+  .quality-medium { color: #eab308; }
+  .quality-bad { color: #ef4444; }
+  #summary {
+    background: #1e293b; padding: 16px; border-radius: 12px;
+    font-family: 'Courier New', monospace; font-size: 0.85rem;
+    word-break: break-word; width: 100%; max-width: 400px; color: #cbd5e1;
+  }
+  .error { color: #ef4444; padding: 16px; max-width: 340px; }
+</style>
+</head>
+<body>
+
+<div id="screen-home" class="screen active">
+  <h1>Mesure VFC</h1>
+  <p>Pose ton doigt sur la caméra arrière avec le flash allumé. Reste immobile pendant 45 secondes.</p>
+  <button id="btn-start">Démarrer la mesure</button>
+</div>
+
+<div id="screen-measure" class="screen">
+  <div class="timer" id="timer">45s</div>
+  <canvas id="waveform" width="500" height="120"></canvas>
+  <div class="status" id="status">Initialisation…</div>
+  <button id="btn-stop" class="secondary">Arrêter</button>
+</div>
+
+<div id="screen-result" class="screen">
+  <h1>Résultat</h1>
+  <div class="results">
+    <div class="metric">
+      <span class="metric-label">Fréquence cardiaque</span>
+      <span class="metric-value" id="res-hr">—</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">RMSSD</span>
+      <span class="metric-value" id="res-rmssd">—</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">SDNN</span>
+      <span class="metric-value" id="res-sdnn">—</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">Qualité du signal</span>
+      <span class="metric-value" id="res-quality">—</span>
+    </div>
+  </div>
+  <div id="summary"></div>
+  <button id="btn-copy">Copier le résumé</button>
+  <button id="btn-restart" class="secondary">Nouvelle mesure</button>
+</div>
+
+<div id="screen-error" class="screen">
+  <h1>Erreur</h1>
+  <p class="error" id="error-msg"></p>
+  <button id="btn-back">Retour</button>
+</div>
+
+<video id="video" autoplay playsinline muted></video>
+
+<script>
+const DURATION = 45;
+const SAMPLE_INTERVAL_MS = 33;
+let stream = null, rafId = null, samples = [], startTime = 0, running = false;
+let lastSampleTime = 0, canvas, ctx, workCanvas, workCtx;
+const $ = id => document.getElementById(id);
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(`screen-${name}`).classList.add('active');
+}
+
+async function startMeasurement() {
+  try {
+    showScreen('measure');
+    samples = []; running = true;
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 320 }, height: { ideal: 240 } }
+    });
+    const video = $('video');
+    video.srcObject = stream;
+    await video.play();
+    const track = stream.getVideoTracks()[0];
+    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    if (caps.torch) {
+      await track.applyConstraints({ advanced: [{ torch: true }] });
+    }
+    workCanvas = document.createElement('canvas');
+    workCanvas.width = 64; workCanvas.height = 64;
+    workCtx = workCanvas.getContext('2d', { willReadFrequently: true });
+    canvas = $('waveform'); ctx = canvas.getContext('2d');
+    startTime = performance.now(); lastSampleTime = 0;
+    $('status').textContent = 'Mesure en cours… garde le doigt immobile.';
+    loop();
+  } catch (err) {
+    showError(err.message || String(err));
+  }
+}
+
+function loop() {
+  if (!running) return;
+  const now = performance.now();
+  const elapsed = now - startTime;
+  if (now - lastSampleTime >= SAMPLE_INTERVAL_MS) {
+    lastSampleTime = now;
+    const video = $('video');
+    if (video.readyState >= 2) {
+      workCtx.drawImage(video, 0, 0, workCanvas.width, workCanvas.height);
+      const data = workCtx.getImageData(0, 0, workCanvas.width, workCanvas.height).data;
+      const w = workCanvas.width, h = workCanvas.height;
+      const cx = w/2, cy = h/2, radius = Math.min(w, h) * 0.35;
+      let rSum = 0, count = 0;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const dx = x - cx, dy = y - cy;
+          if (dx*dx + dy*dy <= radius*radius) {
+            rSum += data[(y * w + x) * 4]; count++;
+          }
+        }
+      }
+      if (count > 0) samples.push({ t: elapsed, v: rSum / count });
+    }
+  }
+  const remaining = Math.max(0, DURATION - elapsed / 1000);
+  $('timer').textContent = Math.ceil(remaining) + 's';
+  drawWaveform();
+  if (remaining <= 0) { stopMeasurement(); return; }
+  rafId = requestAnimationFrame(loop);
+}
+
+function drawWaveform() {
+  if (!canvas) return;
+  const w = canvas.width, h = canvas.height;
+  ctx.fillStyle = '#1e293b'; ctx.fillRect(0, 0, w, h);
+  if (samples.length < 2) return;
+  const windowMs = 5000;
+  const nowT = samples[samples.length - 1].t;
+  const recent = samples.filter(s => s.t >= nowT - windowMs);
+  if (recent.length < 2) return;
+  const vals = recent.map(s => s.v);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = max - min || 1;
+  ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  recent.forEach((s, i) => {
+    const x = (i / (recent.length - 1)) * w;
+    const y = h - ((s.v - min) / range) * (h - 20) - 10;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+}
+
+async function stopMeasurement() {
+  running = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  $('status').textContent = 'Analyse…';
+  const result = analyzeSignal(samples);
+  displayResult(result);
+}
+
+function analyzeSignal(samples) {
+  if (samples.length < 50) return { error: 'Trop peu d\'échantillons. Vérifie que le doigt couvre bien la caméra et que le flash est actif.' };
+  const dt = 33;
+  const t0 = samples[0].t, t1 = samples[samples.length - 1].t;
+  const n = Math.floor((t1 - t0) / dt) + 1;
+  const uniform = new Array(n);
+  let j = 0;
+  for (let i = 0; i < n; i++) {
+    const target = t0 + i * dt;
+    while (j < samples.length - 1 && samples[j+1].t < target) j++;
+    const a = samples[j], b = samples[Math.min(j+1, samples.length-1)];
+    const frac = b.t > a.t ? (target - a.t) / (b.t - a.t) : 0;
+    uniform[i] = a.v + (b.v - a.v) * frac;
+  }
+  const win = Math.round(2000 / dt);
+  const detrended = movingAverageSubtract(uniform, win);
+  const smoothed = movingAverage(detrended, Math.round(150 / dt));
+  const peaks = detectPeaks(smoothed, dt);
+  if (peaks.length < 5) return { error: 'Signal trop faible. Essaie avec le doigt plus stable, plus couvrant, et le flash bien allumé.' };
+  const ibis = [];
+  for (let i = 1; i < peaks.length; i++) {
+    const ibi = peaks[i].t - peaks[i-1].t;
+    if (ibi >= 300 && ibi <= 2000) ibis.push(ibi);
+  }
+  if (ibis.length < 5) return { error: 'Trop peu d\'intervalles valides. Réessaie avec un doigt plus immobile.' };
+  const meanIBI = ibis.reduce((a,b) => a+b, 0) / ibis.length;
+  const hr = 60000 / meanIBI;
+  let sumSqDiff = 0;
+  for (let i = 1; i < ibis.length; i++) { const d = ibis[i] - ibis[i-1]; sumSqDiff += d*d; }
+  const rmssd = Math.sqrt(sumSqDiff / (ibis.length - 1));
+  const variance = ibis.reduce((a,b) => a + (b - meanIBI)**2, 0) / ibis.length;
+  const sdnn = Math.sqrt(variance);
+  const validRatio = ibis.length / Math.max(1, peaks.length - 1);
+  let quality = 'mauvaise';
+  if (validRatio > 0.85 && rmssd < 300) quality = 'bonne';
+  else if (validRatio > 0.6) quality = 'moyenne';
+  return { hr: Math.round(hr*10)/10, rmssd: Math.round(rmssd), sdnn: Math.round(sdnn), quality };
+}
+
+function movingAverage(arr, win) {
+  const out = new Array(arr.length); let sum = 0;
+  for (let i = 0; i < arr.length; i++) {
+    sum += arr[i];
+    if (i >= win) sum -= arr[i - win];
+    out[i] = sum / Math.min(i + 1, win);
+  }
+  return out;
+}
+function movingAverageSubtract(arr, win) {
+  const ma = movingAverage(arr, win);
+  return arr.map((v, i) => v - ma[i]);
+}
+function detectPeaks(signal, dt) {
+  const peaks = [];
+  const mean = signal.reduce((a,b) => a+b, 0) / signal.length;
+  const std = Math.sqrt(signal.reduce((a,b) => a + (b - mean)**2, 0) / signal.length);
+  const minDist = Math.round(300 / dt);
+  const threshold = 0.4 * std;
+  let lastPeakIdx = -minDist;
+  for (let i = 1; i < signal.length - 1; i++) {
+    const v = signal[i];
+    if (v > threshold && v > signal[i-1] && v >= signal[i+1] && i - lastPeakIdx >= minDist) {
+      peaks.push({ idx: i, t: i * dt, v }); lastPeakIdx = i;
+    }
+  }
+  return peaks;
+}
+
+function displayResult(result) {
+  if (result.error) { showError(result.error); return; }
+  const q = result.quality;
+  const qClass = q === 'bonne' ? 'quality-good' : q === 'moyenne' ? 'quality-medium' : 'quality-bad';
+  $('res-hr').innerHTML = `${result.hr} <span class="metric-unit">bpm</span>`;
+  $('res-rmssd').innerHTML = `${result.rmssd} <span class="metric-unit">ms</span>`;
+  $('res-sdnn').innerHTML = `${result.sdnn} <span class="metric-unit">ms</span>`;
+  $('res-quality').innerHTML = `<span class="${qClass}">${q}</span>`;
+  const date = new Date().toISOString().slice(0, 10);
+  $('summary').textContent = `VFC ${date}: RMSSD=${result.rmssd}ms, SDNN=${result.sdnn}ms, FC=${result.hr}bpm, qualité=${q}`;
+  showScreen('result');
+}
+
+function showError(msg) { $('error-msg').textContent = msg; showScreen('error'); }
+
+$('btn-start').addEventListener('click', startMeasurement);
+$('btn-stop').addEventListener('click', stopMeasurement);
+$('btn-restart').addEventListener('click', () => showScreen('home'));
+$('btn-back').addEventListener('click', () => showScreen('home'));
+$('btn-copy').addEventListener('click', async () => {
+  const text = $('summary').textContent;
+  try { await navigator.clipboard.writeText(text); }
+  catch {
+    const r = document.createRange(); r.selectNode($('summary'));
+    window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
+    document.execCommand('copy');
+  }
+  $('btn-copy').textContent = 'Copié !';
+  setTimeout(() => { $('btn-copy').textContent = 'Copier le résumé'; }, 1500);
+});
+</script>
+</body>
+</html>
