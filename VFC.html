@@ -22,7 +22,6 @@
   }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
   button.secondary { background: #334155; }
-  #video { display: none; }
   .timer { font-size: 3rem; font-variant-numeric: tabular-nums; font-weight: 700; color: #3b82f6; }
   #waveform { width: 100%; max-width: 500px; height: 120px; background: #1e293b; border-radius: 12px; }
   .status { font-size: 0.9rem; color: #94a3b8; max-width: 340px; }
@@ -46,7 +45,7 @@
 
 <div id="screen-home" class="screen active">
   <h1>Mesure VFC</h1>
-  <p>Pose ton doigt sur la caméra arrière avec le flash allumé. Reste immobile pendant 45 secondes.</p>
+  <p>Pose ton doigt sur la caméra arrière avec le flash allumé. Reste immobile.</p>
   <button id="btn-start">Démarrer la mesure</button>
 </div>
 
@@ -88,14 +87,13 @@
   <button id="btn-back">Retour</button>
 </div>
 
-<video id="video" autoplay playsinline muted></video>
-
 <script type="module">
 import { PPG } from 'https://esm.sh/@sontakey/ppg-js';
 
 const DURATION = 45;
-let stream = null, ppg = null, running = false, startTime = 0;
+let ppg = null, running = false, startTime = 0;
 let canvas, ctx;
+let lastMetrics = null;
 const $ = id => document.getElementById(id);
 
 function showScreen(name) {
@@ -110,55 +108,44 @@ async function startMeasurement() {
     ctx = canvas.getContext('2d');
     $('status').textContent = 'Demande d\'accès à la caméra…';
 
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 320 }, height: { ideal: 240 } }
-    });
-
-    const video = $('video');
-    video.srcObject = stream;
-    await video.play();
-
-    // Activation explicite du flash (torch)
-    const track = stream.getVideoTracks()[0];
-    const caps = track.getCapabilities ? track.getCapabilities() : {};
-    if (caps.torch) {
-      try {
-        await track.applyConstraints({ advanced: [{ torch: true }] });
-      } catch (e) {
-        console.warn('Flash non activable :', e);
-      }
-    } else {
-      $('status').textContent = 'Flash non supporté par ce navigateur. Mesure en lumière ambiante…';
-    }
-
     // Initialisation de ppg-js
     ppg = new PPG();
-    
-    // Écoute des métriques en temps réel
-    ppg.on('metrics', (metrics) => {
-      if (metrics.quality && metrics.quality.good) {
-        $('status').textContent = `Mesure en cours… FC: ${Math.round(metrics.heartRate)} bpm`;
-      } else if (metrics.quality && metrics.quality.reason) {
-        $('status').textContent = `Signal : ${metrics.quality.reason}`;
+
+    // Suivi de l'état du doigt (NO_FINGER -> SETTLING -> MEASURING)
+    ppg.addEventListener('state', (e) => {
+      const { state, reason } = e.detail;
+      if (state === 'NO_FINGER') $('status').textContent = 'Pose ton doigt sur la caméra…';
+      else if (state === 'SETTLING') $('status').textContent = 'Initialisation du signal… reste immobile.';
+      else if (state === 'MEASURING') $('status').textContent = 'Mesure en cours…';
+      else $('status').textContent = `État : ${state} (${reason || ''})`;
+    });
+
+    // Réception des métriques
+    ppg.addEventListener('metrics', (e) => {
+      lastMetrics = e.detail;
+      const m = e.detail;
+      if (m.quality && m.quality.good) {
+        $('status').textContent = `Mesure en cours… FC: ${Math.round(m.heartRate)} bpm`;
+      } else if (m.quality && m.quality.reason) {
+        $('status').textContent = `Signal : ${m.quality.reason}`;
       }
     });
 
-    // Écoute du signal pour dessiner la waveform
-    ppg.on('waveform', (data) => {
-      drawWaveform(data);
+    // Réception du signal pour dessiner la waveform
+    ppg.addEventListener('waveform', (e) => {
+      drawWaveform(e.detail);
     });
 
-    // Écoute des erreurs
-    ppg.on('error', (err) => {
-      console.error('Erreur ppg-js:', err);
-      $('status').textContent = `Erreur : ${err.message || err}`;
+    // Gestion des erreurs
+    ppg.addEventListener('error', (e) => {
+      console.error('Erreur ppg-js:', e.detail);
+      $('status').textContent = `Erreur : ${e.detail.message || e.detail}`;
     });
 
-    // Démarrage de la mesure
+    // Démarrage de la capture (nécessite un geste utilisateur, ce qui est le cas ici)
     await ppg.start();
     running = true;
     startTime = performance.now();
-    $('status').textContent = 'Mesure en cours… garde le doigt immobile.';
     loopTimer();
 
   } catch (err) {
@@ -179,16 +166,19 @@ function loopTimer() {
 }
 
 function drawWaveform(data) {
-  if (!canvas || !data || data.length < 2) return;
+  if (!canvas || !data) return;
   const w = canvas.width, h = canvas.height;
   ctx.fillStyle = '#1e293b';
   ctx.fillRect(0, 0, w, h);
-  
-  const vals = Array.from(data);
+
+  // data peut être un tableau de valeurs ou un objet contenant un tableau
+  const vals = Array.isArray(data) ? data : (data.samples || []);
+  if (vals.length < 2) return;
+
   const min = Math.min(...vals);
   const max = Math.max(...vals);
   const range = max - min || 1;
-  
+
   ctx.strokeStyle = '#3b82f6';
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -205,34 +195,82 @@ async function stopMeasurement() {
   if (ppg) {
     try { await ppg.stop(); } catch (e) { console.warn(e); }
   }
-  if (stream) {
-    stream.getTracks().forEach(t => t.stop());
-    stream = null;
+
+  // Récupération du résumé de session ou des dernières métriques
+  let result = null;
+  if (ppg && typeof ppg.getSessionSummary === 'function') {
+    try {
+      result = ppg.getSessionSummary();
+    } catch (e) {
+      console.warn('getSessionSummary a échoué, utilisation des dernières métriques.', e);
+    }
   }
-  if (!ppg) {
-    showError('Aucune mesure disponible.');
+  if (!result && lastMetrics) {
+    result = lastMetrics;
+  }
+
+  if (!result) {
+    showError('Aucune mesure exploitable. Vérifie que le doigt couvre bien la caméra et que le flash est actif.');
     return;
   }
 
-  // Récupération des métriques finales
-  const metrics = ppg.metrics; // Selon l'API, les métriques sont peut-être exposées ainsi
-  // Si l'API ne fournit pas directement les métriques finales, on utilise les dernières reçues.
-  // Pour être robuste, on écoute l'événement 'result' ou on utilise une variable globale.
-  // Dans la documentation, ppg-js émet des événements. On va donc stocker les dernières métriques.
-  // (Voir ci-dessous)
-  
-  // Solution : on stocke les métriques dans une variable globale via l'événement
-  // Pour simplifier, on va utiliser une promesse ou un écouteur.
-  // Mais pour l'instant, on va utiliser une variable globale `lastMetrics`.
+  displayResult(result);
 }
 
-// Variable globale pour stocker les dernières métriques
-let lastMetrics = null;
-// On modifie l'écouteur 'metrics' pour stocker
-// (Ceci est fait dans startMeasurement, mais on peut le faire ici)
-// Pour des raisons de clarté, je vais réécrire la partie stopMeasurement.
+function displayResult(result) {
+  const hr = result.heartRate;
+  const rmssd = result.rmssd;
+  const sdnn = result.sdnn;
+  const q = result.quality ? (result.quality.good ? 'bonne' : (result.quality.reason || 'mauvaise')) : 'mauvaise';
 
-// En fait, je vais réécrire le code pour que ce soit plus propre.
+  if (hr === undefined || rmssd === undefined || sdnn === undefined) {
+    showError('Les données de mesure sont incomplètes. Réessaie en gardant le doigt plus immobile.');
+    return;
+  }
+
+  const qClass = q === 'bonne' ? 'quality-good' : (q === 'moyenne' ? 'quality-medium' : 'quality-bad');
+
+  $('res-hr').innerHTML = `${Math.round(hr * 10) / 10} <span class="metric-unit">bpm</span>`;
+  $('res-rmssd').innerHTML = `${Math.round(rmssd)} <span class="metric-unit">ms</span>`;
+  $('res-sdnn').innerHTML = `${Math.round(sdnn)} <span class="metric-unit">ms</span>`;
+  $('res-quality').innerHTML = `<span class="${qClass}">${q}</span>`;
+
+  const date = new Date().toISOString().slice(0, 10);
+  $('summary').textContent = `VFC ${date}: RMSSD=${Math.round(rmssd)}ms, SDNN=${Math.round(sdnn)}ms, FC=${Math.round(hr * 10) / 10}bpm, qualité=${q}`;
+
+  showScreen('result');
+}
+
+function showError(msg) {
+  $('error-msg').textContent = msg;
+  showScreen('error');
+}
+
+$('btn-start').addEventListener('click', startMeasurement);
+$('btn-stop').addEventListener('click', stopMeasurement);
+$('btn-restart').addEventListener('click', () => {
+  if (ppg) {
+    try { ppg.destroy(); } catch (e) {}
+    ppg = null;
+  }
+  lastMetrics = null;
+  showScreen('home');
+});
+$('btn-back').addEventListener('click', () => showScreen('home'));
+$('btn-copy').addEventListener('click', async () => {
+  const text = $('summary').textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const r = document.createRange();
+    r.selectNode($('summary'));
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(r);
+    document.execCommand('copy');
+  }
+  $('btn-copy').textContent = 'Copié !';
+  setTimeout(() => { $('btn-copy').textContent = 'Copier le résumé'; }, 1500);
+});
 </script>
 </body>
 </html>
