@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesure VFC - Tracker EM/SFC</title>
+    <title>Mesure VFC v2 — Diagnostic</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -11,6 +11,7 @@
             --text: #e2e8f0;
             --accent: #38bdf8;
             --danger: #f87171;
+            --warn: #fcd34d;
             --success: #4ade80;
             --muted: #94a3b8;
         }
@@ -22,23 +23,31 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             padding: 1rem;
+            padding-top: 2rem;
         }
         .container {
             background: var(--card);
             border-radius: 1.5rem;
             padding: 1.5rem;
             width: 100%;
-            max-width: 480px;
+            max-width: 520px;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
         }
         h1 {
-            font-size: 1.25rem;
-            font-weight: 600;
+            font-size: 1.15rem;
+            font-weight: 700;
             text-align: center;
-            margin-bottom: 1rem;
+            margin-bottom: 0.25rem;
             color: var(--accent);
+        }
+        .version-tag {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
         }
         .video-wrapper {
             position: relative;
@@ -47,7 +56,7 @@
             background: #000;
             border-radius: 1rem;
             overflow: hidden;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
             border: 2px solid #334155;
         }
         #cameraPreview {
@@ -57,11 +66,9 @@
         }
         #waveformCanvas {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 30%;
-            background: rgba(0,0,0,0.5);
+            bottom: 0; left: 0;
+            width: 100%; height: 28%;
+            background: rgba(0,0,0,0.45);
             border-top: 1px solid #475569;
         }
         .status-bar {
@@ -69,81 +76,145 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 0.75rem;
-            font-size: 0.875rem;
+            font-size: 0.85rem;
             color: var(--muted);
         }
         .state-badge {
-            padding: 0.25rem 0.75rem;
+            padding: 0.2rem 0.7rem;
             border-radius: 999px;
-            font-weight: 600;
-            font-size: 0.75rem;
+            font-weight: 700;
+            font-size: 0.7rem;
             text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
         .state-NO_FINGER { background: #7f1d1d; color: #fca5a5; }
         .state-SETTLING { background: #78350f; color: #fcd34d; }
         .state-MEASURING { background: #14532d; color: #86efac; }
+
+        /* --- Panneau de diagnostic --- */
+        .diag-panel {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 0.9rem;
+            padding: 0.8rem 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+        .diag-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .diag-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.2rem 0;
+            font-size: 0.82rem;
+            border-bottom: 1px solid #1e293b;
+        }
+        .diag-row:last-child { border-bottom: none; }
+        .diag-label { color: var(--muted); }
+        .diag-value {
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: var(--accent);
+        }
+        .diag-value.bad { color: var(--danger); }
+        .diag-value.warn { color: var(--warn); }
+        .diag-value.good { color: var(--success); }
+
+        .reason-box {
+            background: #450a0a;
+            border: 1px solid #7f1d1d;
+            border-radius: 0.6rem;
+            padding: 0.5rem 0.7rem;
+            font-size: 0.8rem;
+            color: #fca5a5;
+            margin-top: 0.5rem;
+            display: none;
+            line-height: 1.4;
+        }
+        .reason-box.visible { display: block; }
+
+        .timer {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-variant-numeric: tabular-nums;
+        }
+
         .metrics-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
+            gap: 0.6rem;
+            margin-bottom: 0.75rem;
         }
         .metric {
             background: #0f172a;
-            padding: 0.75rem;
-            border-radius: 0.75rem;
+            padding: 0.6rem;
+            border-radius: 0.7rem;
             text-align: center;
         }
         .metric .label {
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             color: var(--muted);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.04em;
         }
         .metric .value {
-            font-size: 1.5rem;
+            font-size: 1.35rem;
             font-weight: 700;
             color: var(--accent);
-            margin-top: 0.25rem;
+            margin-top: 0.15rem;
         }
-        .metric .unit {
-            font-size: 0.75rem;
-            color: var(--muted);
-        }
+        .metric .unit { font-size: 0.7rem; color: var(--muted); }
+
         button {
             width: 100%;
-            padding: 0.875rem;
+            padding: 0.8rem;
             border: none;
-            border-radius: 0.75rem;
-            font-size: 1rem;
+            border-radius: 0.7rem;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             transition: opacity 0.2s;
         }
         button:active { opacity: 0.8; }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        button:disabled { opacity: 0.45; cursor: not-allowed; }
         #startBtn {
             background: var(--accent);
             color: #0f172a;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
         }
         #copyBtn {
             background: #334155;
             color: var(--text);
-            margin-top: 0.5rem;
+            margin-top: 0.3rem;
         }
         #copyBtn:not(:disabled) {
             background: var(--success);
             color: #0f172a;
         }
+        #exportBtn {
+            background: #1e293b;
+            color: var(--muted);
+            margin-top: 0.4rem;
+            font-size: 0.8rem;
+            padding: 0.6rem;
+        }
         .message-box {
-            margin-top: 0.75rem;
-            padding: 0.75rem;
-            border-radius: 0.75rem;
-            font-size: 0.875rem;
+            margin-top: 0.6rem;
+            padding: 0.6rem 0.75rem;
+            border-radius: 0.7rem;
+            font-size: 0.82rem;
             line-height: 1.4;
             display: none;
         }
@@ -159,20 +230,12 @@
             border: 1px solid var(--accent);
             color: #bae6fd;
         }
-        .timer {
-            text-align: center;
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--accent);
-            margin-bottom: 0.5rem;
-            font-variant-numeric: tabular-nums;
-        }
-        .hidden { display: none; }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>📊 Mesure VFC</h1>
+    <p class="version-tag">Version 2 — Diagnostic de signal</p>
 
     <div class="video-wrapper">
         <video id="cameraPreview" playsinline muted autoplay></video>
@@ -184,33 +247,32 @@
         <span id="stateBadge" class="state-badge state-NO_FINGER">NO_FINGER</span>
     </div>
 
+    <!-- Panneau de diagnostic -->
+    <div class="diag-panel" id="diagPanel">
+        <div class="diag-title">
+            <span>Diagnostic qualité (SQI)</span>
+            <span id="diagScore" style="color:var(--muted); font-weight:400; text-transform:none;">score: —</span>
+        </div>
+        <div class="diag-row"><span class="diag-label">Perfusion (AC/DC)</span><span class="diag-value" id="sqiPerfusion">—</span></div>
+        <div class="diag-row"><span class="diag-label">Corrélation morpho.</span><span class="diag-value" id="sqiTemplate">—</span></div>
+        <div class="diag-row"><span class="diag-label">Pixels saturés</span><span class="diag-value" id="sqiClipped">—</span></div>
+        <div class="diag-row"><span class="diag-label">Mouvement</span><span class="diag-value" id="sqiMotion">—</span></div>
+        <div class="diag-row"><span class="diag-label">SNR (dB)</span><span class="diag-value" id="sqiSnr">—</span></div>
+        <div class="reason-box" id="reasonBox"></div>
+    </div>
+
     <div class="timer" id="timerDisplay">45s</div>
 
     <div class="metrics-grid">
-        <div class="metric">
-            <div class="label">FC</div>
-            <div class="value" id="heartRate">--</div>
-            <div class="unit">bpm</div>
-        </div>
-        <div class="metric">
-            <div class="label">RMSSD</div>
-            <div class="value" id="rmssd">--</div>
-            <div class="unit">ms</div>
-        </div>
-        <div class="metric">
-            <div class="label">SDNN</div>
-            <div class="value" id="sdnn">--</div>
-            <div class="unit">ms</div>
-        </div>
-        <div class="metric">
-            <div class="label">Qualité</div>
-            <div class="value" id="quality">--</div>
-            <div class="unit">&nbsp;</div>
-        </div>
+        <div class="metric"><div class="label">FC</div><div class="value" id="heartRate">--</div><div class="unit">bpm</div></div>
+        <div class="metric"><div class="label">RMSSD</div><div class="value" id="rmssd">--</div><div class="unit">ms</div></div>
+        <div class="metric"><div class="label">SDNN</div><div class="value" id="sdnn">--</div><div class="unit">ms</div></div>
+        <div class="metric"><div class="label">Qualité</div><div class="value" id="quality">--</div><div class="unit">&nbsp;</div></div>
     </div>
 
     <button id="startBtn">Démarrer la mesure (45s)</button>
     <button id="copyBtn" disabled>📋 Copier le résumé</button>
+    <button id="exportBtn">⬇ Exporter le journal de débogage</button>
 
     <div id="messageBox" class="message-box"></div>
 </div>
@@ -230,23 +292,32 @@
     const qualityEl = document.getElementById('quality');
     const startBtn = document.getElementById('startBtn');
     const copyBtn = document.getElementById('copyBtn');
+    const exportBtn = document.getElementById('exportBtn');
     const messageBox = document.getElementById('messageBox');
+    const reasonBox = document.getElementById('reasonBox');
+    const diagScore = document.getElementById('diagScore');
+
+    // Éléments SQI
+    const sqiPerfusion = document.getElementById('sqiPerfusion');
+    const sqiTemplate  = document.getElementById('sqiTemplate');
+    const sqiClipped   = document.getElementById('sqiClipped');
+    const sqiMotion    = document.getElementById('sqiMotion');
+    const sqiSnr       = document.getElementById('sqiSnr');
 
     // ---- Variables ----
     let ppg = null;
     let measurementActive = false;
     let timerInterval = null;
     let remainingSeconds = 45;
-    let latestMetrics = null;
     let lastState = 'NO_FINGER';
-    let waveformData = []; // buffer des échantillons pour le canvas
+    let waveformData = [];
     const MAX_WAVEFORM_POINTS = 200;
 
     // ---- Canvas ----
     function resizeCanvas() {
         canvas.width = canvas.clientWidth * window.devicePixelRatio;
         canvas.height = canvas.clientHeight * window.devicePixelRatio;
-        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
@@ -255,10 +326,8 @@
         const w = canvas.clientWidth;
         const h = canvas.clientHeight;
         ctx.clearRect(0, 0, w, h);
-
         if (waveformData.length < 2) return;
 
-        // Normalisation simple
         const min = Math.min(...waveformData);
         const max = Math.max(...waveformData);
         const range = max - min || 1;
@@ -267,7 +336,6 @@
         ctx.strokeStyle = '#38bdf8';
         ctx.lineWidth = 2;
         ctx.lineJoin = 'round';
-
         for (let i = 0; i < waveformData.length; i++) {
             const x = (i / (waveformData.length - 1)) * w;
             const y = h - ((waveformData[i] - min) / range) * (h * 0.8) - h * 0.1;
@@ -282,26 +350,94 @@
         messageBox.textContent = text;
         messageBox.className = `message-box ${type}`;
     }
-
     function hideMessage() {
         messageBox.className = 'message-box';
         messageBox.textContent = '';
+    }
+
+    // ---- Mise à jour du panneau SQI ----
+    function colorClass(value, thresholds) {
+        // thresholds: {good, warn} en valeur brute
+        if (value >= thresholds.good) return 'good';
+        if (value >= thresholds.warn) return 'warn';
+        return 'bad';
+    }
+
+    function updateDiagnostics(metrics) {
+        if (!metrics) return;
+
+        const sqi = metrics.sqi;
+        if (!sqi) {
+            // Si la métrique n'expose pas sqi, on tente de lire des champs directs
+            // (certaines versions peuvent les exposer à la racine de metrics)
+        }
+
+        // Score global
+        if (sqi?.score !== undefined) {
+            diagScore.textContent = `score: ${sqi.score.toFixed(2)}`;
+            diagScore.style.color = sqi.score >= 0.6 ? 'var(--success)' : (sqi.score >= 0.4 ? 'var(--warn)' : 'var(--danger)');
+        }
+
+        // Perfusion (en %). Seuil critique : 0.2%
+        if (sqi?.perfusion !== undefined) {
+            const v = sqi.perfusion;
+            sqiPerfusion.textContent = `${v.toFixed(3)} %`;
+            // On colore : vert si > 0.4%, jaune si > 0.2%, rouge sinon
+            sqiPerfusion.className = `diag-value ${v >= 0.4 ? 'good' : (v >= 0.2 ? 'warn' : 'bad')}`;
+        }
+
+        // Template correlation. Seuil critique : 0.6
+        if (sqi?.templateCorrelation !== undefined) {
+            const v = sqi.templateCorrelation;
+            sqiTemplate.textContent = v.toFixed(3);
+            sqiTemplate.className = `diag-value ${v >= 0.7 ? 'good' : (v >= 0.6 ? 'warn' : 'bad')}`;
+        }
+
+        // Clipped fraction. Seuil critique : 0.05 (5%)
+        if (sqi?.clippedFraction !== undefined) {
+            const v = sqi.clippedFraction;
+            sqiClipped.textContent = `${(v * 100).toFixed(2)} %`;
+            sqiClipped.className = `diag-value ${v <= 0.02 ? 'good' : (v <= 0.05 ? 'warn' : 'bad')}`;
+        }
+
+        // Motion (unité arbitraire, 0 = pas de mouvement)
+        if (sqi?.motion !== undefined) {
+            const v = sqi.motion;
+            sqiMotion.textContent = v.toFixed(4);
+            sqiMotion.className = `diag-value ${v <= 0.01 ? 'good' : (v <= 0.05 ? 'warn' : 'bad')}`;
+        }
+
+        // SNR en dB
+        if (sqi?.snrDb !== undefined) {
+            const v = sqi.snrDb;
+            sqiSnr.textContent = `${v.toFixed(1)} dB`;
+            sqiSnr.className = `diag-value ${v >= 10 ? 'good' : (v >= 5 ? 'warn' : 'bad')}`;
+        }
+
+        // Raison de l'échec
+        const q = metrics.quality;
+        if (q && q.good === false && q.reason) {
+            const guidance = q.guidanceMessage || '';
+            reasonBox.textContent = `Échec : ${q.reason} — ${guidance}`;
+            reasonBox.classList.add('visible');
+        } else {
+            reasonBox.classList.remove('visible');
+            reasonBox.textContent = '';
+        }
     }
 
     // ---- Initialisation PPG ----
     function initPPG() {
         if (ppg) return;
 
-        ppg = new PPG({
-            video: video, // La bibliothèque gère la caméra et le flash
-        });
+        ppg = new PPG({ video: video });
 
-        // Événement : état du doigt (NO_FINGER, SETTLING, MEASURING)
         ppg.addEventListener('state', (e) => {
             const { state, reason } = e.detail;
             lastState = state;
             stateBadge.textContent = state;
             stateBadge.className = `state-badge state-${state}`;
+
             if (state === 'NO_FINGER') {
                 showMessage('Placez votre doigt sur la caméra arrière et le flash.', 'info');
             } else if (state === 'SETTLING') {
@@ -311,53 +447,55 @@
             }
         });
 
-        // Événement : forme d'onde (un échantillon par frame)
         ppg.addEventListener('waveform', (e) => {
-            const sample = e.detail; // valeur numérique unique
+            const sample = e.detail;
             if (typeof sample === 'number' && !isNaN(sample)) {
                 waveformData.push(sample);
-                if (waveformData.length > MAX_WAVEFORM_POINTS) {
-                    waveformData.shift();
-                }
+                if (waveformData.length > MAX_WAVEFORM_POINTS) waveformData.shift();
                 drawWaveform();
             }
         });
 
-        // Événement : métriques en temps réel
+        // Événement metrics : contient les SQI et le verdict qualité
         ppg.addEventListener('metrics', (e) => {
             const m = e.detail;
-            latestMetrics = m;
+            updateDiagnostics(m);
 
-            if (m.heartRate && m.heartRate > 0) {
-                heartRateEl.textContent = Math.round(m.heartRate);
-            }
-            if (m.rmssd !== undefined && m.rmssd > 0) {
-                rmssdEl.textContent = Math.round(m.rmssd);
-            }
-            if (m.sdnn !== undefined && m.sdnn > 0) {
-                sdnnEl.textContent = Math.round(m.sdnn);
-            }
-            if (m.quality) {
-                qualityEl.textContent = m.quality.good ? 'Bonne' : 'Faible';
-                qualityEl.style.color = m.quality.good ? 'var(--success)' : 'var(--danger)';
+            if (m.quality && m.quality.good) {
+                if (m.heartRate) heartRateEl.textContent = Math.round(m.heartRate);
+                if (m.rmssd !== undefined) rmssdEl.textContent = Math.round(m.rmssd);
+                if (m.sdnn !== undefined) sdnnEl.textContent = Math.round(m.sdnn);
+                qualityEl.textContent = 'Bonne';
+                qualityEl.style.color = 'var(--success)';
+            } else {
+                heartRateEl.textContent = '--';
+                rmssdEl.textContent = '--';
+                sdnnEl.textContent = '--';
+                qualityEl.textContent = 'Faible';
+                qualityEl.style.color = 'var(--danger)';
             }
         });
 
-        // Événement : erreur
+        // Événement quality (par fenêtre) : on l'utilise aussi pour rafraîchir le diagnostic
+        ppg.addEventListener('quality', (e) => {
+            // Le détail peut contenir directement les SQI de la fenêtre
+            const d = e.detail;
+            if (d) updateDiagnostics({ sqi: d.sqi || d, quality: d.quality || d });
+        });
+
         ppg.addEventListener('error', (e) => {
             const err = e.detail;
             console.error('PPG Error:', err);
             showMessage(`Erreur : ${err.message || err.code || 'Inconnue'}`, 'error');
-            stopMeasurement();
         });
     }
 
-    // ---- Démarrer la mesure ----
+    // ---- Démarrer ----
     async function startMeasurement() {
         hideMessage();
+        reasonBox.classList.remove('visible');
         initPPG();
 
-        // Réinitialiser l'interface
         waveformData = [];
         heartRateEl.textContent = '--';
         rmssdEl.textContent = '--';
@@ -365,13 +503,21 @@
         qualityEl.textContent = '--';
         qualityEl.style.color = 'var(--accent)';
         copyBtn.disabled = true;
-        latestMetrics = null;
+        exportBtn.disabled = true;
+
+        // Réinitialiser les SQI
+        [sqiPerfusion, sqiTemplate, sqiClipped, sqiMotion, sqiSnr].forEach(el => {
+            el.textContent = '—';
+            el.className = 'diag-value';
+        });
+        diagScore.textContent = 'score: —';
+        diagScore.style.color = 'var(--muted)';
 
         try {
             await ppg.start();
         } catch (err) {
             console.error('Erreur de démarrage:', err);
-            showMessage(`Impossible de démarrer la caméra : ${err.message || err.code}`, 'error');
+            showMessage(`Impossible de démarrer : ${err.message || err.code}`, 'error');
             return;
         }
 
@@ -380,84 +526,61 @@
         remainingSeconds = 45;
         timerDisplay.textContent = `${remainingSeconds}s`;
 
-        // Activer le flash si possible (la bibliothèque le fait souvent, mais on force via l'API)
+        // Flash (la lib le gère souvent, on force au cas où)
         try {
             const stream = video.srcObject;
             if (stream) {
                 const track = stream.getVideoTracks()[0];
-                if (track) {
-                    const capabilities = track.getCapabilities();
-                    if (capabilities.torch) {
-                        await track.applyConstraints({ advanced: [{ torch: true }] });
-                    }
+                if (track && track.getCapabilities().torch) {
+                    await track.applyConstraints({ advanced: [{ torch: true }] });
                 }
             }
-        } catch (flashErr) {
-            console.warn('Flash non disponible:', flashErr);
-        }
+        } catch (e) { console.warn('Flash non disponible', e); }
 
-        // Minuteur
         timerInterval = setInterval(() => {
             remainingSeconds--;
             timerDisplay.textContent = `${remainingSeconds}s`;
-            if (remainingSeconds <= 0) {
-                stopMeasurement();
-            }
+            if (remainingSeconds <= 0) stopMeasurement();
         }, 1000);
     }
 
-    // ---- Arrêter la mesure ----
+    // ---- Arrêter ----
     function stopMeasurement() {
         if (!measurementActive) return;
         measurementActive = false;
         clearInterval(timerInterval);
         startBtn.disabled = false;
 
-        // Arrêter la caméra
-        if (ppg) {
-            try { ppg.stop(); } catch (e) { /* ignore */ }
-        }
+        if (ppg) try { ppg.stop(); } catch (e) {}
 
-        // Éteindre le flash
         try {
             const stream = video.srcObject;
             if (stream) {
                 const track = stream.getVideoTracks()[0];
-                if (track) {
-                    track.applyConstraints({ advanced: [{ torch: false }] });
-                }
+                if (track) track.applyConstraints({ advanced: [{ torch: false }] });
             }
-        } catch (e) { /* ignore */ }
+        } catch (e) {}
 
-        // Générer le résumé
+        exportBtn.disabled = false;
         generateSummary();
     }
 
-    // ---- Générer le résumé ----
+    // ---- Résumé ----
     function generateSummary() {
-        if (!ppg) {
-            showMessage('Aucune session PPG active.', 'error');
-            return;
-        }
+        if (!ppg) return;
 
         let summary;
         try {
             summary = ppg.getSessionSummary();
         } catch (e) {
-            console.error('getSessionSummary a échoué:', e);
-            showMessage(`Erreur lors de la récupération du résumé : ${e.message}`, 'error');
+            showMessage(`Erreur getSessionSummary : ${e.message}`, 'error');
             return;
         }
 
-        // Vérifier que le signal est exploitable
         if (!summary || !summary.quality || !summary.quality.good) {
             const reason = summary?.quality?.reason || 'signal_non_exploitable';
-            const guidance = summary?.quality?.guidanceMessage || 'Assurez-vous que le doigt couvre bien la caméra et le flash, et restez immobile.';
-            showMessage(
-                `Mesure échouée (${reason}). ${guidance}\n` +
-                `Dernier état : ${lastState}.`,
-                'error'
-            );
+            const guidance = summary?.quality?.guidanceMessage || 'Vérifiez la position du doigt et restez immobile.';
+            showMessage(`Mesure échouée (${reason}). ${guidance}\nDernier état : ${lastState}.`, 'error');
             return;
         }
 
@@ -465,39 +588,51 @@
         const hr = Math.round(summary.heartRate || 0);
         const rmssd = Math.round(summary.rmssd || 0);
         const sdnn = Math.round(summary.sdnn || 0);
-        const qualityLabel = summary.quality.good ? 'bonne' : 'faible';
+        const text = `VFC ${date}: RMSSD=${rmssd}ms, SDNN=${sdnn}ms, FC=${hr}bpm, qualité=bonne`;
 
-        const text = `VFC ${date}: RMSSD=${rmssd}ms, SDNN=${sdnn}ms, FC=${hr}bpm, qualité=${qualityLabel}`;
-
-        // Afficher le résumé et activer le bouton copier
         showMessage(`Résumé prêt :\n${text}`, 'info');
-
         copyBtn.disabled = false;
         copyBtn.onclick = async () => {
             try {
                 await navigator.clipboard.writeText(text);
-                copyBtn.textContent = '✅ Copié !';
-                setTimeout(() => { copyBtn.textContent = '📋 Copier le résumé'; }, 2000);
-            } catch (err) {
-                // Fallback
+            } catch (e) {
                 const ta = document.createElement('textarea');
-                ta.value = text;
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
+                ta.value = text; document.body.appendChild(ta);
+                ta.select(); document.execCommand('copy');
                 document.body.removeChild(ta);
-                copyBtn.textContent = '✅ Copié !';
-                setTimeout(() => { copyBtn.textContent = '📋 Copier le résumé'; }, 2000);
             }
+            copyBtn.textContent = '✅ Copié !';
+            setTimeout(() => { copyBtn.textContent = '📋 Copier le résumé'; }, 2000);
         };
     }
+
+    // ---- Export du journal de débogage ----
+    exportBtn.addEventListener('click', () => {
+        if (!ppg) return;
+        try {
+            if (typeof ppg.exportDebugLog === 'function') {
+                const log = ppg.exportDebugLog();
+                const blob = new Blob([log], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `vfc-debug-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showMessage('Journal de débogage exporté.', 'info');
+            } else {
+                showMessage('exportDebugLog() non disponible dans cette version de la bibliothèque.', 'error');
+            }
+        } catch (e) {
+            showMessage(`Export impossible : ${e.message}`, 'error');
+        }
+    });
 
     // ---- Événements UI ----
     startBtn.addEventListener('click', startMeasurement);
 
-    // Nettoyage
     window.addEventListener('beforeunload', () => {
-        if (ppg) try { ppg.destroy(); } catch (e) { /* ignore */ }
+        if (ppg) try { ppg.destroy(); } catch (e) {}
     });
 </script>
 </body>
