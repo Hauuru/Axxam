@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesure VFC v5 — Anti-saturation</title>
+    <title>Mesure VFC v6 — Anti-drift focus</title>
     <style>
         :root {
             --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --accent: #38bdf8;
@@ -38,12 +38,12 @@
         .state-NO_FINGER { background: #7f1d1d; color: #fca5a5; }
         .state-SETTLING { background: #78350f; color: #fcd34d; }
         .state-MEASURING { background: #14532d; color: #86efac; }
+        .state-DRIFT { background: #7c2d12; color: #fed7aa; }
         .status-bar {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 0.75rem; font-size: 0.85rem; color: var(--muted);
         }
 
-        /* Bandeau d'alerte saturation */
         .saturation-alert {
             display: none;
             background: #7f1d1d; border: 2px solid var(--danger);
@@ -57,7 +57,6 @@
             50% { opacity: 0.6; }
         }
 
-        /* Panneau diagnostic */
         .diag-panel {
             background: #0f172a; border: 1px solid #334155; border-radius: 0.9rem;
             padding: 0.8rem 0.9rem; margin-bottom: 0.75rem;
@@ -85,7 +84,6 @@
         }
         .reason-box.visible { display: block; }
 
-        /* Contrôle d'exposition */
         .exposure-control {
             background: #0f172a; border: 1px solid #334155; border-radius: 0.9rem;
             padding: 0.8rem 0.9rem; margin-bottom: 0.75rem;
@@ -157,7 +155,7 @@
 <body>
 <div class="container">
     <h1>📊 Mesure VFC</h1>
-    <p class="version-tag">Version 5 — Anti-saturation</p>
+    <p class="version-tag">Version 6 — Anti-drift focus</p>
 
     <div class="video-wrapper">
         <video id="cameraPreview" playsinline muted autoplay></video>
@@ -170,7 +168,7 @@
     </div>
 
     <div class="saturation-alert" id="saturationAlert">
-        ⚠️ TROP DE LUMIÈRE — Réduisez l'exposition ou éloignez le doigt du flash
+        ⚠️ TROP DE LUMIÈRE — Abaissez l'exposition ou éloignez le doigt du flash
     </div>
 
     <div class="diag-panel" id="diagPanel">
@@ -189,21 +187,21 @@
     <div class="exposure-control">
         <div class="exposure-header">
             <span>Exposition caméra</span>
-            <span class="exposure-value" id="exposureValue">auto</span>
+            <span class="exposure-value" id="exposureValue">-2</span>
         </div>
         <div class="exposure-buttons" id="exposureButtons">
-            <button data-exp="auto" class="active">Auto</button>
+            <button data-exp="auto">Auto</button>
             <button data-exp="-1">-1</button>
-            <button data-exp="-2">-2</button>
+            <button data-exp="-2" class="active">-2</button>
             <button data-exp="-3">-3</button>
-            <button data-exp="-4">-4</button>
             <button data-exp="-1.5">-1.5</button>
             <button data-exp="-2.5">-2.5</button>
             <button data-exp="-3.5">-3.5</button>
+            <button data-exp="-4">-4</button>
         </div>
         <div class="exposure-hint">
-            💡 Si la saturation reste rouge, abaissez l'exposition (valeurs négatives).
-            Vous pouvez aussi <strong>éloigner très légèrement le doigt</strong> du flash pour réduire la lumière.
+            💡 <strong>−2 est le réglage recommandé</strong> sur votre téléphone (perfusion excellente, pas de saturation).
+            Si l'alerte rouge clignote, descendez encore.
         </div>
     </div>
 
@@ -237,7 +235,68 @@
 <script type="module">
     import { PPG } from 'https://esm.sh/@sontakey/ppg-js';
 
-    // ---- DOM ----
+    // ============================================================
+    // *** PATCH CAMÉRA — posé AVANT toute utilisation par la lib ***
+    // ============================================================
+    // La bibliothèque ppg-js applique un `focusMode: "manual"` avec
+    // une distance de focus aberrante (2^63) lors du "lockExposure"
+    // en mode MEASURING. Cela floute l'image et déclenche un
+    // "large_drift" systématique. On filtre ces contraintes au niveau
+    // du MediaStreamTrack pour qu'elles n'atteignent jamais la caméra.
+
+    function patchVideoTrack(track) {
+        if (track.__vfcPatched) return;
+        track.__vfcPatched = true;
+
+        // --- 1. Cacher 'manual' dans les capabilities ---
+        const origGetCaps = track.getCapabilities ? track.getCapabilities.bind(track) : null;
+        if (origGetCaps) {
+            track.getCapabilities = function() {
+                const caps = origGetCaps();
+                if (caps && Array.isArray(caps.focusMode)) {
+                    caps.focusMode = caps.focusMode.filter(m => m !== 'manual' && m !== 'single-shot');
+                }
+                if (caps && Array.isArray(caps.exposureMode)) {
+                    caps.exposureMode = caps.exposureMode.filter(m => m !== 'manual');
+                }
+                return caps;
+            };
+        }
+
+        // --- 2. Filtrer les contraintes ---
+        const origApply = track.applyConstraints.bind(track);
+        track.applyConstraints = async function(constraints) {
+            if (constraints && Array.isArray(constraints.advanced)) {
+                constraints.advanced = constraints.advanced.map(adv => {
+                    const clean = { ...adv };
+                    delete clean.focusMode;      // ← cause du drift
+                    delete clean.focusDistance;  // ← valeur aberrante 2^63
+                    delete clean.exposureTime;   // ← inutile, préserve exposureCompensation
+                    delete clean.iso;
+                    // On bloque exposureMode "manual" mais on laisse "continuous"
+                    if (clean.exposureMode === 'manual') {
+                        delete clean.exposureMode;
+                    }
+                    return clean;
+                }).filter(adv => Object.keys(adv).length > 0);
+            }
+            return origApply(constraints);
+        };
+    }
+
+    // Override global pour patcher tous les tracks dès leur création
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const origGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+        navigator.mediaDevices.getUserMedia = async function(constraints) {
+            const stream = await origGetUserMedia(constraints);
+            stream.getVideoTracks().forEach(t => patchVideoTrack(t));
+            return stream;
+        };
+    }
+
+    // ============================================================
+    // DOM
+    // ============================================================
     const video = document.getElementById('cameraPreview');
     const canvas = document.getElementById('waveformCanvas');
     const ctx = canvas.getContext('2d');
@@ -267,7 +326,9 @@
     const exposureButtons = document.getElementById('exposureButtons');
     const exposureValue = document.getElementById('exposureValue');
 
-    // ---- Variables ----
+    // ============================================================
+    // État
+    // ============================================================
     let ppg = null;
     let measurementActive = false;
     let timerInterval = null;
@@ -275,11 +336,9 @@
     let lastState = 'NO_FINGER';
     let waveformData = [];
     const MAX_WAVEFORM_POINTS = 200;
+    let currentExposure = -2;
+    let driftCount = 0;
 
-    // Exposition actuelle (-4 à +4, ou 'auto')
-    let currentExposure = 'auto';
-
-    // ---- Journal interne ----
     const debugEvents = [];
     const MAX_EVENTS = 5000;
     const sessionStart = Date.now();
@@ -290,7 +349,9 @@
         debugEvents.push({ t: Date.now() - sessionStart, type, ...data });
     }
 
-    // ---- Canvas ----
+    // ============================================================
+    // Canvas
+    // ============================================================
     function resizeCanvas() {
         canvas.width = canvas.clientWidth * window.devicePixelRatio;
         canvas.height = canvas.clientHeight * window.devicePixelRatio;
@@ -314,45 +375,41 @@
         ctx.stroke();
     }
 
-    // ---- Messages ----
     function showMessage(text, type = 'info') {
         messageBox.textContent = text;
         messageBox.className = `message-box ${type}`;
     }
     function hideMessage() { messageBox.className = 'message-box'; messageBox.textContent = ''; }
 
-    // ---- Application de l'exposition à la caméra ----
+    // ============================================================
+    // Exposition
+    // ============================================================
     async function applyExposure(value) {
         currentExposure = value;
-        // Mise à jour de l'UI
         exposureValue.textContent = value === 'auto' ? 'auto' : `${value >= 0 ? '+' : ''}${value}`;
         Array.from(exposureButtons.children).forEach(btn => {
             btn.classList.toggle('active', btn.dataset.exp === String(value));
         });
 
-        // Application à la caméra
         try {
             const stream = video.srcObject;
             if (!stream) return;
             const track = stream.getVideoTracks()[0];
             if (!track) return;
             const caps = track.getCapabilities ? track.getCapabilities() : {};
-            if (!caps.exposureCompensation) {
-                logEvent('exposure_unsupported', {});
-                return;
-            }
-            if (value === 'auto') {
-                await track.applyConstraints({ advanced: [{ exposureCompensation: 0 }] });
-            } else {
-                await track.applyConstraints({ advanced: [{ exposureCompensation: parseFloat(value) }] });
-            }
-            logEvent('exposure_applied', { value });
+            if (!caps.exposureCompensation) return;
+            const expVal = value === 'auto' ? 0 : parseFloat(value);
+            // On passe par le applyConstraints patché → exposureMode 'manual' sera filtré si présent
+            await track.applyConstraints({ advanced: [{ exposureCompensation: expVal }] });
+            logEvent('exposure_applied', { value, expVal });
         } catch (e) {
             logEvent('exposure_error', { message: String(e) });
         }
     }
 
-    // ---- Diagnostic SQI ----
+    // ============================================================
+    // Diagnostic SQI
+    // ============================================================
     function updateDiagnostics(metrics) {
         if (!metrics) return;
         const sqi = metrics.sqi;
@@ -361,39 +418,32 @@
             diagScore.textContent = `score: ${sqi.score.toFixed(2)}`;
             diagScore.style.color = sqi.score >= 0.6 ? 'var(--success)' : (sqi.score >= 0.4 ? 'var(--warn)' : 'var(--danger)');
         }
-
-        // SATURATION — en premier, c'est le point critique
         if (sqi?.clippedFraction !== undefined) {
             const v = sqi.clippedFraction;
             sqiClipped.textContent = `${(v * 100).toFixed(2)} %`;
             sqiClipped.className = `diag-value ${v <= 0.02 ? 'good' : (v <= 0.05 ? 'warn' : 'bad')}`;
             saturationAlert.classList.toggle('visible', v > 0.05);
         }
-
         if (sqi?.perfusion !== undefined) {
             const v = sqi.perfusion;
             sqiPerfusion.textContent = `${v.toFixed(3)} %`;
             sqiPerfusion.className = `diag-value ${v >= 0.4 ? 'good' : (v >= 0.2 ? 'warn' : 'bad')}`;
         }
-
         if (sqi?.templateCorrelation !== undefined) {
             const v = sqi.templateCorrelation;
             sqiTemplate.textContent = v.toFixed(3);
             sqiTemplate.className = `diag-value ${v >= 0.7 ? 'good' : (v >= 0.6 ? 'warn' : 'bad')}`;
         }
-
         if (sqi?.motion !== undefined) {
             const v = sqi.motion;
             sqiMotion.textContent = v.toFixed(4);
             sqiMotion.className = `diag-value ${v <= 0.01 ? 'good' : (v <= 0.05 ? 'warn' : 'bad')}`;
         }
-
         if (sqi?.snrDb !== undefined) {
             const v = sqi.snrDb;
             sqiSnr.textContent = `${v.toFixed(1)} dB`;
             sqiSnr.className = `diag-value ${v >= 10 ? 'good' : (v >= 5 ? 'warn' : 'bad')}`;
         }
-
         const q = metrics.quality;
         if (q && q.good === false && q.reason) {
             const guidance = q.guidanceMessage || '';
@@ -405,11 +455,12 @@
         }
     }
 
-    // ---- Initialisation PPG ----
+    // ============================================================
+    // Init PPG
+    // ============================================================
     function initPPG() {
         if (ppg) return;
 
-        // *** CONFIGURATION ANTI-SATURATION ***
         ppg = new PPG({
             video: video,
             cameraOptions: {
@@ -417,9 +468,10 @@
                 height: { ideal: 480 },
                 frameRate: { ideal: 30 },
                 facingMode: 'environment',
-                // *** Désactive le verrouillage d'exposition qui cause le large_drift ***
-                lockExposure: 'never',
                 torch: true,
+                // Note : la valeur passée ici est un souhait, pas une contrainte.
+                // Le patch applyConstraints s'occupe de filtrer le reste.
+                lockExposure: 'measuring',
             },
         });
 
@@ -428,6 +480,17 @@
             const state = detail.state;
             const reason = detail.reason;
             lastState = state;
+
+            // Détection de drift : on affiche DRIFT au lieu de SETTLING
+            if (state === 'SETTLING' && reason === 'large_drift') {
+                driftCount++;
+                stateBadge.textContent = 'DRIFT';
+                stateBadge.className = 'state-badge state-DRIFT';
+                logEvent('state', { state, reason, driftCount });
+                showMessage(`⚠️ Dérive détectée (#${driftCount}). Restez parfaitement immobile.`, 'info');
+                return;
+            }
+
             stateBadge.textContent = state;
             stateBadge.className = `state-badge state-${state}`;
             logEvent('state', { state, reason: reason || null });
@@ -436,10 +499,10 @@
                 showMessage('Placez votre doigt sur la caméra arrière et le flash.', 'info');
             } else if (state === 'SETTLING') {
                 let msg = 'Signal en cours de stabilisation... Ne bougez plus.';
-                if (reason === 'large_drift') {
-                    msg += '\n💡 Dérive détectée. Restez parfaitement immobile.';
-                } else if (reason === 'weak_pulse') {
-                    msg += '\n💡 Pouls faible : ajustez la position du doigt.';
+                if (reason === 'weak_pulse') {
+                    msg += '\n💡 Pouls faible : appuyez plus fort.';
+                } else if (reason === 'motion') {
+                    msg += '\n💡 Mouvement détecté : posez le téléphone.';
                 } else if (reason) {
                     msg += `\n(raison : ${reason})`;
                 }
@@ -462,27 +525,17 @@
             const m = e.detail;
             updateDiagnostics(m);
             logEvent('metrics', {
-                hr: m.heartRate ?? null,
-                rmssd: m.rmssd ?? null,
-                sdnn: m.sdnn ?? null,
-                good: m.quality?.good ?? null,
-                reason: m.quality?.reason ?? null,
-                sqi: m.sqi ? {
-                    score: m.sqi.score,
-                    perfusion: m.sqi.perfusion,
-                    template: m.sqi.templateCorrelation,
-                    clipped: m.sqi.clippedFraction,
-                    motion: m.sqi.motion,
-                    snr: m.sqi.snrDb,
-                } : null,
+                hr: m.heartRate ?? null, rmssd: m.rmssd ?? null, sdnn: m.sdnn ?? null,
+                good: m.quality?.good ?? null, reason: m.quality?.reason ?? null,
+                sqi: m.sqi ? { score: m.sqi.score, perfusion: m.sqi.perfusion,
+                    template: m.sqi.templateCorrelation, clipped: m.sqi.clippedFraction,
+                    motion: m.sqi.motion, snr: m.sqi.snrDb } : null,
             });
-
             if (m.quality && m.quality.good) {
                 if (m.heartRate) heartRateEl.textContent = Math.round(m.heartRate);
                 if (m.rmssd !== undefined) rmssdEl.textContent = Math.round(m.rmssd);
                 if (m.sdnn !== undefined) sdnnEl.textContent = Math.round(m.sdnn);
-                qualityEl.textContent = 'Bonne';
-                qualityEl.style.color = 'var(--success)';
+                qualityEl.textContent = 'Bonne'; qualityEl.style.color = 'var(--success)';
             } else {
                 heartRateEl.textContent = '--'; rmssdEl.textContent = '--'; sdnnEl.textContent = '--';
                 qualityEl.textContent = 'Faible'; qualityEl.style.color = 'var(--danger)';
@@ -521,12 +574,15 @@
         }
     }
 
-    // ---- Démarrer ----
+    // ============================================================
+    // Démarrer
+    // ============================================================
     async function startMeasurement() {
         hideMessage(); reasonBox.classList.remove('visible'); initPPG();
         saturationAlert.classList.remove('visible');
 
         debugEvents.length = 0;
+        driftCount = 0;
         waveformData = [];
         heartRateEl.textContent = '--'; rmssdEl.textContent = '--'; sdnnEl.textContent = '--';
         qualityEl.textContent = '--'; qualityEl.style.color = 'var(--accent)';
@@ -553,27 +609,27 @@
         measurementActive = true; startBtn.disabled = true;
         remainingSeconds = 45; timerDisplay.textContent = `${remainingSeconds}s`;
 
-        // Allumer le flash et appliquer l'exposition courante
+        // Vérifier que le patch est bien posé sur le track
         try {
             const stream = video.srcObject;
             if (stream) {
                 const track = stream.getVideoTracks()[0];
                 if (track) {
+                    const patched = track.__vfcPatched === true;
+                    logEvent('track_patched', { patched });
                     const caps = track.getCapabilities ? track.getCapabilities() : {};
                     logEvent('camera_caps', {
                         torch: !!caps.torch,
+                        focusMode: caps.focusMode || null,
+                        exposureMode: caps.exposureMode || null,
                         exposureCompensation: caps.exposureCompensation || null,
-                        exposureTime: caps.exposureTime || null,
-                        iso: caps.iso || null,
                     });
                     if (caps.torch) {
                         await track.applyConstraints({ advanced: [{ torch: true }] });
                         logEvent('torch_on', {});
                     }
-                    // Appliquer l'exposition si non-auto
-                    if (currentExposure !== 'auto') {
-                        await applyExposure(currentExposure);
-                    }
+                    // Appliquer l'exposition courante (sera patché pour ignorer focusMode)
+                    await applyExposure(currentExposure);
                 }
             }
         } catch (e) {
@@ -586,7 +642,6 @@
         }, 1000);
     }
 
-    // ---- Arrêter ----
     function stopMeasurement() {
         if (!measurementActive) return;
         measurementActive = false; clearInterval(timerInterval); startBtn.disabled = false;
@@ -601,23 +656,35 @@
         } catch (e) {}
         saturationAlert.classList.remove('visible');
 
-        logEvent('session_end', { lastState });
+        logEvent('session_end', { lastState, driftCount });
         viewBtn.disabled = false;
         exportBtn.disabled = false;
         generateSummary();
     }
 
-    // ---- Rapport ----
+    // ============================================================
+    // Rapport
+    // ============================================================
     function buildReport() {
         const report = {
             generatedAt: new Date().toISOString(),
             sessionId,
-            version: 'v5',
+            version: 'v6',
             exposure: currentExposure,
+            driftCount,
             userAgent: navigator.userAgent,
             eventsCount: debugEvents.length,
             events: debugEvents,
         };
+        // Info sur le patch
+        try {
+            const track = video.srcObject?.getVideoTracks?.()[0];
+            if (track) {
+                report.trackPatched = track.__vfcPatched === true;
+                report.trackSettings = track.getSettings?.() || null;
+            }
+        } catch (_) {}
+
         if (ppg && typeof ppg.exportDebugLog === 'function') {
             try {
                 const nativeLog = ppg.exportDebugLog();
@@ -636,7 +703,6 @@
         return report;
     }
 
-    // ---- Résumé ----
     function generateSummary() {
         if (!ppg) return;
         let summary;
@@ -646,14 +712,14 @@
         if (!summary || !summary.quality || !summary.quality.good) {
             const reason = summary?.quality?.reason || 'signal_non_exploitable';
             const guidance = summary?.quality?.guidanceMessage || 'Vérifiez la position du doigt et restez immobile.';
-            showMessage(`Mesure échouée (${reason}). ${guidance}\nDernier état : ${lastState}.`, 'error');
+            showMessage(`Mesure échouée (${reason}). ${guidance}\nDernier état : ${lastState}. Drifts : ${driftCount}.`, 'error');
             return;
         }
         const date = new Date().toISOString().slice(0, 10);
         const hr = Math.round(summary.heartRate || 0);
         const rmssd = Math.round(summary.rmssd || 0);
         const sdnn = Math.round(summary.sdnn || 0);
-        const text = `VFC ${date}: RMSSD=${rmssd}ms, SDNN=${sdnn}ms, FC=${hr}bps, qualité=bonne`;
+        const text = `VFC ${date}: RMSSD=${rmssd}ms, SDNN=${sdnn}ms, FC=${hr}bpm, qualité=bonne`;
         showMessage(`Résumé prêt :\n${text}`, 'info');
         copyBtn.disabled = false;
         copyBtn.onclick = async () => {
@@ -667,7 +733,9 @@
         };
     }
 
-    // ---- Voir / Exporter / Fermer ----
+    // ============================================================
+    // UI secondaire
+    // ============================================================
     viewBtn.addEventListener('click', () => {
         if (reportView.classList.contains('visible')) {
             reportView.classList.remove('visible');
@@ -708,7 +776,6 @@
         }
     });
 
-    // ---- Contrôles d'exposition ----
     exposureButtons.addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-exp]');
         if (!btn) return;
