@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesure VFC v4 — Journal fiable</title>
+    <title>Mesure VFC v5 — Anti-saturation</title>
     <style>
         :root {
             --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --accent: #38bdf8;
@@ -31,10 +31,6 @@
             position: absolute; bottom: 0; left: 0; width: 100%; height: 28%;
             background: rgba(0,0,0,0.45); border-top: 1px solid #475569;
         }
-        .status-bar {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 0.75rem; font-size: 0.85rem; color: var(--muted);
-        }
         .state-badge {
             padding: 0.2rem 0.7rem; border-radius: 999px; font-weight: 700;
             font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.03em;
@@ -42,7 +38,26 @@
         .state-NO_FINGER { background: #7f1d1d; color: #fca5a5; }
         .state-SETTLING { background: #78350f; color: #fcd34d; }
         .state-MEASURING { background: #14532d; color: #86efac; }
+        .status-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 0.75rem; font-size: 0.85rem; color: var(--muted);
+        }
 
+        /* Bandeau d'alerte saturation */
+        .saturation-alert {
+            display: none;
+            background: #7f1d1d; border: 2px solid var(--danger);
+            border-radius: 0.8rem; padding: 0.7rem; margin-bottom: 0.75rem;
+            text-align: center; font-weight: 700; color: #fecaca;
+            animation: pulse 1.2s infinite;
+        }
+        .saturation-alert.visible { display: block; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Panneau diagnostic */
         .diag-panel {
             background: #0f172a; border: 1px solid #334155; border-radius: 0.9rem;
             padding: 0.8rem 0.9rem; margin-bottom: 0.75rem;
@@ -69,6 +84,29 @@
             margin-top: 0.5rem; display: none; line-height: 1.4; white-space: pre-wrap;
         }
         .reason-box.visible { display: block; }
+
+        /* Contrôle d'exposition */
+        .exposure-control {
+            background: #0f172a; border: 1px solid #334155; border-radius: 0.9rem;
+            padding: 0.8rem 0.9rem; margin-bottom: 0.75rem;
+        }
+        .exposure-header {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.8rem; color: var(--muted); margin-bottom: 0.5rem;
+        }
+        .exposure-value { color: var(--accent); font-weight: 700; }
+        .exposure-buttons {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.35rem;
+            margin-bottom: 0.5rem;
+        }
+        .exposure-buttons button {
+            font-size: 0.75rem; padding: 0.4rem 0.2rem;
+            background: #1e293b; color: var(--text); border: 1px solid #334155;
+        }
+        .exposure-buttons button.active {
+            background: var(--accent); color: #0f172a; font-weight: 700;
+        }
+        .exposure-hint { font-size: 0.7rem; color: var(--muted); line-height: 1.35; }
 
         .timer { text-align: center; font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; font-variant-numeric: tabular-nums; }
 
@@ -99,7 +137,6 @@
         .message-box.error { display: block; background: #450a0a; border: 1px solid var(--danger); color: #fca5a5; }
         .message-box.info { display: block; background: #0c4a6e; border: 1px solid var(--accent); color: #bae6fd; }
 
-        /* Zone d'aperçu du rapport */
         .report-view {
             display: none; margin-top: 0.6rem; background: #0f172a;
             border: 1px solid #334155; border-radius: 0.7rem; padding: 0.6rem;
@@ -120,7 +157,7 @@
 <body>
 <div class="container">
     <h1>📊 Mesure VFC</h1>
-    <p class="version-tag">Version 4 — Journal fiable</p>
+    <p class="version-tag">Version 5 — Anti-saturation</p>
 
     <div class="video-wrapper">
         <video id="cameraPreview" playsinline muted autoplay></video>
@@ -132,17 +169,42 @@
         <span id="stateBadge" class="state-badge state-NO_FINGER">NO_FINGER</span>
     </div>
 
+    <div class="saturation-alert" id="saturationAlert">
+        ⚠️ TROP DE LUMIÈRE — Réduisez l'exposition ou éloignez le doigt du flash
+    </div>
+
     <div class="diag-panel" id="diagPanel">
         <div class="diag-title">
             <span>Diagnostic qualité (SQI)</span>
             <span id="diagScore" style="color:var(--muted); font-weight:400; text-transform:none;">score: —</span>
         </div>
+        <div class="diag-row"><span class="diag-label">Saturation (clipped)</span><span class="diag-value" id="sqiClipped">—</span></div>
         <div class="diag-row"><span class="diag-label">Perfusion (AC/DC)</span><span class="diag-value" id="sqiPerfusion">—</span></div>
         <div class="diag-row"><span class="diag-label">Corrélation morpho.</span><span class="diag-value" id="sqiTemplate">—</span></div>
-        <div class="diag-row"><span class="diag-label">Pixels saturés</span><span class="diag-value" id="sqiClipped">—</span></div>
         <div class="diag-row"><span class="diag-label">Mouvement</span><span class="diag-value" id="sqiMotion">—</span></div>
         <div class="diag-row"><span class="diag-label">SNR (dB)</span><span class="diag-value" id="sqiSnr">—</span></div>
         <div class="reason-box" id="reasonBox"></div>
+    </div>
+
+    <div class="exposure-control">
+        <div class="exposure-header">
+            <span>Exposition caméra</span>
+            <span class="exposure-value" id="exposureValue">auto</span>
+        </div>
+        <div class="exposure-buttons" id="exposureButtons">
+            <button data-exp="auto" class="active">Auto</button>
+            <button data-exp="-1">-1</button>
+            <button data-exp="-2">-2</button>
+            <button data-exp="-3">-3</button>
+            <button data-exp="-4">-4</button>
+            <button data-exp="-1.5">-1.5</button>
+            <button data-exp="-2.5">-2.5</button>
+            <button data-exp="-3.5">-3.5</button>
+        </div>
+        <div class="exposure-hint">
+            💡 Si la saturation reste rouge, abaissez l'exposition (valeurs négatives).
+            Vous pouvez aussi <strong>éloigner très légèrement le doigt</strong> du flash pour réduire la lumière.
+        </div>
     </div>
 
     <div class="timer" id="timerDisplay">45s</div>
@@ -164,7 +226,7 @@
     <div class="report-view" id="reportView">
         <textarea id="reportText" readonly></textarea>
         <div class="report-actions">
-            <button id="reportCopyBtn">📋 Copier le rapport</button>
+            <button id="reportCopyBtn">📋 Copier</button>
             <button id="reportCloseBtn">✕ Fermer</button>
         </div>
     </div>
@@ -201,6 +263,9 @@
     const reportText = document.getElementById('reportText');
     const reportCopyBtn = document.getElementById('reportCopyBtn');
     const reportCloseBtn = document.getElementById('reportCloseBtn');
+    const saturationAlert = document.getElementById('saturationAlert');
+    const exposureButtons = document.getElementById('exposureButtons');
+    const exposureValue = document.getElementById('exposureValue');
 
     // ---- Variables ----
     let ppg = null;
@@ -211,23 +276,19 @@
     let waveformData = [];
     const MAX_WAVEFORM_POINTS = 200;
 
-    // *** Journal interne : toujours disponible, indépendant de la bibliothèque ***
+    // Exposition actuelle (-4 à +4, ou 'auto')
+    let currentExposure = 'auto';
+
+    // ---- Journal interne ----
     const debugEvents = [];
     const MAX_EVENTS = 5000;
+    const sessionStart = Date.now();
     const sessionId = new Date().toISOString();
 
     function logEvent(type, data) {
         if (debugEvents.length >= MAX_EVENTS) return;
-        const entry = {
-            t: Date.now() - sessionStart,
-            type,
-            ...data,
-        };
-        debugEvents.push(entry);
+        debugEvents.push({ t: Date.now() - sessionStart, type, ...data });
     }
-
-    // Date de départ pour les timestamps relatifs
-    const sessionStart = Date.now();
 
     // ---- Canvas ----
     function resizeCanvas() {
@@ -260,39 +321,79 @@
     }
     function hideMessage() { messageBox.className = 'message-box'; messageBox.textContent = ''; }
 
+    // ---- Application de l'exposition à la caméra ----
+    async function applyExposure(value) {
+        currentExposure = value;
+        // Mise à jour de l'UI
+        exposureValue.textContent = value === 'auto' ? 'auto' : `${value >= 0 ? '+' : ''}${value}`;
+        Array.from(exposureButtons.children).forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.exp === String(value));
+        });
+
+        // Application à la caméra
+        try {
+            const stream = video.srcObject;
+            if (!stream) return;
+            const track = stream.getVideoTracks()[0];
+            if (!track) return;
+            const caps = track.getCapabilities ? track.getCapabilities() : {};
+            if (!caps.exposureCompensation) {
+                logEvent('exposure_unsupported', {});
+                return;
+            }
+            if (value === 'auto') {
+                await track.applyConstraints({ advanced: [{ exposureCompensation: 0 }] });
+            } else {
+                await track.applyConstraints({ advanced: [{ exposureCompensation: parseFloat(value) }] });
+            }
+            logEvent('exposure_applied', { value });
+        } catch (e) {
+            logEvent('exposure_error', { message: String(e) });
+        }
+    }
+
     // ---- Diagnostic SQI ----
     function updateDiagnostics(metrics) {
         if (!metrics) return;
         const sqi = metrics.sqi;
+
         if (sqi?.score !== undefined) {
             diagScore.textContent = `score: ${sqi.score.toFixed(2)}`;
             diagScore.style.color = sqi.score >= 0.6 ? 'var(--success)' : (sqi.score >= 0.4 ? 'var(--warn)' : 'var(--danger)');
         }
+
+        // SATURATION — en premier, c'est le point critique
+        if (sqi?.clippedFraction !== undefined) {
+            const v = sqi.clippedFraction;
+            sqiClipped.textContent = `${(v * 100).toFixed(2)} %`;
+            sqiClipped.className = `diag-value ${v <= 0.02 ? 'good' : (v <= 0.05 ? 'warn' : 'bad')}`;
+            saturationAlert.classList.toggle('visible', v > 0.05);
+        }
+
         if (sqi?.perfusion !== undefined) {
             const v = sqi.perfusion;
             sqiPerfusion.textContent = `${v.toFixed(3)} %`;
             sqiPerfusion.className = `diag-value ${v >= 0.4 ? 'good' : (v >= 0.2 ? 'warn' : 'bad')}`;
         }
+
         if (sqi?.templateCorrelation !== undefined) {
             const v = sqi.templateCorrelation;
             sqiTemplate.textContent = v.toFixed(3);
             sqiTemplate.className = `diag-value ${v >= 0.7 ? 'good' : (v >= 0.6 ? 'warn' : 'bad')}`;
         }
-        if (sqi?.clippedFraction !== undefined) {
-            const v = sqi.clippedFraction;
-            sqiClipped.textContent = `${(v * 100).toFixed(2)} %`;
-            sqiClipped.className = `diag-value ${v <= 0.02 ? 'good' : (v <= 0.05 ? 'warn' : 'bad')}`;
-        }
+
         if (sqi?.motion !== undefined) {
             const v = sqi.motion;
             sqiMotion.textContent = v.toFixed(4);
             sqiMotion.className = `diag-value ${v <= 0.01 ? 'good' : (v <= 0.05 ? 'warn' : 'bad')}`;
         }
+
         if (sqi?.snrDb !== undefined) {
             const v = sqi.snrDb;
             sqiSnr.textContent = `${v.toFixed(1)} dB`;
             sqiSnr.className = `diag-value ${v >= 10 ? 'good' : (v >= 5 ? 'warn' : 'bad')}`;
         }
+
         const q = metrics.quality;
         if (q && q.good === false && q.reason) {
             const guidance = q.guidanceMessage || '';
@@ -307,7 +408,20 @@
     // ---- Initialisation PPG ----
     function initPPG() {
         if (ppg) return;
-        ppg = new PPG({ video: video });
+
+        // *** CONFIGURATION ANTI-SATURATION ***
+        ppg = new PPG({
+            video: video,
+            cameraOptions: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                frameRate: { ideal: 30 },
+                facingMode: 'environment',
+                // *** Désactive le verrouillage d'exposition qui cause le large_drift ***
+                lockExposure: 'never',
+                torch: true,
+            },
+        });
 
         ppg.addEventListener('state', (e) => {
             const detail = e.detail || {};
@@ -316,20 +430,16 @@
             lastState = state;
             stateBadge.textContent = state;
             stateBadge.className = `state-badge state-${state}`;
-
-            // *** Journalisation ***
             logEvent('state', { state, reason: reason || null });
 
             if (state === 'NO_FINGER') {
                 showMessage('Placez votre doigt sur la caméra arrière et le flash.', 'info');
             } else if (state === 'SETTLING') {
                 let msg = 'Signal en cours de stabilisation... Ne bougez plus.';
-                if (reason === 'weak_pulse') {
-                    msg += '\n💡 Pouls trop faible : appuyez plus fort ou déplacez le doigt.';
-                } else if (reason === 'motion') {
-                    msg += '\n💡 Mouvement détecté : posez le téléphone sur une surface stable.';
-                } else if (reason === 'saturated') {
-                    msg += '\n💡 Signal saturé : éloignez légèrement le doigt.';
+                if (reason === 'large_drift') {
+                    msg += '\n💡 Dérive détectée. Restez parfaitement immobile.';
+                } else if (reason === 'weak_pulse') {
+                    msg += '\n💡 Pouls faible : ajustez la position du doigt.';
                 } else if (reason) {
                     msg += `\n(raison : ${reason})`;
                 }
@@ -351,7 +461,6 @@
         ppg.addEventListener('metrics', (e) => {
             const m = e.detail;
             updateDiagnostics(m);
-            // *** Journalisation compacte (toutes les 500 ms max pour ne pas exploser le log) ***
             logEvent('metrics', {
                 hr: m.heartRate ?? null,
                 rmssd: m.rmssd ?? null,
@@ -395,7 +504,6 @@
         });
     }
 
-    // ---- Sérialisation robuste (gère les références circulaires) ----
     function safeStringify(obj) {
         try {
             const seen = new WeakSet();
@@ -416,8 +524,8 @@
     // ---- Démarrer ----
     async function startMeasurement() {
         hideMessage(); reasonBox.classList.remove('visible'); initPPG();
+        saturationAlert.classList.remove('visible');
 
-        // Réinitialiser l'état
         debugEvents.length = 0;
         waveformData = [];
         heartRateEl.textContent = '--'; rmssdEl.textContent = '--'; sdnnEl.textContent = '--';
@@ -445,23 +553,31 @@
         measurementActive = true; startBtn.disabled = true;
         remainingSeconds = 45; timerDisplay.textContent = `${remainingSeconds}s`;
 
+        // Allumer le flash et appliquer l'exposition courante
         try {
             const stream = video.srcObject;
             if (stream) {
                 const track = stream.getVideoTracks()[0];
                 if (track) {
                     const caps = track.getCapabilities ? track.getCapabilities() : {};
-                    logEvent('camera_caps', { torch: !!caps.torch, width: track.getSettings?.().width });
+                    logEvent('camera_caps', {
+                        torch: !!caps.torch,
+                        exposureCompensation: caps.exposureCompensation || null,
+                        exposureTime: caps.exposureTime || null,
+                        iso: caps.iso || null,
+                    });
                     if (caps.torch) {
                         await track.applyConstraints({ advanced: [{ torch: true }] });
                         logEvent('torch_on', {});
-                    } else {
-                        logEvent('torch_unavailable', {});
+                    }
+                    // Appliquer l'exposition si non-auto
+                    if (currentExposure !== 'auto') {
+                        await applyExposure(currentExposure);
                     }
                 }
             }
         } catch (e) {
-            logEvent('torch_error', { message: String(e) });
+            logEvent('camera_error', { message: String(e) });
         }
 
         timerInterval = setInterval(() => {
@@ -483,57 +599,41 @@
                 if (track) track.applyConstraints({ advanced: [{ torch: false }] });
             }
         } catch (e) {}
+        saturationAlert.classList.remove('visible');
 
         logEvent('session_end', { lastState });
-
         viewBtn.disabled = false;
         exportBtn.disabled = false;
         generateSummary();
     }
 
-    // ---- Construire le rapport de diagnostic ----
+    // ---- Rapport ----
     function buildReport() {
         const report = {
             generatedAt: new Date().toISOString(),
             sessionId,
-            version: 'v4',
+            version: 'v5',
+            exposure: currentExposure,
             userAgent: navigator.userAgent,
             eventsCount: debugEvents.length,
             events: debugEvents,
         };
-
-        // Tentative d'inclusion du log natif de la bibliothèque
         if (ppg && typeof ppg.exportDebugLog === 'function') {
             try {
                 const nativeLog = ppg.exportDebugLog();
-                // La bibliothèque peut renvoyer un objet : on le sérialise proprement
                 if (typeof nativeLog === 'string') {
-                    try {
-                        report.libraryLog = JSON.parse(nativeLog);
-                    } catch (_) {
-                        report.libraryLogRaw = nativeLog;
-                    }
-                } else if (nativeLog !== null && nativeLog !== undefined) {
-                    // Sérialiser puis re-parser pour vérifier qu'on peut l'embarquer
+                    try { report.libraryLog = JSON.parse(nativeLog); }
+                    catch (_) { report.libraryLogRaw = nativeLog; }
+                } else if (nativeLog != null) {
                     const serialized = safeStringify(nativeLog);
-                    try {
-                        report.libraryLog = JSON.parse(serialized);
-                    } catch (_) {
-                        report.libraryLogRaw = serialized;
-                    }
+                    try { report.libraryLog = JSON.parse(serialized); }
+                    catch (_) { report.libraryLogRaw = serialized; }
                 }
             } catch (e) {
                 report.libraryLogError = String(e);
             }
-        } else {
-            report.libraryLogError = 'exportDebugLog() non disponible';
         }
-
         return report;
-    }
-
-    function buildReportString() {
-        return safeStringify(buildReport());
     }
 
     // ---- Résumé ----
@@ -546,14 +646,14 @@
         if (!summary || !summary.quality || !summary.quality.good) {
             const reason = summary?.quality?.reason || 'signal_non_exploitable';
             const guidance = summary?.quality?.guidanceMessage || 'Vérifiez la position du doigt et restez immobile.';
-            showMessage(`Mesure échouée (${reason}). ${guidance}\nDernier état : ${lastState}.\nOuvre "Voir le rapport" pour inspecter les SQI.`, 'error');
+            showMessage(`Mesure échouée (${reason}). ${guidance}\nDernier état : ${lastState}.`, 'error');
             return;
         }
         const date = new Date().toISOString().slice(0, 10);
         const hr = Math.round(summary.heartRate || 0);
         const rmssd = Math.round(summary.rmssd || 0);
         const sdnn = Math.round(summary.sdnn || 0);
-        const text = `VFC ${date}: RMSSD=${rmssd}ms, SDNN=${sdnn}ms, FC=${hr}bpm, qualité=bonne`;
+        const text = `VFC ${date}: RMSSD=${rmssd}ms, SDNN=${sdnn}ms, FC=${hr}bps, qualité=bonne`;
         showMessage(`Résumé prêt :\n${text}`, 'info');
         copyBtn.disabled = false;
         copyBtn.onclick = async () => {
@@ -567,39 +667,34 @@
         };
     }
 
-    // ---- Voir le rapport ----
+    // ---- Voir / Exporter / Fermer ----
     viewBtn.addEventListener('click', () => {
         if (reportView.classList.contains('visible')) {
             reportView.classList.remove('visible');
             viewBtn.textContent = '👁 Voir le rapport';
             return;
         }
-        reportText.value = buildReportString();
+        reportText.value = safeStringify(buildReport());
         reportView.classList.add('visible');
-        viewBtn.textContent = '🙈 Masquer le rapport';
+        viewBtn.textContent = '🙈 Masquer';
     });
 
-    // ---- Copier le rapport depuis la zone de texte ----
     reportCopyBtn.addEventListener('click', async () => {
         try { await navigator.clipboard.writeText(reportText.value); }
-        catch (e) {
-            reportText.select(); document.execCommand('copy');
-        }
+        catch (e) { reportText.select(); document.execCommand('copy'); }
         reportCopyBtn.textContent = '✅ Copié !';
-        setTimeout(() => { reportCopyBtn.textContent = '📋 Copier le rapport'; }, 2000);
+        setTimeout(() => { reportCopyBtn.textContent = '📋 Copier'; }, 2000);
     });
 
-    // ---- Fermer la vue du rapport ----
     reportCloseBtn.addEventListener('click', () => {
         reportView.classList.remove('visible');
         viewBtn.textContent = '👁 Voir le rapport';
     });
 
-    // ---- Télécharger le rapport ----
     exportBtn.addEventListener('click', () => {
         if (!ppg) return;
         try {
-            const json = buildReportString();
+            const json = safeStringify(buildReport());
             const blob = new Blob([json], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -611,6 +706,14 @@
         } catch (e) {
             showMessage(`Export impossible : ${e.message}`, 'error');
         }
+    });
+
+    // ---- Contrôles d'exposition ----
+    exposureButtons.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-exp]');
+        if (!btn) return;
+        const val = btn.dataset.exp === 'auto' ? 'auto' : parseFloat(btn.dataset.exp);
+        applyExposure(val);
     });
 
     startBtn.addEventListener('click', startMeasurement);
