@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesure VFC v3 — Diagnostic SETTLING</title>
+    <title>Mesure VFC v4 — Journal fiable</title>
     <style>
         :root {
             --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --accent: #38bdf8;
@@ -88,19 +87,40 @@
         #startBtn { background: var(--accent); color: #0f172a; margin-bottom: 0.4rem; }
         #copyBtn { background: #334155; color: var(--text); margin-top: 0.3rem; }
         #copyBtn:not(:disabled) { background: var(--success); color: #0f172a; }
-        #exportBtn { background: #1e293b; color: var(--muted); margin-top: 0.4rem; font-size: 0.8rem; padding: 0.6rem; }
+        .btn-row { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
+        .btn-row button { margin-top: 0; font-size: 0.8rem; padding: 0.6rem; }
+        #viewBtn { background: #1e293b; color: var(--accent); }
+        #exportBtn { background: #1e293b; color: var(--muted); }
+
         .message-box {
             margin-top: 0.6rem; padding: 0.6rem 0.75rem; border-radius: 0.7rem;
             font-size: 0.82rem; line-height: 1.4; display: none; white-space: pre-wrap;
         }
         .message-box.error { display: block; background: #450a0a; border: 1px solid var(--danger); color: #fca5a5; }
         .message-box.info { display: block; background: #0c4a6e; border: 1px solid var(--accent); color: #bae6fd; }
+
+        /* Zone d'aperçu du rapport */
+        .report-view {
+            display: none; margin-top: 0.6rem; background: #0f172a;
+            border: 1px solid #334155; border-radius: 0.7rem; padding: 0.6rem;
+        }
+        .report-view.visible { display: block; }
+        .report-view textarea {
+            width: 100%; height: 220px; background: #020617; color: var(--muted);
+            border: 1px solid #1e293b; border-radius: 0.4rem; padding: 0.5rem;
+            font-family: 'SF Mono', Menlo, Consolas, monospace;
+            font-size: 0.68rem; resize: vertical; line-height: 1.35;
+        }
+        .report-actions { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
+        .report-actions button { font-size: 0.75rem; padding: 0.45rem; }
+        #reportCopyBtn { background: var(--accent); color: #0f172a; }
+        #reportCloseBtn { background: #334155; color: var(--text); }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>📊 Mesure VFC</h1>
-    <p class="version-tag">Version 3 — Focus SETTLING</p>
+    <p class="version-tag">Version 4 — Journal fiable</p>
 
     <div class="video-wrapper">
         <video id="cameraPreview" playsinline muted autoplay></video>
@@ -136,7 +156,18 @@
 
     <button id="startBtn">Démarrer la mesure (45s)</button>
     <button id="copyBtn" disabled>📋 Copier le résumé</button>
-    <button id="exportBtn">⬇ Exporter le journal de débogage</button>
+    <div class="btn-row">
+        <button id="viewBtn" disabled>👁 Voir le rapport</button>
+        <button id="exportBtn" disabled>⬇ Télécharger</button>
+    </div>
+
+    <div class="report-view" id="reportView">
+        <textarea id="reportText" readonly></textarea>
+        <div class="report-actions">
+            <button id="reportCopyBtn">📋 Copier le rapport</button>
+            <button id="reportCloseBtn">✕ Fermer</button>
+        </div>
+    </div>
 
     <div id="messageBox" class="message-box"></div>
 </div>
@@ -144,7 +175,7 @@
 <script type="module">
     import { PPG } from 'https://esm.sh/@sontakey/ppg-js';
 
-    // ---- DOM (identiques à la v2) ----
+    // ---- DOM ----
     const video = document.getElementById('cameraPreview');
     const canvas = document.getElementById('waveformCanvas');
     const ctx = canvas.getContext('2d');
@@ -156,6 +187,7 @@
     const qualityEl = document.getElementById('quality');
     const startBtn = document.getElementById('startBtn');
     const copyBtn = document.getElementById('copyBtn');
+    const viewBtn = document.getElementById('viewBtn');
     const exportBtn = document.getElementById('exportBtn');
     const messageBox = document.getElementById('messageBox');
     const reasonBox = document.getElementById('reasonBox');
@@ -165,6 +197,10 @@
     const sqiClipped   = document.getElementById('sqiClipped');
     const sqiMotion    = document.getElementById('sqiMotion');
     const sqiSnr       = document.getElementById('sqiSnr');
+    const reportView = document.getElementById('reportView');
+    const reportText = document.getElementById('reportText');
+    const reportCopyBtn = document.getElementById('reportCopyBtn');
+    const reportCloseBtn = document.getElementById('reportCloseBtn');
 
     // ---- Variables ----
     let ppg = null;
@@ -174,6 +210,24 @@
     let lastState = 'NO_FINGER';
     let waveformData = [];
     const MAX_WAVEFORM_POINTS = 200;
+
+    // *** Journal interne : toujours disponible, indépendant de la bibliothèque ***
+    const debugEvents = [];
+    const MAX_EVENTS = 5000;
+    const sessionId = new Date().toISOString();
+
+    function logEvent(type, data) {
+        if (debugEvents.length >= MAX_EVENTS) return;
+        const entry = {
+            t: Date.now() - sessionStart,
+            type,
+            ...data,
+        };
+        debugEvents.push(entry);
+    }
+
+    // Date de départ pour les timestamps relatifs
+    const sessionStart = Date.now();
 
     // ---- Canvas ----
     function resizeCanvas() {
@@ -206,7 +260,7 @@
     }
     function hideMessage() { messageBox.className = 'message-box'; messageBox.textContent = ''; }
 
-    // ---- Mise à jour du panneau SQI (identique à la v2) ----
+    // ---- Diagnostic SQI ----
     function updateDiagnostics(metrics) {
         if (!metrics) return;
         const sqi = metrics.sqi;
@@ -263,17 +317,19 @@
             stateBadge.textContent = state;
             stateBadge.className = `state-badge state-${state}`;
 
-            // *** DIAGNOSTIC SPÉCIFIQUE À SETTLING ***
+            // *** Journalisation ***
+            logEvent('state', { state, reason: reason || null });
+
             if (state === 'NO_FINGER') {
                 showMessage('Placez votre doigt sur la caméra arrière et le flash.', 'info');
             } else if (state === 'SETTLING') {
                 let msg = 'Signal en cours de stabilisation... Ne bougez plus.';
                 if (reason === 'weak_pulse') {
-                    msg += '\n💡 Le pouls est trop faible. Appuyez plus fort ou déplacez légèrement le doigt.';
+                    msg += '\n💡 Pouls trop faible : appuyez plus fort ou déplacez le doigt.';
                 } else if (reason === 'motion') {
-                    msg += '\n💡 Mouvement détecté. Posez le téléphone sur une surface stable.';
+                    msg += '\n💡 Mouvement détecté : posez le téléphone sur une surface stable.';
                 } else if (reason === 'saturated') {
-                    msg += '\n💡 Signal saturé. Éloignez légèrement le doigt ou réduisez la luminosité.';
+                    msg += '\n💡 Signal saturé : éloignez légèrement le doigt.';
                 } else if (reason) {
                     msg += `\n(raison : ${reason})`;
                 }
@@ -295,6 +351,23 @@
         ppg.addEventListener('metrics', (e) => {
             const m = e.detail;
             updateDiagnostics(m);
+            // *** Journalisation compacte (toutes les 500 ms max pour ne pas exploser le log) ***
+            logEvent('metrics', {
+                hr: m.heartRate ?? null,
+                rmssd: m.rmssd ?? null,
+                sdnn: m.sdnn ?? null,
+                good: m.quality?.good ?? null,
+                reason: m.quality?.reason ?? null,
+                sqi: m.sqi ? {
+                    score: m.sqi.score,
+                    perfusion: m.sqi.perfusion,
+                    template: m.sqi.templateCorrelation,
+                    clipped: m.sqi.clippedFraction,
+                    motion: m.sqi.motion,
+                    snr: m.sqi.snrDb,
+                } : null,
+            });
+
             if (m.quality && m.quality.good) {
                 if (m.heartRate) heartRateEl.textContent = Math.round(m.heartRate);
                 if (m.rmssd !== undefined) rmssdEl.textContent = Math.round(m.rmssd);
@@ -310,38 +383,62 @@
         ppg.addEventListener('quality', (e) => {
             const d = e.detail;
             if (d) updateDiagnostics({ sqi: d.sqi || d, quality: d.quality || d });
+            logEvent('quality', { raw: safeStringify(d) });
         });
 
-        // *** GESTION D'ERREUR ROBUSTE (plus de [object Object]) ***
         ppg.addEventListener('error', (e) => {
             const err = e.detail;
-            let msg = 'Erreur inconnue';
-            if (typeof err === 'string') {
-                msg = err;
-            } else if (err && typeof err === 'object') {
-                msg = err.message || err.code || JSON.stringify(err);
-            }
+            const msg = safeStringify(err);
             console.error('PPG Error:', err);
             showMessage(`Erreur : ${msg}`, 'error');
+            logEvent('error', { message: msg });
         });
     }
 
-    // ---- Démarrer (identique à la v2, avec réinitialisation) ----
+    // ---- Sérialisation robuste (gère les références circulaires) ----
+    function safeStringify(obj) {
+        try {
+            const seen = new WeakSet();
+            return JSON.stringify(obj, (k, v) => {
+                if (typeof v === 'object' && v !== null) {
+                    if (seen.has(v)) return '[Circular]';
+                    seen.add(v);
+                }
+                if (typeof v === 'function') return '[Function]';
+                if (typeof v === 'bigint') return v.toString();
+                return v;
+            }, 2);
+        } catch (e) {
+            return `[Unstringifiable: ${e.message}]`;
+        }
+    }
+
+    // ---- Démarrer ----
     async function startMeasurement() {
         hideMessage(); reasonBox.classList.remove('visible'); initPPG();
+
+        // Réinitialiser l'état
+        debugEvents.length = 0;
         waveformData = [];
         heartRateEl.textContent = '--'; rmssdEl.textContent = '--'; sdnnEl.textContent = '--';
         qualityEl.textContent = '--'; qualityEl.style.color = 'var(--accent)';
-        copyBtn.disabled = true; exportBtn.disabled = true;
+        copyBtn.disabled = true; viewBtn.disabled = true; exportBtn.disabled = true;
         [sqiPerfusion, sqiTemplate, sqiClipped, sqiMotion, sqiSnr].forEach(el => {
             el.textContent = '—'; el.className = 'diag-value';
         });
         diagScore.textContent = 'score: —'; diagScore.style.color = 'var(--muted)';
+        reportView.classList.remove('visible');
 
-        try { await ppg.start(); } catch (err) {
+        logEvent('session_start', { ua: navigator.userAgent });
+
+        try {
+            await ppg.start();
+            logEvent('start_ok', {});
+        } catch (err) {
+            const msg = safeStringify(err);
             console.error('Erreur de démarrage:', err);
-            const msg = err?.message || err?.code || JSON.stringify(err);
             showMessage(`Impossible de démarrer : ${msg}`, 'error');
+            logEvent('start_error', { message: msg });
             return;
         }
 
@@ -352,11 +449,20 @@
             const stream = video.srcObject;
             if (stream) {
                 const track = stream.getVideoTracks()[0];
-                if (track && track.getCapabilities().torch) {
-                    await track.applyConstraints({ advanced: [{ torch: true }] });
+                if (track) {
+                    const caps = track.getCapabilities ? track.getCapabilities() : {};
+                    logEvent('camera_caps', { torch: !!caps.torch, width: track.getSettings?.().width });
+                    if (caps.torch) {
+                        await track.applyConstraints({ advanced: [{ torch: true }] });
+                        logEvent('torch_on', {});
+                    } else {
+                        logEvent('torch_unavailable', {});
+                    }
                 }
             }
-        } catch (e) { console.warn('Flash non disponible', e); }
+        } catch (e) {
+            logEvent('torch_error', { message: String(e) });
+        }
 
         timerInterval = setInterval(() => {
             remainingSeconds--; timerDisplay.textContent = `${remainingSeconds}s`;
@@ -364,10 +470,11 @@
         }, 1000);
     }
 
-    // ---- Arrêter (identique à la v2) ----
+    // ---- Arrêter ----
     function stopMeasurement() {
         if (!measurementActive) return;
         measurementActive = false; clearInterval(timerInterval); startBtn.disabled = false;
+
         if (ppg) try { ppg.stop(); } catch (e) {}
         try {
             const stream = video.srcObject;
@@ -376,11 +483,60 @@
                 if (track) track.applyConstraints({ advanced: [{ torch: false }] });
             }
         } catch (e) {}
+
+        logEvent('session_end', { lastState });
+
+        viewBtn.disabled = false;
         exportBtn.disabled = false;
         generateSummary();
     }
 
-    // ---- Résumé (identique à la v2) ----
+    // ---- Construire le rapport de diagnostic ----
+    function buildReport() {
+        const report = {
+            generatedAt: new Date().toISOString(),
+            sessionId,
+            version: 'v4',
+            userAgent: navigator.userAgent,
+            eventsCount: debugEvents.length,
+            events: debugEvents,
+        };
+
+        // Tentative d'inclusion du log natif de la bibliothèque
+        if (ppg && typeof ppg.exportDebugLog === 'function') {
+            try {
+                const nativeLog = ppg.exportDebugLog();
+                // La bibliothèque peut renvoyer un objet : on le sérialise proprement
+                if (typeof nativeLog === 'string') {
+                    try {
+                        report.libraryLog = JSON.parse(nativeLog);
+                    } catch (_) {
+                        report.libraryLogRaw = nativeLog;
+                    }
+                } else if (nativeLog !== null && nativeLog !== undefined) {
+                    // Sérialiser puis re-parser pour vérifier qu'on peut l'embarquer
+                    const serialized = safeStringify(nativeLog);
+                    try {
+                        report.libraryLog = JSON.parse(serialized);
+                    } catch (_) {
+                        report.libraryLogRaw = serialized;
+                    }
+                }
+            } catch (e) {
+                report.libraryLogError = String(e);
+            }
+        } else {
+            report.libraryLogError = 'exportDebugLog() non disponible';
+        }
+
+        return report;
+    }
+
+    function buildReportString() {
+        return safeStringify(buildReport());
+    }
+
+    // ---- Résumé ----
     function generateSummary() {
         if (!ppg) return;
         let summary;
@@ -390,7 +546,7 @@
         if (!summary || !summary.quality || !summary.quality.good) {
             const reason = summary?.quality?.reason || 'signal_non_exploitable';
             const guidance = summary?.quality?.guidanceMessage || 'Vérifiez la position du doigt et restez immobile.';
-            showMessage(`Mesure échouée (${reason}). ${guidance}\nDernier état : ${lastState}.`, 'error');
+            showMessage(`Mesure échouée (${reason}). ${guidance}\nDernier état : ${lastState}.\nOuvre "Voir le rapport" pour inspecter les SQI.`, 'error');
             return;
         }
         const date = new Date().toISOString().slice(0, 10);
@@ -411,22 +567,50 @@
         };
     }
 
-    // ---- Export (identique à la v2) ----
+    // ---- Voir le rapport ----
+    viewBtn.addEventListener('click', () => {
+        if (reportView.classList.contains('visible')) {
+            reportView.classList.remove('visible');
+            viewBtn.textContent = '👁 Voir le rapport';
+            return;
+        }
+        reportText.value = buildReportString();
+        reportView.classList.add('visible');
+        viewBtn.textContent = '🙈 Masquer le rapport';
+    });
+
+    // ---- Copier le rapport depuis la zone de texte ----
+    reportCopyBtn.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(reportText.value); }
+        catch (e) {
+            reportText.select(); document.execCommand('copy');
+        }
+        reportCopyBtn.textContent = '✅ Copié !';
+        setTimeout(() => { reportCopyBtn.textContent = '📋 Copier le rapport'; }, 2000);
+    });
+
+    // ---- Fermer la vue du rapport ----
+    reportCloseBtn.addEventListener('click', () => {
+        reportView.classList.remove('visible');
+        viewBtn.textContent = '👁 Voir le rapport';
+    });
+
+    // ---- Télécharger le rapport ----
     exportBtn.addEventListener('click', () => {
         if (!ppg) return;
         try {
-            if (typeof ppg.exportDebugLog === 'function') {
-                const log = ppg.exportDebugLog();
-                const blob = new Blob([log], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = `vfc-debug-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.json`;
-                a.click(); URL.revokeObjectURL(url);
-                showMessage('Journal de débogage exporté.', 'info');
-            } else {
-                showMessage('exportDebugLog() non disponible.', 'error');
-            }
-        } catch (e) { showMessage(`Export impossible : ${e.message}`, 'error'); }
+            const json = buildReportString();
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `vfc-debug-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showMessage('Rapport téléchargé.', 'info');
+        } catch (e) {
+            showMessage(`Export impossible : ${e.message}`, 'error');
+        }
     });
 
     startBtn.addEventListener('click', startMeasurement);
