@@ -10,8 +10,7 @@
       font-family: system-ui, -apple-system, sans-serif;
       background: #0b0f14; color: #e6edf3;
       display: flex; flex-direction: column; align-items: center;
-      min-height: 100vh; padding: 16px;
-      padding-bottom: 60px;
+      min-height: 100vh; padding: 16px; padding-bottom: 60px;
     }
     
     #video-container {
@@ -31,6 +30,15 @@
       font-size: 80px; background: rgba(11, 15, 20, 0.85); color: #1f6feb;
     }
     #video-container.complete #complete-icon { display: flex; }
+
+    /* Panneau de Debug */
+    #debug-panel {
+      margin-top: 10px; font-family: monospace; font-size: 11px;
+      color: #8b949e; background: #0d1117; padding: 6px 12px;
+      border-radius: 4px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+      border: 1px solid #2a3038;
+    }
+    .debug-item span { color: #e6edf3; font-weight: bold; }
 
     #quality-badge {
       display: inline-block; padding: 3px 10px; border-radius: 4px;
@@ -58,10 +66,7 @@
     .metric-value { font-variant-numeric: tabular-nums; font-weight: 700; text-align: right; }
 
     .btn-group { display: flex; gap: 8px; width: 100%; max-width: 320px; margin-top: 16px; }
-    button {
-      padding: 12px 16px; font-size: 14px; font-weight: 600;
-      border: none; border-radius: 8px; cursor: pointer; flex: 1;
-    }
+    button { padding: 12px 16px; font-size: 14px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; flex: 1; }
     #start-btn { background: #1f6feb; color: white; width: 100%; max-width: 320px; margin-top: 16px; }
     #restart-btn { background: #1f6feb; color: white; }
     #export-json-btn { background: #238636; color: white; }
@@ -71,8 +76,7 @@
     #info-panel, #history-panel {
       max-width: 360px; margin-top: 16px; padding: 14px 16px;
       background: #161b22; border-radius: 8px; font-size: 13px;
-      line-height: 1.6; color: #c9d1d9; border: 1px solid #2a3038;
-      width: 100%;
+      line-height: 1.6; color: #c9d1d9; border: 1px solid #2a3038; width: 100%;
     }
     #info-panel h3, #history-panel h3 { font-size: 13px; margin-top: 14px; margin-bottom: 6px; color: #e6edf3; text-transform: uppercase; }
     #info-panel h3:first-child, #history-panel h3:first-child { margin-top: 0; }
@@ -87,6 +91,13 @@
   <div id="video-container" class="no_finger">
     <video id="video" autoplay playsinline muted></video>
     <div id="complete-icon">✅</div>
+  </div>
+
+  <div id="debug-panel">
+    <div class="debug-item">Lum: <span id="dbg-lum">0</span></div>
+    <div class="debug-item">Sat: <span id="dbg-sat">0%</span></div>
+    <div class="debug-item">FPS: <span id="dbg-fps">0</span></div>
+    <div class="debug-item">État: <span id="dbg-state">IDLE</span></div>
   </div>
 
   <div id="quality-badge" class="quality-none">—</div>
@@ -121,9 +132,9 @@
     <p><span class="badge quality-poor">Faible</span> SQI &lt; 0,40 — mesures masquées.</p>
     <h3>Valeurs de VFC</h3>
     <p><b>FC</b> : Fréquence cardiaque moyenne.</p>
-    <p><b>RMSSD</b> : Variabilité battement à battement (souvent 20-50 ms au repos).</p>
-    <p><b>SDNN</b> : Variabilité globale (doit normalement être > au RMSSD).</p>
-    <p><b>pNN50</b> : Pourcentage de battements espacés de plus de 50 ms.</p>
+    <p><b>RMSSD</b> : Variabilité battement à battement.</p>
+    <p><b>SDNN</b> : Variabilité globale.</p>
+    <p><b>pNN50</b> : % de battements espacés de plus de 50 ms.</p>
   </div>
 
   <div id="history-panel" hidden>
@@ -149,8 +160,9 @@ const MEASURE_MAX_MS  = 180000;    // 3 min
 const MIN_RR_FOR_VFC = 10;
 const SQI_GOOD_THRESHOLD = 0.6;
 const SQI_FAIR_THRESHOLD = 0.4;
-const CLIP_FRACTION_MAX = 0.05;
-const FINGER_PRESENCE_MIN = 0.15;
+const CLIP_FRACTION_MAX = 0.25;    // Assoupli : on tolère jusqu'à 25% de pixels brûlés
+const FINGER_PRESENCE_MIN = 0.10;  // Assoupli : on accepte un signal plus sombre
+const FINGER_LOSS_TOLERANCE_MS = 1000; // 1 seconde de tolérance avant de reset
 
 /* ======================================================================
    ÉTAT
@@ -162,7 +174,6 @@ const state = {
   rawSamples: [],
   filteredSamples: [],
   rrIntervals: [],
-  allRrIntervals: [], // Pour le calcul final
   fpsReal: 0,
   fpsHistory: [],
   quality: null,
@@ -173,10 +184,15 @@ const state = {
   sqiSum: 0,
   sqiCount: 0,
   totalRejectedRR: 0,
-  debugInfo: {}
+  lastFingerLossTime: null // Pour la tolérance de perte
 };
 
-let sessionHistory = JSON.parse(localStorage.getItem('vfc_history') || '[]');
+let sessionHistory = [];
+try {
+  sessionHistory = JSON.parse(localStorage.getItem('vfc_history') || '[]');
+} catch(e) {
+  console.warn("localStorage bloqué", e);
+}
 
 /* ======================================================================
    DOM
@@ -203,6 +219,12 @@ const infoPanel = document.getElementById('info-panel');
 const historyPanel = document.getElementById('history-panel');
 const historyTable = document.getElementById('history-table').querySelector('tbody');
 const clearHistoryBtn = document.getElementById('clear-history-btn');
+
+// Debug Elements
+const dbgLum = document.getElementById('dbg-lum');
+const dbgSat = document.getElementById('dbg-sat');
+const dbgFps = document.getElementById('dbg-fps');
+const dbgState = document.getElementById('dbg-state');
 
 /* ======================================================================
    CANVAS DE LECTURE
@@ -310,7 +332,7 @@ function computeSQI(rawWindow) {
 }
 
 /* ======================================================================
-   DÉTECTION DES PICS (avec interpolation parabolique)
+   DÉTECTION DES PICS
    ====================================================================== */
 function detectPeaks(signal, timestamps) {
   const n = signal.length;
@@ -323,7 +345,6 @@ function detectPeaks(signal, timestamps) {
   
   for (let i = 1; i < n-1; i++) {
     if (signal[i] > threshold && signal[i] > signal[i-1] && signal[i] >= signal[i+1]) {
-      // Interpolation parabolique pour trouver le vrai pic entre les frames
       let t = timestamps[i];
       if (i > 0 && i < n - 1) {
         const alpha = signal[i-1], beta = signal[i], gamma = signal[i+1];
@@ -364,6 +385,7 @@ function transitionTo(newPhase) {
   state.phase = newPhase;
   state.phaseStart = performance.now();
   videoContainer.className = newPhase.toLowerCase();
+  dbgState.textContent = newPhase;
   
   if (newPhase === 'NO_FINGER') {
     statusEl.textContent = 'Recherche du doigt…';
@@ -380,7 +402,7 @@ function transitionTo(newPhase) {
 
 function updateGuidance(meanR, clippedFraction) {
   if (state.phase === 'NO_FINGER') {
-    if (state.hadInterruption) guidanceEl.textContent = '⚠️ Signal perdu — replacez le doigt. (Reprise à zéro)';
+    if (state.hadInterruption) guidanceEl.textContent = '⚠️ Signal perdu — replacez le doigt.';
     return;
   }
   if (clippedFraction > CLIP_FRACTION_MAX) { guidanceEl.textContent = '⚠️ Trop de lumière — appuyez moins fort.'; return; }
@@ -424,6 +446,16 @@ function updateQualityBadge() {
   qualityBadge.textContent = map[state.quality].label;
 }
 
+function resetSignalBuffers() {
+  state.rawSamples = [];
+  state.filteredSamples = [];
+  state.frames = [];
+  state.rrIntervals = [];
+  state.sqiSum = 0;
+  state.sqiCount = 0;
+  state.totalRejectedRR = 0;
+}
+
 /* ======================================================================
    FINALISATION ET EXPORT
    ====================================================================== */
@@ -438,7 +470,6 @@ function finalizeMeasurement() {
   
   sqiEl.textContent = avgSQI.toFixed(2);
 
-  // Calcul des métriques finales sur TOUS les RR valides de la session
   let hr = 0, rmssd = 0, sdnn = 0, pnn50 = 0;
   if (cleanRR.length >= MIN_RR_FOR_VFC) {
     const meanRR = cleanRR.reduce((a,b)=>a+b,0)/cleanRR.length;
@@ -462,7 +493,6 @@ function finalizeMeasurement() {
     hrEl.textContent = '—'; rmssdEl.textContent = '—'; sdnnEl.textContent = '—'; pnn50El.textContent = '—';
   }
 
-  // Détermination de la qualité de session basée sur le SQI Moyen
   let sessionQuality, badgeText;
   if (avgSQI >= SQI_GOOD_THRESHOLD) { sessionQuality = 'good'; badgeText = 'Session : Bonne'; }
   else if (avgSQI >= SQI_FAIR_THRESHOLD) { sessionQuality = 'fair'; badgeText = 'Session : Moyenne'; }
@@ -484,13 +514,12 @@ function finalizeMeasurement() {
   startBtn.hidden = true;
   actionButtons.hidden = false;
 
-  // --- CRÉATION DU RAPPORT ---
   const report = {
     meta: {
       id: Date.now(),
       date_iso: new Date().toISOString(),
       user_agent: navigator.userAgent,
-      duration_sec: Math.round((performance.now() - state.phaseStart) / 1000) // Approximation
+      duration_sec: Math.round((performance.now() - state.phaseStart) / 1000)
     },
     results: {
       hr_bpm: Math.round(hr),
@@ -508,21 +537,18 @@ function finalizeMeasurement() {
       quality_time_ms: state.qualityTime,
       good_time_accumulated_ms: Math.round(state.goodTimeMs)
     },
-    // Tableau complet pour analyse externe
     rr_intervals_valid_ms: cleanRR
   };
 
-  // Sauvegarde de l'historique
   sessionHistory.push(report);
-  localStorage.setItem('vfc_history', JSON.stringify(sessionHistory));
+  try {
+    localStorage.setItem('vfc_history', JSON.stringify(sessionHistory));
+  } catch(e) {}
   updateHistoryUI();
 }
 
 function updateHistoryUI() {
-  if (sessionHistory.length === 0) {
-    historyPanel.hidden = true;
-    return;
-  }
+  if (sessionHistory.length === 0) { historyPanel.hidden = true; return; }
   historyPanel.hidden = false;
   historyTable.innerHTML = '';
   sessionHistory.slice().reverse().forEach(session => {
@@ -539,7 +565,6 @@ function updateHistoryUI() {
   });
 }
 
-// Fonction d'export JSON
 function exportJSON() {
   if (sessionHistory.length === 0) return;
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sessionHistory, null, 2));
@@ -551,7 +576,6 @@ function exportJSON() {
   downloadAnchorNode.remove();
 }
 
-// Fonction d'export CSV
 function exportCSV() {
   if (sessionHistory.length === 0) return;
   let csv = "Date,ID,FC_bpm,RMSSD_ms,SDNN_ms,pNN50_pct,SQI_Moyen,Qualite,RR_Valides,FPS_Moyen,Temps_Optimal_ms\n";
@@ -582,33 +606,58 @@ function processFrame() {
   }
 
   const { meanR, clippedFraction } = analyzeFrame();
+  
+  // Mise à jour du panneau de debug
+  dbgLum.textContent = Math.round(meanR);
+  dbgSat.textContent = (clippedFraction * 100).toFixed(1) + '%';
+  dbgFps.textContent = state.fpsReal.toFixed(1);
+
   const fingerPresent = meanR > FINGER_PRESENCE_MIN * 255 && clippedFraction < CLIP_FRACTION_MAX;
 
+  // --- GESTION DE LA PERTE DE CONTACT (TOLÉRANCE) ---
   if (!fingerPresent) {
-    const wasPhase = state.phase;
-    if (wasPhase !== 'NO_FINGER' && wasPhase !== 'COMPLETE') {
-      transitionTo('NO_FINGER');
-      state.rawSamples = []; state.filteredSamples = []; state.frames = []; state.rrIntervals = [];
-      if (wasPhase === 'MEASURING') {
-        state.hadInterruption = true;
-        state.goodTimeMs = 0;
-        state.qualityTime = { good: 0, fair: 0, poor: 0 };
+    if (state.phase !== 'NO_FINGER' && state.phase !== 'COMPLETE') {
+      if (!state.lastFingerLossTime) state.lastFingerLossTime = now;
+      
+      // On attend 1 seconde avant de pénaliser (évite les faux positifs)
+      if (now - state.lastFingerLossTime > FINGER_LOSS_TOLERANCE_MS) {
+        transitionTo('NO_FINGER');
+        resetSignalBuffers();
+        if (state.hadInterruption !== true && state.goodTimeMs > 0) {
+          state.hadInterruption = true;
+          state.goodTimeMs = 0;
+          state.qualityTime = { good: 0, fair: 0, poor: 0 };
+        }
+        updateProgressDisplay();
+        updateQualityBadge();
       }
-      updateProgressDisplay();
-      updateQualityBadge();
     }
+    
     if (state.phase !== 'COMPLETE') {
+      // On continue de mettre à jour l'UI, mais sans reset si on est dans la tolérance
       updateGuidance(meanR, clippedFraction);
       scheduleFrame(processFrame);
     }
     return;
   }
 
+  // Le doigt est présent : on reset le compteur de perte
+  state.lastFingerLossTime = null;
+
   if (state.phase === 'NO_FINGER') {
     transitionTo('SETTLING');
     initFilter(state.fpsReal || FS_TARGET);
     state.hadInterruption = false;
     state.sqiSum = 0; state.sqiCount = 0; state.totalRejectedRR = 0;
+    
+    // Tentative de verrouillage matériel dès la détection
+    if (state.videoTrack) {
+      const caps = state.videoTrack.getCapabilities ? state.videoTrack.getCapabilities() : {};
+      if (caps.torch) { try { state.videoTrack.applyConstraints({ advanced: [{ torch: true }] }); } catch(_){} }
+      if (caps.exposureMode && caps.exposureMode.includes('manual')) {
+        try { state.videoTrack.applyConstraints({ advanced: [{ exposureMode: 'manual' }] }); } catch(_){}
+      }
+    }
   }
 
   state.rawSamples.push(meanR);
@@ -640,11 +689,7 @@ function processFrame() {
     }
 
     if (state.quality !== 'poor') {
-      // On passe tout le buffer de frames pour trouver les pics
       const peaks = detectPeaks(state.filteredSamples, state.frames.map(f => f.t));
-      
-      // On reconstruit les RR de la session (on ne garde que les nouveaux)
-      // Pour être plus précis sur le débogage, on garde le compte total
       state.rrIntervals = []; 
       for (let i = 1; i < peaks.length; i++) {
         const rr = peaks[i].t - peaks[i-1].t;
@@ -698,17 +743,7 @@ async function startCamera() {
 
     const track = stream.getVideoTracks()[0];
     state.videoTrack = track;
-    const caps = track.getCapabilities ? track.getCapabilities() : {};
-    if (caps.exposureMode && caps.exposureMode.includes('manual')) {
-      try { await track.applyConstraints({ advanced: [{ exposureMode: 'manual' }] }); } catch(_){}
-    }
-    if (caps.whiteBalanceMode && caps.whiteBalanceMode.includes('manual')) {
-      try { await track.applyConstraints({ advanced: [{ whiteBalanceMode: 'manual' }] }); } catch(_){}
-    }
-    if (caps.torch) {
-      try { await track.applyConstraints({ advanced: [{ torch: true }] }); } catch(_){}
-    }
-
+    
     transitionTo('NO_FINGER');
     updateProgressDisplay();
     scheduleFrame(processFrame);
@@ -729,7 +764,9 @@ function startNewMeasurement() {
   state.fpsHistory = [];
   state.fpsReal = 0;
   lastFrameTime = 0;
-  state.sqiSum = 0; state.sqiCount = 0; state.totalRejectedRR = 0;
+  state.lastFingerLossTime = null;
+  
+  resetSignalBuffers();
   
   hrEl.textContent = '—'; rmssdEl.textContent = '—'; sdnnEl.textContent = '—'; pnn50El.textContent = '—'; sqiEl.textContent = '—';
   qualityBadge.className = 'quality-none'; qualityBadge.textContent = '—';
@@ -753,7 +790,7 @@ infoBtn.addEventListener('click', () => {
 clearHistoryBtn.addEventListener('click', () => {
   if (confirm("Voulez-vous vraiment effacer tout l'historique ?")) {
     sessionHistory = [];
-    localStorage.removeItem('vfc_history');
+    try { localStorage.removeItem('vfc_history'); } catch(e){}
     updateHistoryUI();
   }
 });
@@ -763,7 +800,6 @@ window.addEventListener('beforeunload', () => {
   if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
 });
 
-// Au chargement, on restaure l'historique visuel
 updateHistoryUI();
 </script>
 </body>
