@@ -1,852 +1,902 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>VFC – Captation PPG stabilisée</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #0b0f14; color: #e6edf3;
-      display: flex; flex-direction: column; align-items: center;
-      min-height: 100vh; padding: 16px; padding-bottom: 60px;
-    }
-    
-    #video-container {
-      position: relative; width: 200px; height: 200px;
-      border-radius: 50%; overflow: hidden; background: #1a1f26;
-      border: 3px solid #2a3038; transition: border-color 0.2s;
-    }
-    #video { width: 100%; height: 100%; object-fit: cover; }
-    #video-container.no_finger { border-color: #d04040; }
-    #video-container.settling { border-color: #f0a030; }
-    #video-container.measuring { border-color: #30c060; }
-    #video-container.complete { border-color: #1f6feb; }
-    
-    #complete-icon {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      display: none; align-items: center; justify-content: center;
-      font-size: 80px; background: rgba(11, 15, 20, 0.85); color: #1f6feb;
-    }
-    #video-container.complete #complete-icon { display: flex; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VFC — Observation cardiaque</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #181b22;
+    --border: #2a2f3a;
+    --text: #e6e9ef;
+    --muted: #8a92a6;
+    --accent: #4ade80;
+    --warn: #fbbf24;
+    --bad: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+  }
+  .app {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  h1 { font-size: 1.25rem; margin: 0; font-weight: 600; }
+  .subtitle { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
 
-    #debug-panel {
-      margin-top: 10px; font-family: monospace; font-size: 11px;
-      color: #8b949e; background: #0d1117; padding: 6px 12px;
-      border-radius: 4px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
-      border: 1px solid #2a3038;
-    }
-    .debug-item span { color: #e6edf3; font-weight: bold; }
+  .preview-wrap {
+    position: relative;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 1;
+    max-height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  #video.hidden { display: none; }
+  .placeholder {
+    color: var(--muted);
+    font-size: 0.9rem;
+    padding: 16px;
+    text-align: center;
+  }
 
-    #quality-badge {
-      display: inline-block; padding: 3px 10px; border-radius: 4px;
-      font-size: 12px; font-weight: 600; margin-top: 12px;
-    }
-    .quality-good { background: #1a3a24; color: #30c060; }
-    .quality-fair { background: #3a2f1a; color: #f0a030; }
-    .quality-poor { background: #3a1a1a; color: #d04040; }
-    .quality-none { background: #1a1f26; color: #8b949e; }
+  .metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .card-label {
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  .bpm-value {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .bpm-unit { color: var(--muted); font-size: 0.85rem; margin-left: 4px; }
 
-    #status { margin-top: 8px; font-size: 15px; font-weight: 600; text-align: center; min-height: 22px; max-width: 340px; }
-    #guidance { margin-top: 4px; font-size: 13px; color: #8b949e; text-align: center; min-height: 20px; max-width: 340px; line-height: 1.4; }
+  .quality-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  .quality-value[data-level="good"] { color: var(--accent); }
+  .quality-value[data-level="mid"] { color: var(--warn); }
+  .quality-value[data-level="bad"] { color: var(--bad); }
 
-    #progress-container { width: 100%; max-width: 320px; height: 8px; background: #1a1f26; border-radius: 4px; margin-top: 16px; overflow: hidden; }
-    #progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #1f6feb, #30c060); transition: width 0.25s linear; }
-    #progress-bar.paused { background: #484f58; }
-    #progress-label { font-size: 12px; color: #8b949e; margin-top: 6px; text-align: center; max-width: 340px; min-height: 16px; }
+  .reason {
+    color: var(--muted);
+    font-size: 0.85rem;
+    min-height: 1.2em;
+    margin-top: 4px;
+  }
+  .reason[data-code="clip"], .reason[data-code="motion"] { color: var(--warn); }
+  .reason[data-code="weak"], .reason[data-code="noisy"] { color: var(--bad); }
 
-    #metrics {
-      margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr;
-      gap: 10px 24px; font-size: 15px; width: 100%; max-width: 320px;
-      background: #161b22; padding: 16px; border-radius: 8px; border: 1px solid #2a3038;
-    }
-    .metric-label { color: #8b949e; }
-    .metric-value { font-variant-numeric: tabular-nums; font-weight: 700; text-align: right; }
+  #signal-canvas {
+    width: 100%;
+    height: 80px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
 
-    .btn-group { display: flex; gap: 8px; width: 100%; max-width: 320px; margin-top: 16px; }
-    button { padding: 12px 16px; font-size: 14px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; flex: 1; }
-    #start-btn { background: #1f6feb; color: white; width: 100%; max-width: 320px; margin-top: 16px; }
-    #restart-btn { background: #1f6feb; color: white; }
-    #export-json-btn { background: #238636; color: white; }
-    #export-csv-btn { background: #238636; color: white; }
-    #info-btn { background: transparent; color: #8b949e; font-weight: 500; padding: 8px 12px; font-size: 13px; margin-top: 12px; border: 1px solid #2a3038; width: 100%; max-width: 320px; }
+  .controls { display: flex; gap: 8px; }
+  button {
+    flex: 1;
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background: var(--accent);
+    color: #0a0f0a;
+    transition: opacity 0.15s;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.stop { background: var(--bad); color: #1a0505; }
 
-    #info-panel, #history-panel {
-      max-width: 360px; margin-top: 16px; padding: 14px 16px;
-      background: #161b22; border-radius: 8px; font-size: 13px;
-      line-height: 1.6; color: #c9d1d9; border: 1px solid #2a3038; width: 100%;
-    }
-    #info-panel h3, #history-panel h3 { font-size: 13px; margin-top: 14px; margin-bottom: 6px; color: #e6edf3; text-transform: uppercase; }
-    #info-panel h3:first-child, #history-panel h3:first-child { margin-top: 0; }
-    #info-panel .badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px; }
-    #history-panel table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
-    #history-panel th, #history-panel td { padding: 4px; border-bottom: 1px solid #2a3038; text-align: left; }
-    #history-panel th { color: #8b949e; }
-  </style>
+  .debug {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px 16px;
+  }
+  .debug span:nth-child(odd) { color: #6b7280; }
+  .debug span:nth-child(even) { color: var(--text); text-align: right; }
+</style>
 </head>
 <body>
-  
-  <div id="video-container" class="no_finger">
-    <video id="video" autoplay playsinline muted></video>
-    <div id="complete-icon">✅</div>
+<div class="app">
+  <div>
+    <h1>Observation cardiaque</h1>
+    <div class="subtitle">Placez votre doigt sur l'objectif arrière, sans appuyer trop fort.</div>
   </div>
 
-  <div id="debug-panel">
-    <div class="debug-item">Lum: <span id="dbg-lum">0</span></div>
-    <div class="debug-item">Sat: <span id="dbg-sat">0%</span></div>
-    <div class="debug-item">FPS: <span id="dbg-fps">0</span></div>
-    <div class="debug-item">RR: <span id="dbg-rr">0</span></div>
-    <div class="debug-item">État: <span id="dbg-state">IDLE</span></div>
+  <div class="preview-wrap">
+    <video id="video" class="hidden" autoplay playsinline muted></video>
+    <div id="placeholder" class="placeholder">Caméra inactive</div>
   </div>
 
-  <div id="quality-badge" class="quality-none">—</div>
-  <div id="status">Appuyez sur « Démarrer » pour commencer.</div>
-  <div id="guidance">Couvrez l’objectif + flash avec le bout du doigt.</div>
-
-  <div id="progress-container"><div id="progress-bar"></div></div>
-  <div id="progress-label">0 s / 60 s de signal valide</div>
-
-  <div id="metrics">
-    <span class="metric-label">FC (bpm)</span><span class="metric-value" id="hr">—</span>
-    <span class="metric-label">RMSSD (ms)</span><span class="metric-value" id="rmssd">—</span>
-    <span class="metric-label">SDNN (ms)</span><span class="metric-value" id="sdnn">—</span>
-    <span class="metric-label">pNN50 (%)</span><span class="metric-value" id="pnn50">—</span>
-    <span class="metric-label">SQI moyen</span><span class="metric-value" id="sqi">—</span>
+  <div class="metrics">
+    <div class="card">
+      <div class="card-label">Fréquence</div>
+      <div>
+        <span id="bpm" class="bpm-value">—</span>
+        <span class="bpm-unit">bpm</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">Qualité du signal</div>
+      <div id="quality" class="quality-value" data-level="bad">—</div>
+      <div id="reason" class="reason"></div>
+    </div>
   </div>
 
-  <button id="start-btn">Démarrer la mesure</button>
-  
-  <div class="btn-group" id="action-buttons" hidden>
-    <button id="restart-btn">Nouvelle mesure</button>
-    <button id="export-json-btn">Export JSON</button>
-    <button id="export-csv-btn">CSV</button>
+  <canvas id="signal-canvas" width="600" height="120"></canvas>
+
+  <div class="controls">
+    <button id="start-btn">Démarrer</button>
   </div>
 
-  <button id="info-btn">ⓘ Comprendre la mesure</button>
-
-  <div id="info-panel" hidden>
-    <h3>Qualité du signal (SQI)</h3>
-    <p><span class="badge quality-good">Bon</span> SQI ≥ 0,60 — signal stable, mesures fiables.</p>
-    <p><span class="badge quality-fair">Moyen</span> SQI 0,40 - 0,60 — mesures indicatives.</p>
-    <p><span class="badge quality-poor">Faible</span> SQI &lt; 0,40 — mesures masquées.</p>
-    <h3>Valeurs de VFC</h3>
-    <p><b>FC</b> : Fréquence cardiaque moyenne.</p>
-    <p><b>RMSSD</b> : Variabilité battement à battement.</p>
-    <p><b>SDNN</b> : Variabilité globale.</p>
-    <p><b>pNN50</b> : % de battements espacés de plus de 50 ms.</p>
+  <div class="debug">
+    <span>État</span><span id="dbg-state">—</span>
+    <span>Source FPS</span><span id="dbg-fps">—</span>
+    <span>Pics détectés</span><span id="dbg-peaks">—</span>
+    <span>Score qualité</span><span id="dbg-score">—</span>
+    <span>AC/DC</span><span id="dbg-acdc">—</span>
+    <span>Artefacts</span><span id="dbg-art">—</span>
+    <span>Échantillons</span><span id="dbg-samples">—</span>
   </div>
+</div>
 
-  <div id="history-panel" hidden>
-    <h3>Historique des mesures</h3>
-    <table id="history-table">
-      <thead><tr><th>Date</th><th>FC</th><th>RMSSD</th><th>SDNN</th><th>Qualité</th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <button id="clear-history-btn" style="margin-top:12px; background:#d04040; width:100%; font-size:12px;">Vider l'historique</button>
-  </div>
-
-<script>
-/* ======================================================================
-   CONSTANTES
-   ====================================================================== */
-const FS_TARGET = 30;
-const BAND_LOW = 0.5, BAND_HIGH = 3.0; // <-- BAISSÉ : 3.0 Hz pour lisser le dicrotisme
-const RR_OUTLIER_MAD_K = 3.0;
-const MIN_RR_MS = 500;             // <-- AUGMENTÉ : 500ms = 120 bpm max
-const MAX_RR_MS = 2000;
-const SETTLING_MS = 5000;
-const MEASURE_GOOD_MS = 60000;     
-const MEASURE_MAX_MS  = 180000;    
-const MIN_RR_FOR_VFC = 5;          
-const SQI_GOOD_THRESHOLD = 0.60;
-const SQI_FAIR_THRESHOLD = 0.50;   // <-- AUGMENTÉ : exige un signal un peu meilleur
-const CLIP_FRACTION_MAX = 0.25;    
-const FINGER_PRESENCE_MIN = 0.10;  
-const FINGER_LOSS_TOLERANCE_MS = 1000; 
-const MAX_RR_CHANGE_PCT = 0.20;    // <-- NOUVEAU : rejet si saut de + de 20%
-
-/* ======================================================================
-   ÉTAT
-   ====================================================================== */
-const state = {
-  phase: 'IDLE',
-  phaseStart: 0,
-  startTime: 0, // <-- NOUVEAU : pour la durée réelle
-  frames: [],
-  rawSamples: [],
-  filteredSamples: [],
-  rrIntervals: [],
-  lastPeakTime: null,
-  fpsReal: 0,
-  fpsHistory: [],
-  quality: null,
-  qualityTime: { good: 0, fair: 0, poor: 0 },
-  goodTimeMs: 0,
-  hadInterruption: false,
-  videoTrack: null,
-  sqiSum: 0,
-  sqiCount: 0,
-  totalRejectedRR: 0,
-  lastFingerLossTime: null
+<script type="module">
+// ============================================================
+// Configuration
+// ============================================================
+const CONFIG = {
+  VIDEO: { facingMode: 'environment', idealWidth: 320, idealHeight: 240, idealFrameRate: 30 },
+  ROI_SIZE: 128,
+  RESAMPLE_HZ: 60,
+  BANDPASS: { low: 0.8, high: 3.0 },
+  PEAKS: {
+    minRR: 0.33,
+    maxRR: 2.0,
+    templateLen: 5,
+    templateCorr: 0.6,
+    marginSec: 0.3,
+  },
+  ARTIFACT: { sigmaThreshold: 5 },
+  SQI: {
+    clipMax: 0.05,
+    motionMax: 0.15,
+    acDcMin: 0.005,
+    acDcRef: 0.02,
+  },
+  SETTLING: { minMs: 1500, stdRatio: 0.02, windowMs: 1000, minMean: 15 },
+  RR: { window: 10, madFactor: 3 },
+  BUFFER_SEC: 30,
+  ANALYSIS_INTERVAL_MS: 250,
+  MIN_BUFFER_SAMPLES: 180,
 };
 
-let sessionHistory = [];
-try {
-  sessionHistory = JSON.parse(localStorage.getItem('vfc_history') || '[]');
-} catch(e) {
-  console.warn("localStorage bloqué", e);
-}
-
-/* ======================================================================
-   DOM
-   ====================================================================== */
-const video = document.getElementById('video');
-const videoContainer = document.getElementById('video-container');
-const statusEl = document.getElementById('status');
-const guidanceEl = document.getElementById('guidance');
-const qualityBadge = document.getElementById('quality-badge');
-const progressBar = document.getElementById('progress-bar');
-const progressLabel = document.getElementById('progress-label');
-const hrEl = document.getElementById('hr');
-const rmssdEl = document.getElementById('rmssd');
-const sdnnEl = document.getElementById('sdnn');
-const pnn50El = document.getElementById('pnn50');
-const sqiEl = document.getElementById('sqi');
-const startBtn = document.getElementById('start-btn');
-const actionButtons = document.getElementById('action-buttons');
-const restartBtn = document.getElementById('restart-btn');
-const exportJsonBtn = document.getElementById('export-json-btn');
-const exportCsvBtn = document.getElementById('export-csv-btn');
-const infoBtn = document.getElementById('info-btn');
-const infoPanel = document.getElementById('info-panel');
-const historyPanel = document.getElementById('history-panel');
-const historyTable = document.getElementById('history-table').querySelector('tbody');
-const clearHistoryBtn = document.getElementById('clear-history-btn');
-
-const dbgLum = document.getElementById('dbg-lum');
-const dbgSat = document.getElementById('dbg-sat');
-const dbgFps = document.getElementById('dbg-fps');
-const dbgRr = document.getElementById('dbg-rr');
-const dbgState = document.getElementById('dbg-state');
-
-/* ======================================================================
-   CANVAS
-   ====================================================================== */
-const canvas = document.createElement('canvas');
-canvas.width = 64; canvas.height = 64;
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-/* ======================================================================
-   BOUCLE FRAME
-   ====================================================================== */
-let videoFrameCallbackId = null, rafId = null, lastFrameTime = 0;
-let lastPresentedFrames = -1;
-
-function scheduleFrame(cb) {
-  if ('requestVideoFrameCallback' in video) {
-    videoFrameCallbackId = video.requestVideoFrameCallback((now, metadata) => {
-      if (metadata.presentedFrames !== undefined) {
-        if (metadata.presentedFrames === lastPresentedFrames) {
-          scheduleFrame(cb);
-          return;
-        }
-        lastPresentedFrames = metadata.presentedFrames;
-      }
-      cb();
-    });
-  } else {
-    rafId = requestAnimationFrame(() => cb());
-  }
-}
-function cancelFrame() {
-  if (videoFrameCallbackId !== null && 'cancelVideoFrameCallback' in video) {
-    video.cancelVideoFrameCallback(videoFrameCallbackId); videoFrameCallbackId = null;
-  }
-  if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
-}
-
-/* ======================================================================
-   FILTRE
-   ====================================================================== */
+// ============================================================
+// DSP : biquad, filtfilt, rééchantillonnage, pics, artefacts
+// ============================================================
 class Biquad {
-  constructor(b, a) { this.b = b; this.a = a; this.x1 = this.x2 = this.y1 = this.y2 = 0; }
+  constructor(b0, b1, b2, a1, a2) {
+    this.b0 = b0; this.b1 = b1; this.b2 = b2;
+    this.a1 = a1; this.a2 = a2;
+    this.z1 = 0; this.z2 = 0;
+  }
+  reset() { this.z1 = 0; this.z2 = 0; }
   process(x) {
-    const y = this.b[0]*x + this.b[1]*this.x1 + this.b[2]*this.x2 - this.a[1]*this.y1 - this.a[2]*this.y2;
-    this.x2 = this.x1; this.x1 = x; this.y2 = this.y1; this.y1 = y;
+    const y = this.b0 * x + this.z1;
+    this.z1 = this.b1 * x - this.a1 * y + this.z2;
+    this.z2 = this.b2 * x - this.a2 * y;
     return y;
   }
 }
-let biquad1 = null, biquad2 = null;
 
-function designBandpass(fs) {
-  const w1 = 2*Math.PI*BAND_LOW/fs, w2 = 2*Math.PI*BAND_HIGH/fs;
-  const w1p = Math.tan(w1/2), w2p = Math.tan(w2/2);
-  const wc = Math.sqrt(w1p*w2p), bw = w2p - w1p;
-  const q = wc / bw, alpha = Math.sin(wc) / (2*q), cosw = Math.cos(wc), a0 = 1 + alpha;
-  return { b: [alpha/a0, 0, -alpha/a0], a: [1, -2*cosw/a0, (1-alpha)/a0] };
-}
-function initFilter(fs) {
-  const c = designBandpass(fs);
-  biquad1 = new Biquad(c.b, c.a);
-  biquad2 = new Biquad(c.b, c.a);
-}
-function bandpassFilter(x) {
-  if (!biquad1 || !biquad2) return x;
-  return biquad2.process(biquad1.process(x));
-}
-
-/* ======================================================================
-   ANALYSE FRAME & SQI
-   ====================================================================== */
-function analyzeFrame() {
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-  let rSum = 0, count = 0, clipped = 0;
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i]; rSum += r; if (r >= 250) clipped++; count++;
+function designBiquad(fs, fc, type) {
+  const w0 = 2 * Math.PI * fc / fs;
+  const cosw0 = Math.cos(w0);
+  const sinw0 = Math.sin(w0);
+  const alpha = sinw0 / Math.SQRT2;
+  let b0, b1, b2;
+  if (type === 'low') {
+    b0 = (1 - cosw0) / 2;
+    b1 = 1 - cosw0;
+    b2 = (1 - cosw0) / 2;
+  } else {
+    b0 = (1 + cosw0) / 2;
+    b1 = -(1 + cosw0);
+    b2 = (1 + cosw0) / 2;
   }
-  return { meanR: rSum / count, clippedFraction: clipped / count };
+  const a0 = 1 + alpha;
+  const a1 = -2 * cosw0;
+  const a2 = 1 - alpha;
+  return new Biquad(b0 / a0, b1 / a0, b2 / a0, a1 / a0, a2 / a0);
 }
 
-function simpleFFT(x) {
-  const n = x.length;
-  if (n <= 1) return x.map(v => ({ re: v, im: 0 }));
-  const even = simpleFFT(x.filter((_, i) => i % 2 === 0));
-  const odd  = simpleFFT(x.filter((_, i) => i % 2 === 1));
-  const out = new Array(n);
-  for (let k = 0; k < n/2; k++) {
-    const ang = -2*Math.PI*k/n;
-    const tRe = Math.cos(ang)*odd[k].re - Math.sin(ang)*odd[k].im;
-    const tIm = Math.sin(ang)*odd[k].re + Math.cos(ang)*odd[k].im;
-    out[k] = { re: even[k].re + tRe, im: even[k].im + tIm };
-    out[k + n/2] = { re: even[k].re - tRe, im: even[k].im - tIm };
+function designBandpass(fs, lowHz, highHz) {
+  return [designBiquad(fs, lowHz, 'high'), designBiquad(fs, highHz, 'low')];
+}
+
+function filtfilt(signal, filters) {
+  const N = signal.length;
+  if (N === 0) return new Float32Array(0);
+  const pad = 20;
+  const M = N + 2 * pad;
+  const padded = new Float64Array(M);
+  for (let i = 0; i < pad; i++) {
+    padded[i] = signal[0];
+    padded[N + pad + i] = signal[N - 1];
   }
+  for (let i = 0; i < N; i++) padded[pad + i] = signal[i];
+
+  const fwd = new Float64Array(M);
+  for (const f of filters) f.reset();
+  for (let i = 0; i < M; i++) {
+    let x = padded[i];
+    for (const f of filters) x = f.process(x);
+    fwd[i] = x;
+  }
+
+  const rev = new Float64Array(M);
+  for (const f of filters) f.reset();
+  for (let i = M - 1; i >= 0; i--) {
+    let x = fwd[i];
+    for (const f of filters) x = f.process(x);
+    rev[i] = x;
+  }
+
+  const out = new Float32Array(N);
+  for (let i = 0; i < N; i++) out[i] = rev[pad + i];
   return out;
 }
 
-function computeSQI(rawWindow) {
-  if (rawWindow.length < 64) return 0;
-  const n = 64;
-  const slice = rawWindow.slice(-n);
-  const mean = slice.reduce((a,b) => a+b, 0) / n;
-  const centered = slice.map(v => v - mean);
-  const fft = simpleFFT(centered);
-  const power = fft.map(c => c.re*c.re + c.im*c.im);
-  const df = (state.fpsReal || FS_TARGET) / n;
-  let pSig = 0, pNoise = 0;
-  for (let i = 1; i < n/2; i++) {
-    const f = i * df;
-    if (f >= 0.8 && f <= 3.0) pSig += power[i];
-    else pNoise += power[i];
+function resampleLinear(samples, targetHz) {
+  if (samples.length < 2) {
+    return { fs: targetHz, t0: 0, data: new Float32Array(0) };
   }
-  if (pSig + pNoise === 0) return 0;
-  const snr = pSig / (pNoise || 1e-12);
-  return Math.min(1, snr / (snr + 1));
+  const t0 = samples[0].t;
+  const tEnd = samples[samples.length - 1].t;
+  const n = Math.max(0, Math.floor(((tEnd - t0) / 1000) * targetHz) + 1);
+  if (n < 2) {
+    return { fs: targetHz, t0, data: new Float32Array(0) };
+  }
+  const data = new Float32Array(n);
+  let j = 0;
+  for (let i = 0; i < n; i++) {
+    const t = t0 + (i * 1000) / targetHz;
+    while (j < samples.length - 2 && samples[j + 1].t < t) j++;
+    const a = samples[j];
+    const b = samples[j + 1];
+    const span = b.t - a.t;
+    let frac = span > 0 ? (t - a.t) / span : 0;
+    if (frac < 0) frac = 0;
+    if (frac > 1) frac = 1;
+    data[i] = a.v + (b.v - a.v) * frac;
+  }
+  return { fs: targetHz, t0, data };
 }
 
-/* ======================================================================
-   LISSAGE & DÉTECTION DES PICS
-   ====================================================================== */
-function smoothSignal(signal) {
-  if (signal.length < 3) return signal;
-  const smoothed = [];
-  for (let i = 1; i < signal.length - 1; i++) {
-    smoothed.push((signal[i-1] + signal[i] + signal[i+1]) / 3);
-  }
-  return smoothed;
-}
+function detectPeaks(signal, fs, opts) {
+  const N = signal.length;
+  if (N < 4) return [];
+  const margin = Math.floor((opts.marginSec || 0) * fs);
+  const startI = Math.max(1, margin);
+  const endI = Math.min(N - 1, N - margin);
+  if (startI >= endI) return [];
 
-function detectPeaks(smoothedSignal, timestamps) {
-  const n = smoothedSignal.length;
-  if (n < 5) return [];
-  // smoothedSignal a 2 éléments de moins que timestamps
-  const timeOffset = timestamps.length - smoothedSignal.length;
-  
-  const sorted = [...smoothedSignal].sort((a,b) => a-b);
-  const q1 = sorted[Math.floor(n*0.25)], q3 = sorted[Math.floor(n*0.75)];
-  const med = sorted[Math.floor(n*0.5)];
-  const threshold = med + 0.3 * (q3 - q1);
+  const sorted = Float32Array.from(signal).sort();
+  const median = sorted[Math.floor(N / 2)];
+  const max = sorted[N - 1];
+  const threshold = median + 0.4 * (max - median);
+  const minDist = Math.max(1, Math.floor(opts.minRR * fs));
+
   const peaks = [];
-  
-  for (let i = 1; i < n-1; i++) {
-    if (smoothedSignal[i] > threshold && smoothedSignal[i] > smoothedSignal[i-1] && smoothedSignal[i] >= smoothedSignal[i+1]) {
-      let t = timestamps[i + timeOffset];
-      if (i > 0 && i < n - 1) {
-        const alpha = smoothedSignal[i-1], beta = smoothedSignal[i], gamma = smoothedSignal[i+1];
-        const denominator = 2 * (alpha - 2*beta + gamma);
-        if (denominator !== 0) {
-          const offset = (alpha - gamma) / denominator;
-          const dt = timestamps[i + timeOffset + 1] - timestamps[i + timeOffset - 1];
-          t = timestamps[i + timeOffset] + offset * (dt / 2);
-        }
-      }
-      if (!peaks.length || t - peaks[peaks.length-1].t > MIN_RR_MS) {
-        peaks.push({ index: i, t: t });
+  let lastPos = -minDist * 2;
+  for (let i = startI; i < endI; i++) {
+    if (signal[i] > threshold && signal[i] > signal[i - 1] && signal[i] >= signal[i + 1]) {
+      const y0 = signal[i - 1];
+      const y1 = signal[i];
+      const y2 = signal[i + 1];
+      const denom = y0 - 2 * y1 + y2;
+      const delta = Math.abs(denom) > 1e-12 ? 0.5 * (y0 - y2) / denom : 0;
+      const pos = i + delta;
+      if (pos - lastPos >= minDist) {
+        peaks.push({ pos, time: pos / fs });
+        lastPos = pos;
       }
     }
   }
   return peaks;
 }
 
-function medianOf(arr) {
-  const s = [...arr].sort((a,b) => a-b);
-  const m = Math.floor(s.length/2);
-  return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2;
-}
-
-function filterRR(rr) {
-  if (rr.length < 3) return rr.filter(v => v >= MIN_RR_MS && v <= MAX_RR_MS);
-  const med = medianOf(rr);
-  const mad = medianOf(rr.map(v => Math.abs(v - med)));
-  if (mad === 0) return rr.filter(v => v >= MIN_RR_MS && v <= MAX_RR_MS);
-  const th = RR_OUTLIER_MAD_K * mad;
-  return rr.filter(v => Math.abs(v - med) <= th && v >= MIN_RR_MS && v <= MAX_RR_MS);
-}
-
-/* ======================================================================
-   UI ET PHASES
-   ====================================================================== */
-function transitionTo(newPhase) {
-  state.phase = newPhase;
-  state.phaseStart = performance.now();
-  videoContainer.className = newPhase.toLowerCase();
-  dbgState.textContent = newPhase;
-  
-  if (newPhase === 'NO_FINGER') {
-    statusEl.textContent = 'Recherche du doigt…';
-    guidanceEl.textContent = 'Couvrez l’objectif + flash avec le bout du doigt.';
-  } else if (newPhase === 'SETTLING') {
-    statusEl.textContent = 'Stabilisation en cours…';
-    guidanceEl.textContent = 'Gardez le doigt immobile.';
-  } else if (newPhase === 'MEASURING') {
-    statusEl.textContent = 'Mesure en cours';
-  } else if (newPhase === 'COMPLETE') {
-    statusEl.textContent = 'Mesure terminée !';
-  }
-}
-
-function updateGuidance(meanR, clippedFraction) {
-  if (state.phase === 'NO_FINGER') {
-    if (state.hadInterruption) guidanceEl.textContent = '⚠️ Signal perdu — replacez le doigt.';
-    return;
-  }
-  if (clippedFraction > CLIP_FRACTION_MAX) { guidanceEl.textContent = '⚠️ Trop de lumière — appuyez moins fort.'; return; }
-  if (meanR < FINGER_PRESENCE_MIN * 255) { guidanceEl.textContent = '⚠️ Signal faible — couvrez mieux l’objectif.'; return; }
-  
-  if (state.phase === 'SETTLING') {
-    const left = Math.max(0, Math.ceil((SETTLING_MS - (performance.now() - state.phaseStart)) / 1000));
-    guidanceEl.textContent = `Ne bougez plus… ${left} s`;
-    return;
-  }
-  if (state.phase === 'MEASURING') {
-    if (state.quality === 'poor') guidanceEl.textContent = '⚠️ Qualité insuffisante — décompte en pause.';
-    else if (state.quality === 'fair') guidanceEl.textContent = 'Signal acceptable — restez bien immobile.';
-    else if (state.quality === 'good') guidanceEl.textContent = '✅ Signal excellent — gardez cette position.';
-  }
-}
-
-function updateProgressDisplay() {
-  const pct = Math.min(100, 100 * state.goodTimeMs / MEASURE_GOOD_MS);
-  progressBar.style.width = pct + '%';
-
-  if (state.phase === 'COMPLETE') return;
-  
-  if (state.phase === 'MEASURING' && state.quality === 'poor') {
-    progressBar.className = 'paused';
-    progressLabel.textContent = `⏸ ${Math.floor(state.goodTimeMs / 1000)} s / 60 s — décompte en pause`;
-  } else {
-    progressBar.className = '';
-    progressLabel.textContent = `${Math.floor(state.goodTimeMs / 1000)} s / 60 s de signal valide`;
-  }
-}
-
-function updateQualityBadge() {
-  if (!state.quality || state.phase === 'COMPLETE') return;
-  const map = {
-    good: { cls: 'quality-good', label: 'Qualité : Bonne' },
-    fair: { cls: 'quality-fair', label: 'Qualité : Moyenne' },
-    poor: { cls: 'quality-poor', label: 'Qualité : Faible' },
-  };
-  qualityBadge.className = map[state.quality].cls;
-  qualityBadge.textContent = map[state.quality].label;
-}
-
-function resetSignalBuffers() {
-  state.rawSamples = [];
-  state.filteredSamples = [];
-  state.frames = [];
-  state.rrIntervals = [];
-  state.lastPeakTime = null;
-  state.sqiSum = 0;
-  state.sqiCount = 0;
-  state.totalRejectedRR = 0;
-}
-
-/* ======================================================================
-   FINALISATION ET EXPORT
-   ====================================================================== */
-function finalizeMeasurement() {
-  transitionTo('COMPLETE');
-  cancelFrame();
-  if (state.videoTrack) { try { state.videoTrack.stop(); } catch(_){} }
-  if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
-
-  const cleanRR = filterRR(state.rrIntervals);
-  const avgSQI = state.sqiCount > 0 ? (state.sqiSum / state.sqiCount) : 0;
-  
-  sqiEl.textContent = avgSQI.toFixed(2);
-
-  let hr = 0, rmssd = 0, sdnn = 0, pnn50 = 0;
-  if (cleanRR.length >= MIN_RR_FOR_VFC) {
-    const meanRR = cleanRR.reduce((a,b)=>a+b,0)/cleanRR.length;
-    hr = 60000 / meanRR;
-    
-    const diffs = [];
-    for (let i = 1; i < cleanRR.length; i++) diffs.push(cleanRR[i] - cleanRR[i-1]);
-    rmssd = Math.sqrt(diffs.reduce((a,b)=>a+b*b,0)/diffs.length);
-    
-    const variance = cleanRR.reduce((a,b)=>a+(b-meanRR)**2,0)/cleanRR.length;
-    sdnn = Math.sqrt(variance);
-    
-    const nn50 = diffs.filter(d => Math.abs(d) > 50).length;
-    pnn50 = (nn50 / diffs.length) * 100;
-
-    hrEl.textContent = Math.round(hr);
-    rmssdEl.textContent = rmssd.toFixed(1);
-    sdnnEl.textContent = sdnn.toFixed(1);
-    pnn50El.textContent = pnn50.toFixed(1);
-  } else {
-    hrEl.textContent = '—'; rmssdEl.textContent = '—'; sdnnEl.textContent = '—'; pnn50El.textContent = '—';
-  }
-
-  let sessionQuality, badgeText;
-  if (avgSQI >= SQI_GOOD_THRESHOLD) { sessionQuality = 'good'; badgeText = 'Session : Bonne'; }
-  else if (avgSQI >= SQI_FAIR_THRESHOLD) { sessionQuality = 'fair'; badgeText = 'Session : Moyenne'; }
-  else { sessionQuality = 'poor'; badgeText = 'Session : Faible'; }
-  
-  qualityBadge.className = 'quality-' + sessionQuality;
-  qualityBadge.textContent = badgeText;
-  
-  if (cleanRR.length < MIN_RR_FOR_VFC) {
-    statusEl.textContent = 'Mesure terminée, signal insuffisant.';
-    guidanceEl.textContent = 'Recommencez en gardant le doigt immobile.';
-  } else {
-    statusEl.textContent = `Terminé — ${Math.round(100 * state.qualityTime.good / (state.qualityTime.good + state.qualityTime.fair + state.qualityTime.poor))}% du temps optimal.`;
-    guidanceEl.textContent = `Basé sur ${cleanRR.length} intervalles RR valides.`;
-  }
-
-  progressBar.style.width = '100%'; progressBar.className = '';
-  progressLabel.textContent = 'Analyse terminée';
-  startBtn.hidden = true;
-  actionButtons.hidden = false;
-
-  const report = {
-    meta: {
-      id: Date.now(),
-      date_iso: new Date().toISOString(),
-      user_agent: navigator.userAgent,
-      duration_sec: Math.round((performance.now() - state.startTime) / 1000) // <-- CORRIGÉ
-    },
-    results: {
-      hr_bpm: Math.round(hr),
-      rmssd_ms: parseFloat(rmssd.toFixed(1)),
-      sdnn_ms: parseFloat(sdnn.toFixed(1)),
-      pnn50_pct: parseFloat(pnn50.toFixed(1)),
-      sqi_avg: parseFloat(avgSQI.toFixed(2)),
-      session_quality: sessionQuality,
-      rr_count_valid: cleanRR.length
-    },
-    debug: {
-      fps_avg: parseFloat(state.fpsReal.toFixed(1)),
-      frames_captured: state.frames.length,
-      rr_rejected_count: state.totalRejectedRR,
-      quality_time_ms: state.qualityTime,
-      good_time_accumulated_ms: Math.round(state.goodTimeMs)
-    },
-    rr_intervals_valid_ms: cleanRR
-  };
-
-  sessionHistory.push(report);
-  try {
-    localStorage.setItem('vfc_history', JSON.stringify(sessionHistory));
-  } catch(e) {}
-  updateHistoryUI();
-}
-
-function updateHistoryUI() {
-  if (sessionHistory.length === 0) { historyPanel.hidden = true; return; }
-  historyPanel.hidden = false;
-  historyTable.innerHTML = '';
-  sessionHistory.slice().reverse().forEach(session => {
-    const tr = document.createElement('tr');
-    const date = new Date(session.meta.date_iso);
-    tr.innerHTML = `
-      <td>${date.toLocaleTimeString()}</td>
-      <td>${session.results.hr_bpm}</td>
-      <td>${session.results.rmssd_ms}</td>
-      <td>${session.results.sdnn_ms}</td>
-      <td><span class="badge quality-${session.results.session_quality}">${session.results.sqi_avg}</span></td>
-    `;
-    historyTable.appendChild(tr);
-  });
-}
-
-function exportJSON() {
-  if (sessionHistory.length === 0) return;
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sessionHistory, null, 2));
-  const downloadAnchorNode = document.createElement('a');
-  downloadAnchorNode.setAttribute("href", dataStr);
-  downloadAnchorNode.setAttribute("download", `vfc_rapport_${new Date().getTime()}.json`);
-  document.body.appendChild(downloadAnchorNode);
-  downloadAnchorNode.click();
-  downloadAnchorNode.remove();
-}
-
-function exportCSV() {
-  if (sessionHistory.length === 0) return;
-  let csv = "Date,ID,FC_bpm,RMSSD_ms,SDNN_ms,pNN50_pct,SQI_Moyen,Qualite,RR_Valides,FPS_Moyen,Temps_Optimal_ms\n";
-  sessionHistory.forEach(s => {
-    csv += `${s.meta.date_iso},${s.meta.id},${s.results.hr_bpm},${s.results.rmssd_ms},${s.results.sdnn_ms},${s.results.pnn50_pct},${s.results.sqi_avg},${s.results.session_quality},${s.results.rr_count_valid},${s.debug.fps_avg},${s.debug.good_time_accumulated_ms}\n`;
-  });
-  const dataStr = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
-  const downloadAnchorNode = document.createElement('a');
-  downloadAnchorNode.setAttribute("href", dataStr);
-  downloadAnchorNode.setAttribute("download", `vfc_donnees_${new Date().getTime()}.csv`);
-  document.body.appendChild(downloadAnchorNode);
-  downloadAnchorNode.click();
-  downloadAnchorNode.remove();
-}
-
-/* ======================================================================
-   BOUCLE PRINCIPALE
-   ====================================================================== */
-function processFrame() {
-  const now = performance.now();
-  const dt = lastFrameTime > 0 ? now - lastFrameTime : 0;
-  lastFrameTime = now;
-
-  if (dt > 0 && dt < 2000) {
-    state.fpsHistory.push(1000 / dt);
-    if (state.fpsHistory.length > 30) state.fpsHistory.shift();
-    state.fpsReal = state.fpsHistory.reduce((a,b)=>a+b,0) / state.fpsHistory.length;
-  }
-
-  const { meanR, clippedFraction } = analyzeFrame();
-  
-  dbgLum.textContent = Math.round(meanR);
-  dbgSat.textContent = (clippedFraction * 100).toFixed(1) + '%';
-  dbgFps.textContent = state.fpsReal.toFixed(1);
-  dbgRr.textContent = state.rrIntervals.length;
-
-  const fingerPresent = meanR > FINGER_PRESENCE_MIN * 255 && clippedFraction < CLIP_FRACTION_MAX;
-
-  if (!fingerPresent) {
-    if (state.phase !== 'NO_FINGER' && state.phase !== 'COMPLETE') {
-      if (!state.lastFingerLossTime) state.lastFingerLossTime = now;
-      
-      if (now - state.lastFingerLossTime > FINGER_LOSS_TOLERANCE_MS) {
-        transitionTo('NO_FINGER');
-        resetSignalBuffers();
-        if (state.hadInterruption !== true && state.goodTimeMs > 0) {
-          state.hadInterruption = true;
-          state.goodTimeMs = 0;
-          state.qualityTime = { good: 0, fair: 0, poor: 0 };
-        }
-        updateProgressDisplay();
-        updateQualityBadge();
-      }
-    }
-    
-    if (state.phase !== 'COMPLETE') {
-      updateGuidance(meanR, clippedFraction);
-      scheduleFrame(processFrame);
-    }
-    return;
-  }
-
-  state.lastFingerLossTime = null;
-
-  if (state.phase === 'NO_FINGER') {
-    transitionTo('SETTLING');
-    initFilter(state.fpsReal || FS_TARGET);
-    state.hadInterruption = false;
-    state.sqiSum = 0; state.sqiCount = 0; state.totalRejectedRR = 0;
-    
-    if (state.videoTrack) {
-      const caps = state.videoTrack.getCapabilities ? state.videoTrack.getCapabilities() : {};
-      if (caps.torch) { try { state.videoTrack.applyConstraints({ advanced: [{ torch: true }] }); } catch(_){} }
-      if (caps.exposureMode && caps.exposureMode.includes('manual')) {
-        try { state.videoTrack.applyConstraints({ advanced: [{ exposureMode: 'manual' }] }); } catch(_){}
-      }
-    }
-  }
-
-  const maxSamples = Math.max(30, Math.round((state.fpsReal || FS_TARGET) * 10));
-  
-  state.rawSamples.push(meanR);
-  if (state.rawSamples.length > maxSamples) state.rawSamples.shift();
-
-  const filtered = bandpassFilter(meanR);
-  state.filteredSamples.push(filtered);
-  if (state.filteredSamples.length > maxSamples) state.filteredSamples.shift();
-
-  state.frames.push({ t: now, filtered });
-  if (state.frames.length > maxSamples) state.frames.shift();
-
-  if (state.phase === 'SETTLING' && now - state.phaseStart >= SETTLING_MS) {
-    transitionTo('MEASURING');
-  }
-
-  const sqi = computeSQI(state.rawSamples);
-  state.quality = sqi >= SQI_GOOD_THRESHOLD ? 'good' : sqi >= SQI_FAIR_THRESHOLD ? 'fair' : 'poor';
-  
-  if (state.phase !== 'COMPLETE') updateQualityBadge();
-
-  if (state.phase === 'MEASURING') {
-    state.sqiSum += sqi;
-    state.sqiCount++;
-
-    if (dt > 0 && dt < 500) {
-      state.qualityTime[state.quality] += dt;
-      if (state.quality !== 'poor') state.goodTimeMs += dt;
-    }
-
-    if (state.quality !== 'poor') {
-      // Application du lissage
-      const smoothed = smoothSignal(state.filteredSamples);
-      const peaks = detectPeaks(smoothed, state.frames.map(f => f.t));
-      
-      for (let i = 0; i < peaks.length; i++) {
-        const p = peaks[i];
-        if (state.lastPeakTime === null) {
-          state.lastPeakTime = p.t;
-        } else if (p.t > state.lastPeakTime) {
-          const rr = p.t - state.lastPeakTime;
-          
-          let isValid = true;
-          if (rr < MIN_RR_MS || rr > MAX_RR_MS) {
-            isValid = false;
-          } else if (state.rrIntervals.length > 0) {
-            const lastRR = state.rrIntervals[state.rrIntervals.length - 1];
-            if (Math.abs(rr - lastRR) / lastRR > MAX_RR_CHANGE_PCT) {
-              isValid = false; // Rejet si saut de plus de 20%
-            }
-          }
-
-          if (isValid) {
-            state.rrIntervals.push(rr);
-          } else {
-            state.totalRejectedRR++;
-          }
-          state.lastPeakTime = p.t;
+function recoverMissedPeaks(signal, fs, peaks, opts) {
+  if (peaks.length < 2) return peaks;
+  const out = [peaks[0]];
+  for (let i = 1; i < peaks.length; i++) {
+    const prev = peaks[i - 1];
+    const cur = peaks[i];
+    const rr = cur.time - prev.time;
+    if (rr > opts.maxRR) {
+      const mid = Math.floor((prev.pos + cur.pos) / 2);
+      const radius = Math.max(2, Math.floor((cur.pos - prev.pos) / 4));
+      let bestPos = -1;
+      let bestVal = -Infinity;
+      const s = Math.max(1, mid - radius);
+      const e = Math.min(signal.length - 1, mid + radius);
+      for (let k = s; k < e; k++) {
+        if (signal[k] > bestVal && signal[k] > signal[k - 1] && signal[k] >= signal[k + 1]) {
+          bestVal = signal[k];
+          bestPos = k;
         }
       }
+      if (bestPos > 0) out.push({ pos: bestPos, time: bestPos / fs });
+    }
+    out.push(cur);
+  }
+  return out;
+}
 
-      const cleanRR = filterRR(state.rrIntervals);
-      if (cleanRR.length >= 5) {
-        const meanRR = cleanRR.reduce((a,b)=>a+b,0)/cleanRR.length;
-        hrEl.textContent = Math.round(60000 / meanRR);
-        const diffs = [];
-        for (let i = 1; i < cleanRR.length; i++) diffs.push(cleanRR[i] - cleanRR[i-1]);
-        if (diffs.length) {
-          rmssdEl.textContent = Math.sqrt(diffs.reduce((a,b)=>a+b*b,0)/diffs.length).toFixed(1);
-          const nn50 = diffs.filter(d => Math.abs(d) > 50).length;
-          pnn50El.textContent = ((nn50 / diffs.length) * 100).toFixed(1);
-        }
-        const v = cleanRR.reduce((a,b)=>a+(b-meanRR)**2,0)/cleanRR.length;
-        sdnnEl.textContent = Math.sqrt(v).toFixed(1);
-        sqiEl.textContent = sqi.toFixed(2); 
-      }
+function validateTemplate(signal, fs, peaks, opts) {
+  if (peaks.length < opts.templateLen) return peaks;
+  const half = Math.max(2, Math.floor(0.15 * fs));
+  const tpl = new Float32Array(2 * half);
+  let count = 0;
+  for (let k = 0; k < opts.templateLen; k++) {
+    const p = Math.round(peaks[k].pos);
+    if (p - half < 0 || p + half >= signal.length) continue;
+    for (let i = 0; i < 2 * half; i++) tpl[i] += signal[p - half + i];
+    count++;
+  }
+  if (!count) return peaks;
+  for (let i = 0; i < tpl.length; i++) tpl[i] /= count;
+
+  const out = [];
+  for (const p of peaks) {
+    const pi = Math.round(p.pos);
+    if (pi - half < 0 || pi + half >= signal.length) {
+      out.push(p);
+      continue;
+    }
+    let dot = 0, na = 0, nb = 0;
+    for (let i = 0; i < tpl.length; i++) {
+      const a = signal[pi - half + i];
+      const b = tpl[i];
+      dot += a * b;
+      na += a * a;
+      nb += b * b;
+    }
+    const denom = Math.sqrt(na * nb);
+    const corr = denom > 1e-9 ? dot / denom : 0;
+    if (corr >= opts.templateCorr) out.push(p);
+  }
+  return out;
+}
+
+function detectArtifacts(signal, sigmaThreshold) {
+  const N = signal.length;
+  const flags = new Uint8Array(N);
+  if (N < 4) return flags;
+  const deriv = new Float32Array(N);
+  for (let i = 1; i < N; i++) deriv[i] = signal[i] - signal[i - 1];
+  let mean = 0;
+  for (let i = 1; i < N; i++) mean += deriv[i];
+  mean /= (N - 1);
+  let v = 0;
+  for (let i = 1; i < N; i++) v += (deriv[i] - mean) * (deriv[i] - mean);
+  const std = Math.sqrt(v / (N - 1));
+  if (std === 0) return flags;
+  for (let i = 1; i < N; i++) {
+    if (Math.abs(deriv[i] - mean) > sigmaThreshold * std) flags[i] = 1;
+  }
+  return flags;
+}
+
+// ============================================================
+// Qualité : SQI et filtre RR
+// ============================================================
+function computeSQI(rawGrid, clipFraction, artifacts) {
+  let mean = 0, maxv = -Infinity, minv = Infinity;
+  for (let i = 0; i < rawGrid.length; i++) {
+    const v = rawGrid[i];
+    mean += v;
+    if (v > maxv) maxv = v;
+    if (v < minv) minv = v;
+  }
+  mean /= rawGrid.length;
+  const acDc = mean > 0 ? (maxv - minv) / 2 / mean : 0;
+
+  const strengthScore = Math.min(1, acDc / CONFIG.SQI.acDcRef);
+  const clipScore = Math.max(0, 1 - clipFraction / CONFIG.SQI.clipMax);
+
+  let artFrac = 0;
+  if (artifacts.length > 0) {
+    let s = 0;
+    for (let i = 0; i < artifacts.length; i++) s += artifacts[i];
+    artFrac = s / artifacts.length;
+  }
+  const motionScore = Math.max(0, 1 - artFrac / CONFIG.SQI.motionMax);
+
+  const score = strengthScore * clipScore * motionScore;
+
+  let reason = 'ok';
+  if (clipFraction > CONFIG.SQI.clipMax) reason = 'clip';
+  else if (artFrac > CONFIG.SQI.motionMax) reason = 'motion';
+  else if (acDc < CONFIG.SQI.acDcMin) reason = 'weak';
+
+  return { score, clipFraction, artFrac, acDc, reason };
+}
+
+function filterRR(rrList) {
+  if (rrList.length === 0) return [];
+  const recent = rrList.slice(-CONFIG.RR.window);
+  const sorted = recent.slice().sort((a, b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)];
+  const devs = recent.map(x => Math.abs(x - median)).sort((a, b) => a - b);
+  const mad = devs[Math.floor(devs.length / 2)] || 0.02;
+  return recent.filter(r => Math.abs(r - median) <= CONFIG.RR.madFactor * mad);
+}
+
+// ============================================================
+// Caméra
+// ============================================================
+class CameraController {
+  constructor() {
+    this.stream = null;
+    this.ctx = null;
+    this.videoEl = null;
+    this.locked = false;
+    this.locking = false;
+    this.lastCurrentTime = -1;
+    this.lastCaptureTime = 0;
+  }
+
+  async start(videoEl, canvasEl) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('Caméra indisponible — HTTPS requis');
+    }
+    this.videoEl = videoEl;
+    canvasEl.width = CONFIG.ROI_SIZE;
+    canvasEl.height = CONFIG.ROI_SIZE;
+    this.ctx = canvasEl.getContext('2d', { willReadFrequently: true });
+    this.stream = await navigator.mediaDevices.getUserMedia({ video: CONFIG.VIDEO });
+    videoEl.srcObject = this.stream;
+    try {
+      await videoEl.play();
+    } catch (e) {
+      console.warn('[camera] play() :', e);
+    }
+    this.lastCurrentTime = -1;
+    this.lastCaptureTime = 0;
+  }
+
+  async lockSettings() {
+    if (this.locked || this.locking || !this.stream) return;
+    this.locking = true;
+    const track = this.stream.getVideoTracks()[0];
+    if (!track) { this.locking = false; return; }
+    try {
+      await track.applyConstraints({
+        advanced: [
+          { exposureMode: 'manual' },
+          { whiteBalanceMode: 'manual' },
+          { focusMode: 'manual' },
+        ],
+      });
+      this.locked = true;
+    } catch (e) {
+      console.warn('[camera] verrouillage partiel :', e.name);
+    } finally {
+      this.locking = false;
+    }
+  }
+
+  captureFrame(rafTime) {
+    if (!this.videoEl) return null;
+    const vw = this.videoEl.videoWidth;
+    const vh = this.videoEl.videoHeight;
+    if (!vw || !vh) return null;
+
+    const ct = this.videoEl.currentTime;
+    if (ct === this.lastCurrentTime) {
+      // Pas de nouvelle frame vidéo — fallback si > 100 ms écoulées
+      if (this.lastCaptureTime && rafTime - this.lastCaptureTime < 100) return null;
+    }
+    this.lastCurrentTime = ct;
+    this.lastCaptureTime = rafTime;
+
+    const side = Math.min(vw, vh);
+    const sx = (vw - side) / 2;
+    const sy = (vh - side) / 2;
+    this.ctx.drawImage(this.videoEl, sx, sy, side, side, 0, 0, CONFIG.ROI_SIZE, CONFIG.ROI_SIZE);
+    const data = this.ctx.getImageData(0, 0, CONFIG.ROI_SIZE, CONFIG.ROI_SIZE).data;
+    const n = data.length / 4;
+    let r = 0;
+    let clipped = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const rv = data[i];
+      r += rv;
+      if (rv >= 250) clipped++;
+    }
+    return { t: performance.now(), r: r / n, clipped: clipped / n };
+  }
+
+  stop() {
+    if (this.stream) {
+      this.stream.getTracks().forEach(t => t.stop());
+      this.stream = null;
+    }
+    if (this.videoEl) this.videoEl.srcObject = null;
+    this.locked = false;
+    this.locking = false;
+  }
+}
+
+// ============================================================
+// Contrôleur vital
+// ============================================================
+class VitalsController {
+  constructor(onUpdate) {
+    this.onUpdate = onUpdate;
+    this.reset();
+  }
+
+  reset() {
+    this.state = 'idle';
+    this.rawBuffer = [];
+    this.settlingStart = 0;
+    this.lastAnalysis = 0;
+    this.lastPeaks = [];
+    this.lastFiltered = null;
+    this.lastFilteredFs = 0;
+    this.stats = {
+      state: 'idle',
+      bpm: null,
+      rr: [],
+      quality: null,
+      reason: 'ok',
+      acDc: null,
+      artifacts: null,
+      peakCount: 0,
+      sourceFps: 0,
+      samples: 0,
+    };
+    this.onUpdate(this.stats);
+  }
+
+  startSettling() {
+    this.settlingStart = performance.now();
+    this.setState('settling');
+  }
+
+  setState(s) {
+    this.state = s;
+    this.stats.state = s;
+    this.onUpdate(this.stats);
+  }
+
+  addSample(sample) {
+    if (sample.r < 10) return;
+
+    this.rawBuffer.push({ t: sample.t, v: sample.r, clipped: sample.clipped });
+    const cutoff = sample.t - CONFIG.BUFFER_SEC * 1000;
+    while (this.rawBuffer.length && this.rawBuffer[0].t < cutoff) this.rawBuffer.shift();
+
+    if (this.state === 'settling') {
+      this._checkSettling();
+    } else if (this.state === 'measuring' && sample.t - this.lastAnalysis > CONFIG.ANALYSIS_INTERVAL_MS) {
+      this.lastAnalysis = sample.t;
+      this._analyze();
+    }
+  }
+
+  _checkSettling() {
+    const now = performance.now();
+    if (now - this.settlingStart < CONFIG.SETTLING.minMs) return;
+    const recent = this.rawBuffer.filter(s => s.t > now - CONFIG.SETTLING.windowMs);
+    if (recent.length < 10) return;
+    let mean = 0;
+    for (const s of recent) mean += s.v;
+    mean /= recent.length;
+    if (mean < CONFIG.SETTLING.minMean) return;
+    let v = 0;
+    for (const s of recent) v += (s.v - mean) * (s.v - mean);
+    const std = Math.sqrt(v / recent.length);
+    if (std / mean < CONFIG.SETTLING.stdRatio) {
+      this.lastAnalysis = 0;
+      this.setState('measuring');
+    }
+  }
+
+  _analyze() {
+    const rs = resampleLinear(this.rawBuffer, CONFIG.RESAMPLE_HZ);
+    if (rs.data.length < CONFIG.MIN_BUFFER_SAMPLES) return;
+    const rawGrid = rs.data;
+    const fs = rs.fs;
+
+    let clipSum = 0;
+    for (const s of this.rawBuffer) clipSum += s.clipped;
+    const clipFraction = clipSum / this.rawBuffer.length;
+
+    const artifacts = detectArtifacts(rawGrid, CONFIG.ARTIFACT.sigmaThreshold);
+
+    const filters = designBandpass(fs, CONFIG.BANDPASS.low, CONFIG.BANDPASS.high);
+    const filtered = filtfilt(rawGrid, filters);
+
+    let peaks = detectPeaks(filtered, fs, CONFIG.PEAKS);
+    peaks = recoverMissedPeaks(filtered, fs, peaks, CONFIG.PEAKS);
+    peaks = validateTemplate(filtered, fs, peaks, CONFIG.PEAKS);
+
+    const rr = [];
+    for (let i = 1; i < peaks.length; i++) {
+      rr.push(peaks[i].time - peaks[i - 1].time);
     }
 
-    const wallElapsed = now - state.phaseStart;
-    if (state.goodTimeMs >= MEASURE_GOOD_MS || wallElapsed >= MEASURE_MAX_MS) {
-      finalizeMeasurement();
+    const sqi = computeSQI(rawGrid, clipFraction, artifacts);
+    const validRR = filterRR(rr);
+
+    let bpm = null;
+    if (validRR.length > 0) {
+      let sum = 0;
+      for (const r of validRR) sum += r;
+      const avg = sum / validRR.length;
+      if (avg > 0) bpm = 60 / avg;
+    }
+
+    let sourceFps = 0;
+    if (this.rawBuffer.length > 1) {
+      const span = this.rawBuffer[this.rawBuffer.length - 1].t - this.rawBuffer[0].t;
+      if (span > 0) sourceFps = 1000 * (this.rawBuffer.length - 1) / span;
+    }
+
+    let reason = sqi.reason;
+    if (peaks.length === 0 && reason === 'ok') reason = 'noisy';
+
+    this.lastPeaks = peaks;
+    this.lastFiltered = filtered;
+    this.lastFilteredFs = fs;
+
+    this.stats = {
+      state: this.state,
+      bpm: bpm ? Math.round(bpm) : null,
+      rr: validRR,
+      quality: sqi.score,
+      reason,
+      acDc: sqi.acDc,
+      artifacts: sqi.artFrac,
+      peakCount: peaks.length,
+      sourceFps: Math.round(sourceFps),
+      samples: this.rawBuffer.length,
+    };
+    this.onUpdate(this.stats);
+  }
+}
+
+// ============================================================
+// Application
+// ============================================================
+const REASON_TEXT = {
+  ok: 'Signal stable',
+  clip: 'Trop de lumière — réduisez l’exposition',
+  motion: 'Mouvement détecté — restez immobile',
+  weak: 'Signal trop faible — couvrez mieux l’objectif',
+  noisy: 'Signal bruité — pression plus douce',
+};
+
+class VitalsApp {
+  constructor(els) {
+    this.els = els;
+    this.camera = new CameraController();
+    this.vitals = new VitalsController(stats => this.render(stats));
+    this.rafId = null;
+    this.running = false;
+    this.signalCtx = els.signalCanvas.getContext('2d');
+    this.boundLoop = this.loop.bind(this);
+  }
+
+  async start() {
+    if (this.running) return;
+    this.els.startBtn.disabled = true;
+    try {
+      const roiCanvas = document.createElement('canvas');
+      await this.camera.start(this.els.video, roiCanvas);
+    } catch (e) {
+      console.error('[app] caméra :', e);
+      alert('Impossible d’accéder à la caméra : ' + (e && e.message ? e.message : e));
+      this.els.startBtn.disabled = false;
       return;
     }
-
-    updateProgressDisplay();
+    this.els.video.classList.remove('hidden');
+    this.els.placeholder.style.display = 'none';
+    this.vitals.reset();
+    this.vitals.startSettling();
+    this.running = true;
+    this.els.startBtn.textContent = 'Arrêter';
+    this.els.startBtn.classList.add('stop');
+    this.els.startBtn.disabled = false;
+    this.rafId = requestAnimationFrame(this.boundLoop);
   }
 
-  updateGuidance(meanR, clippedFraction);
-  scheduleFrame(processFrame);
-}
+  stop() {
+    if (!this.running) return;
+    this.running = false;
+    if (this.rafId) cancelAnimationFrame(this.rafId);
+    this.rafId = null;
+    this.camera.stop();
+    this.vitals.reset();
+    this.els.video.classList.add('hidden');
+    this.els.placeholder.style.display = '';
+    this.els.startBtn.textContent = 'Démarrer';
+    this.els.startBtn.classList.remove('stop');
+    this.render(this.vitals.stats);
+    this.clearSignal();
+  }
 
-/* ======================================================================
-   INITIALISATION
-   ====================================================================== */
-async function startCamera() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 30 } },
-      audio: false,
-    });
-    video.srcObject = stream;
-    await video.play();
+  loop(rafTime) {
+    if (!this.running) return;
+    const frame = this.camera.captureFrame(rafTime);
+    if (frame) this.vitals.addSample(frame);
+    if (this.vitals.state === 'measuring' && !this.camera.locked && !this.camera.locking) {
+      this.camera.lockSettings();
+    }
+    this.rafId = requestAnimationFrame(this.boundLoop);
+  }
 
-    const track = stream.getVideoTracks()[0];
-    state.videoTrack = track;
-    
-    transitionTo('NO_FINGER');
-    updateProgressDisplay();
-    scheduleFrame(processFrame);
-  } catch (err) {
-    statusEl.textContent = 'Erreur caméra';
-    guidanceEl.textContent = 'Autorisez l’accès à la caméra pour continuer.';
-    startBtn.disabled = false;
-    startBtn.hidden = false;
+  clearSignal() {
+    const c = this.els.signalCanvas;
+    this.signalCtx.clearRect(0, 0, c.width, c.height);
+  }
+
+  render(stats) {
+    this.els.bpm.textContent = stats.bpm != null ? stats.bpm : '—';
+
+    let qText = '—';
+    let level = 'bad';
+    if (stats.state !== 'measuring') {
+      qText = 'Acquisition…';
+      level = 'mid';
+    } else if (stats.quality == null) {
+      qText = 'Analyse…';
+      level = 'mid';
+    } else if (stats.quality > 0.6) {
+      qText = 'Bonne';
+      level = 'good';
+    } else if (stats.quality > 0.3) {
+      qText = 'Moyenne';
+      level = 'mid';
+    } else {
+      qText = 'Faible';
+      level = 'bad';
+    }
+    this.els.quality.textContent = qText;
+    this.els.quality.dataset.level = level;
+
+    this.els.reason.textContent = stats.state === 'measuring' ? (REASON_TEXT[stats.reason] || '') : '';
+    this.els.reason.dataset.code = stats.reason || 'ok';
+
+    this.els.dbgState.textContent = stats.state;
+    this.els.dbgFps.textContent = stats.sourceFps ? stats.sourceFps + ' Hz' : '—';
+    this.els.dbgPeaks.textContent = stats.peakCount != null ? stats.peakCount : '—';
+    this.els.dbgScore.textContent = stats.quality != null ? (stats.quality * 100).toFixed(0) + '%' : '—';
+    this.els.dbgAcdc.textContent = stats.acDc != null ? (stats.acDc * 100).toFixed(2) + '%' : '—';
+    this.els.dbgArt.textContent = stats.artifacts != null ? (stats.artifacts * 100).toFixed(1) + '%' : '—';
+    this.els.dbgSamples.textContent = stats.samples != null ? stats.samples : 0;
+
+    this.drawSignal();
+  }
+
+  drawSignal() {
+    const c = this.els.signalCanvas;
+    const ctx = this.signalCtx;
+    ctx.clearRect(0, 0, c.width, c.height);
+
+    const sig = this.vitals.lastFiltered;
+    if (!sig || sig.length < 2) return;
+
+    let maxv = 1e-9;
+    for (let i = 0; i < sig.length; i++) {
+      const a = Math.abs(sig[i]);
+      if (a > maxv) maxv = a;
+    }
+
+    const W = c.width;
+    const H = c.height;
+    const midY = H / 2;
+    const scaleY = (H / 2 - 6) / maxv;
+
+    ctx.strokeStyle = '#4ade80';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < sig.length; i++) {
+      const x = (i / (sig.length - 1)) * W;
+      const y = midY - sig[i] * scaleY;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = '#fbbf24';
+    const peaks = this.vitals.lastPeaks || [];
+    for (const p of peaks) {
+      const idx = Math.round(p.pos);
+      if (idx < 0 || idx >= sig.length) continue;
+      const x = (idx / (sig.length - 1)) * W;
+      const y = midY - sig[idx] * scaleY;
+      ctx.beginPath();
+      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 }
 
-function startNewMeasurement() {
-  state.goodTimeMs = 0;
-  state.qualityTime = { good: 0, fair: 0, poor: 0 };
-  state.quality = null;
-  state.phase = 'IDLE';
-  state.hadInterruption = false;
-  state.fpsHistory = [];
-  state.fpsReal = 0;
-  lastFrameTime = 0;
-  lastPresentedFrames = -1;
-  state.lastFingerLossTime = null;
-  state.startTime = performance.now(); // <-- Initialisation du chrono
-  
-  resetSignalBuffers();
-  
-  hrEl.textContent = '—'; rmssdEl.textContent = '—'; sdnnEl.textContent = '—'; pnn50El.textContent = '—'; sqiEl.textContent = '—';
-  qualityBadge.className = 'quality-none'; qualityBadge.textContent = '—';
-  progressBar.style.width = '0%'; progressBar.className = '';
-  progressLabel.textContent = '0 s / 60 s de signal valide';
-  actionButtons.hidden = true;
-  startBtn.hidden = true;
-  startBtn.disabled = true;
-  
-  startCamera();
-}
+// ============================================================
+// Bootstrap
+// ============================================================
+const els = {
+  video: document.getElementById('video'),
+  placeholder: document.getElementById('placeholder'),
+  signalCanvas: document.getElementById('signal-canvas'),
+  bpm: document.getElementById('bpm'),
+  quality: document.getElementById('quality'),
+  reason: document.getElementById('reason'),
+  startBtn: document.getElementById('start-btn'),
+  dbgState: document.getElementById('dbg-state'),
+  dbgFps: document.getElementById('dbg-fps'),
+  dbgPeaks: document.getElementById('dbg-peaks'),
+  dbgScore: document.getElementById('dbg-score'),
+  dbgAcdc: document.getElementById('dbg-acdc'),
+  dbgArt: document.getElementById('dbg-art'),
+  dbgSamples: document.getElementById('dbg-samples'),
+};
 
-startBtn.addEventListener('click', () => { startBtn.disabled = true; startNewMeasurement(); });
-restartBtn.addEventListener('click', () => startNewMeasurement());
-exportJsonBtn.addEventListener('click', exportJSON);
-exportCsvBtn.addEventListener('click', exportCSV);
-infoBtn.addEventListener('click', () => {
-  infoPanel.hidden = !infoPanel.hidden;
-  infoBtn.textContent = infoPanel.hidden ? 'ⓘ Comprendre la mesure' : '✕ Fermer l’explication';
-});
-clearHistoryBtn.addEventListener('click', () => {
-  if (confirm("Voulez-vous vraiment effacer tout l'historique ?")) {
-    sessionHistory = [];
-    try { localStorage.removeItem('vfc_history'); } catch(e){}
-    updateHistoryUI();
-  }
-});
+const app = new VitalsApp(els);
 
-window.addEventListener('beforeunload', () => {
-  cancelFrame();
-  if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+els.startBtn.addEventListener('click', () => {
+  if (app.running) app.stop();
+  else app.start();
 });
-
-updateHistoryUI();
 </script>
 </body>
 </html>
