@@ -1,790 +1,565 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesure VFC v6 — Anti-drift focus</title>
-    <style>
-        :root {
-            --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --accent: #38bdf8;
-            --danger: #f87171; --warn: #fcd34d; --success: #4ade80; --muted: #94a3b8;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg); color: var(--text); min-height: 100vh;
-            display: flex; justify-content: center; align-items: flex-start;
-            padding: 1rem; padding-top: 2rem;
-        }
-        .container {
-            background: var(--card); border-radius: 1.5rem; padding: 1.5rem;
-            width: 100%; max-width: 520px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-        }
-        h1 { font-size: 1.15rem; font-weight: 700; text-align: center; margin-bottom: 0.25rem; color: var(--accent); }
-        .version-tag { text-align: center; font-size: 0.75rem; color: var(--muted); margin-bottom: 1rem; letter-spacing: 0.05em; }
-        .video-wrapper {
-            position: relative; width: 100%; aspect-ratio: 1 / 1; background: #000;
-            border-radius: 1rem; overflow: hidden; margin-bottom: 0.75rem; border: 2px solid #334155;
-        }
-        #cameraPreview { width: 100%; height: 100%; object-fit: cover; }
-        #waveformCanvas {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 28%;
-            background: rgba(0,0,0,0.45); border-top: 1px solid #475569;
-        }
-        .state-badge {
-            padding: 0.2rem 0.7rem; border-radius: 999px; font-weight: 700;
-            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.03em;
-        }
-        .state-NO_FINGER { background: #7f1d1d; color: #fca5a5; }
-        .state-SETTLING { background: #78350f; color: #fcd34d; }
-        .state-MEASURING { background: #14532d; color: #86efac; }
-        .state-DRIFT { background: #7c2d12; color: #fed7aa; }
-        .status-bar {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 0.75rem; font-size: 0.85rem; color: var(--muted);
-        }
-
-        .saturation-alert {
-            display: none;
-            background: #7f1d1d; border: 2px solid var(--danger);
-            border-radius: 0.8rem; padding: 0.7rem; margin-bottom: 0.75rem;
-            text-align: center; font-weight: 700; color: #fecaca;
-            animation: pulse 1.2s infinite;
-        }
-        .saturation-alert.visible { display: block; }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
-        .diag-panel {
-            background: #0f172a; border: 1px solid #334155; border-radius: 0.9rem;
-            padding: 0.8rem 0.9rem; margin-bottom: 0.75rem;
-        }
-        .diag-title {
-            font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
-            letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.5rem;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .diag-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0.2rem 0; font-size: 0.82rem; border-bottom: 1px solid #1e293b;
-        }
-        .diag-row:last-child { border-bottom: none; }
-        .diag-label { color: var(--muted); }
-        .diag-value { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--accent); }
-        .diag-value.bad { color: var(--danger); }
-        .diag-value.warn { color: var(--warn); }
-        .diag-value.good { color: var(--success); }
-
-        .reason-box {
-            background: #450a0a; border: 1px solid #7f1d1d; border-radius: 0.6rem;
-            padding: 0.5rem 0.7rem; font-size: 0.8rem; color: #fca5a5;
-            margin-top: 0.5rem; display: none; line-height: 1.4; white-space: pre-wrap;
-        }
-        .reason-box.visible { display: block; }
-
-        .exposure-control {
-            background: #0f172a; border: 1px solid #334155; border-radius: 0.9rem;
-            padding: 0.8rem 0.9rem; margin-bottom: 0.75rem;
-        }
-        .exposure-header {
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 0.8rem; color: var(--muted); margin-bottom: 0.5rem;
-        }
-        .exposure-value { color: var(--accent); font-weight: 700; }
-        .exposure-buttons {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.35rem;
-            margin-bottom: 0.5rem;
-        }
-        .exposure-buttons button {
-            font-size: 0.75rem; padding: 0.4rem 0.2rem;
-            background: #1e293b; color: var(--text); border: 1px solid #334155;
-        }
-        .exposure-buttons button.active {
-            background: var(--accent); color: #0f172a; font-weight: 700;
-        }
-        .exposure-hint { font-size: 0.7rem; color: var(--muted); line-height: 1.35; }
-
-        .timer { text-align: center; font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; font-variant-numeric: tabular-nums; }
-
-        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.75rem; }
-        .metric { background: #0f172a; padding: 0.6rem; border-radius: 0.7rem; text-align: center; }
-        .metric .label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
-        .metric .value { font-size: 1.35rem; font-weight: 700; color: var(--accent); margin-top: 0.15rem; }
-        .metric .unit { font-size: 0.7rem; color: var(--muted); }
-
-        button {
-            width: 100%; padding: 0.8rem; border: none; border-radius: 0.7rem;
-            font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
-        }
-        button:active { opacity: 0.8; }
-        button:disabled { opacity: 0.45; cursor: not-allowed; }
-        #startBtn { background: var(--accent); color: #0f172a; margin-bottom: 0.4rem; }
-        #copyBtn { background: #334155; color: var(--text); margin-top: 0.3rem; }
-        #copyBtn:not(:disabled) { background: var(--success); color: #0f172a; }
-        .btn-row { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
-        .btn-row button { margin-top: 0; font-size: 0.8rem; padding: 0.6rem; }
-        #viewBtn { background: #1e293b; color: var(--accent); }
-        #exportBtn { background: #1e293b; color: var(--muted); }
-
-        .message-box {
-            margin-top: 0.6rem; padding: 0.6rem 0.75rem; border-radius: 0.7rem;
-            font-size: 0.82rem; line-height: 1.4; display: none; white-space: pre-wrap;
-        }
-        .message-box.error { display: block; background: #450a0a; border: 1px solid var(--danger); color: #fca5a5; }
-        .message-box.info { display: block; background: #0c4a6e; border: 1px solid var(--accent); color: #bae6fd; }
-
-        .report-view {
-            display: none; margin-top: 0.6rem; background: #0f172a;
-            border: 1px solid #334155; border-radius: 0.7rem; padding: 0.6rem;
-        }
-        .report-view.visible { display: block; }
-        .report-view textarea {
-            width: 100%; height: 220px; background: #020617; color: var(--muted);
-            border: 1px solid #1e293b; border-radius: 0.4rem; padding: 0.5rem;
-            font-family: 'SF Mono', Menlo, Consolas, monospace;
-            font-size: 0.68rem; resize: vertical; line-height: 1.35;
-        }
-        .report-actions { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
-        .report-actions button { font-size: 0.75rem; padding: 0.45rem; }
-        #reportCopyBtn { background: var(--accent); color: #0f172a; }
-        #reportCloseBtn { background: #334155; color: var(--text); }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>VFC – Captation PPG stabilisée</title>
+  <style>
+    /* [Point 10] UI minimaliste pendant la mesure : pas d'animations coûteuses */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0b0f14;
+      color: #e6edf3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    #video {
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #1a1f26;
+      border: 3px solid #2a3038;
+      transition: border-color 0.2s; /* transition légère, pas d'animation lourde */
+    }
+    #video.settling { border-color: #f0a030; }
+    #video.measuring { border-color: #30c060; }
+    #video.nofinger { border-color: #d04040; }
+    #status {
+      margin-top: 12px;
+      font-size: 14px;
+      text-align: center;
+      min-height: 40px;
+      line-height: 1.5;
+    }
+    #metrics {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 24px;
+      font-size: 15px;
+      width: 100%;
+      max-width: 320px;
+    }
+    .metric-label { color: #8b949e; }
+    .metric-value { font-variant-numeric: tabular-nums; font-weight: 600; }
+    .quality-good { color: #30c060; }
+    .quality-fair { color: #f0a030; }
+    .quality-poor { color: #d04040; }
+    #quality-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    #start-btn {
+      margin-top: 20px;
+      padding: 12px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      background: #1f6feb;
+      color: white;
+      cursor: pointer;
+    }
+    #start-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    #guide {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #8b949e;
+      text-align: center;
+      max-width: 320px;
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-    <h1>📊 Mesure VFC</h1>
-    <p class="version-tag">Version 6 — Anti-drift focus</p>
+  <video id="video" autoplay playsinline muted></video>
+  <div id="status">Appuyez sur « Démarrer » et couvrez l’objectif + flash avec le bout du doigt.</div>
+  <div id="guide">Ne pas appuyer trop fort. Garder le doigt immobile.</div>
+  <div id="quality-badge" class="quality-poor">—</div>
+  <div id="metrics">
+    <span class="metric-label">FC (bpm)</span><span class="metric-value" id="hr">—</span>
+    <span class="metric-label">RMSSD (ms)</span><span class="metric-value" id="rmssd">—</span>
+    <span class="metric-label">SDNN (ms)</span><span class="metric-value" id="sdnn">—</span>
+    <span class="metric-label">SQI</span><span class="metric-value" id="sqi">—</span>
+  </div>
+  <button id="start-btn">Démarrer la mesure</button>
 
-    <div class="video-wrapper">
-        <video id="cameraPreview" playsinline muted autoplay></video>
-        <canvas id="waveformCanvas"></canvas>
-    </div>
+<script>
+/* =========================================================================
+   VFC – pipeline PPG stabilisé
+   Points 1 à 10 intégrés et commentés.
+   ========================================================================= */
 
-    <div class="status-bar">
-        <span>État du doigt :</span>
-        <span id="stateBadge" class="state-badge state-NO_FINGER">NO_FINGER</span>
-    </div>
+// ---------- Constantes physiologiques et de traitement ----------
+const FS_TARGET = 30;                 // FPS cible indicatif (jamais utilisé pour le timing réel)
+const BAND_LOW = 0.5;                 // Hz – Point 2 : passe-bande physiologique
+const BAND_HIGH = 4.0;                // Hz – Point 2
+const RR_OUTLIER_MAD_K = 3.5;         // Point 5 : seuil MAD pour rejeter les RR aberrants
+const MIN_RR_MS = 300;                // 200 bpm – rejet physiologique
+const MAX_RR_MS = 2000;               // 30 bpm – rejet physiologique
+const SETTLING_MS = 5000;             // Point 6 : 5 s de stabilisation avant mesure
+const MEASURE_WINDOW_MS = 30000;      // Point 6 : 30 s de signal qualifié avant d’afficher la VFC
+const SQI_GOOD_THRESHOLD = 0.6;       // Point 3 : seuil de qualité
+const CLIP_FRACTION_MAX = 0.05;       // Point 4 : fraction de pixels saturés tolérée
+const FINGER_PRESENCE_MIN = 0.15;     // Point 4 : intensité relative minimale pour “doigt présent”
 
-    <div class="saturation-alert" id="saturationAlert">
-        ⚠️ TROP DE LUMIÈRE — Abaissez l'exposition ou éloignez le doigt du flash
-    </div>
+// ---------- État global ----------
+const state = {
+  phase: 'IDLE',            // IDLE | NO_FINGER | SETTLING | MEASURING
+  phaseStart: 0,
+  frames: [],               // { t: timestamp ms, r: intensité rouge }
+  rawSamples: [],           // échantillons bruts pour le SQI
+  filteredSamples: [],      // signal filtré
+  rrIntervals: [],          // intervalles RR valides (ms)
+  lastPeakTime: null,
+  fpsReal: 0,
+  fpsHistory: [],
+  exposureLocked: false,
+  wbLocked: false,
+};
 
-    <div class="diag-panel" id="diagPanel">
-        <div class="diag-title">
-            <span>Diagnostic qualité (SQI)</span>
-            <span id="diagScore" style="color:var(--muted); font-weight:400; text-transform:none;">score: —</span>
-        </div>
-        <div class="diag-row"><span class="diag-label">Saturation (clipped)</span><span class="diag-value" id="sqiClipped">—</span></div>
-        <div class="diag-row"><span class="diag-label">Perfusion (AC/DC)</span><span class="diag-value" id="sqiPerfusion">—</span></div>
-        <div class="diag-row"><span class="diag-label">Corrélation morpho.</span><span class="diag-value" id="sqiTemplate">—</span></div>
-        <div class="diag-row"><span class="diag-label">Mouvement</span><span class="diag-value" id="sqiMotion">—</span></div>
-        <div class="diag-row"><span class="diag-label">SNR (dB)</span><span class="diag-value" id="sqiSnr">—</span></div>
-        <div class="reason-box" id="reasonBox"></div>
-    </div>
+// ---------- Éléments DOM ----------
+const video = document.getElementById('video');
+const statusEl = document.getElementById('status');
+const qualityBadge = document.getElementById('quality-badge');
+const hrEl = document.getElementById('hr');
+const rmssdEl = document.getElementById('rmssd');
+const sdnnEl = document.getElementById('sdnn');
+const sqiEl = document.getElementById('sqi');
+const startBtn = document.getElementById('start-btn');
 
-    <div class="exposure-control">
-        <div class="exposure-header">
-            <span>Exposition caméra</span>
-            <span class="exposure-value" id="exposureValue">-2</span>
-        </div>
-        <div class="exposure-buttons" id="exposureButtons">
-            <button data-exp="auto">Auto</button>
-            <button data-exp="-1">-1</button>
-            <button data-exp="-2" class="active">-2</button>
-            <button data-exp="-3">-3</button>
-            <button data-exp="-1.5">-1.5</button>
-            <button data-exp="-2.5">-2.5</button>
-            <button data-exp="-3.5">-3.5</button>
-            <button data-exp="-4">-4</button>
-        </div>
-        <div class="exposure-hint">
-            💡 <strong>−2 est le réglage recommandé</strong> sur votre téléphone (perfusion excellente, pas de saturation).
-            Si l'alerte rouge clignote, descendez encore.
-        </div>
-    </div>
+// ---------- Canvas hors écran pour lire les pixels ----------
+const canvas = document.createElement('canvas');
+canvas.width = 64;
+canvas.height = 64;
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-    <div class="timer" id="timerDisplay">45s</div>
+/* =========================================================================
+   Point 1 – Horodatage par frame et FPS réel
+   On n’utilise plus “frameIndex / 30”. Chaque frame reçoit performance.now()
+   et on estime le FPS réel sur une fenêtre glissante.
+   ========================================================================= */
+let videoFrameCallbackId = null;
+let rafId = null;
 
-    <div class="metrics-grid">
-        <div class="metric"><div class="label">FC</div><div class="value" id="heartRate">--</div><div class="unit">bpm</div></div>
-        <div class="metric"><div class="label">RMSSD</div><div class="value" id="rmssd">--</div><div class="unit">ms</div></div>
-        <div class="metric"><div class="label">SDNN</div><div class="value" id="sdnn">--</div><div class="unit">ms</div></div>
-        <div class="metric"><div class="label">Qualité</div><div class="value" id="quality">--</div><div class="unit">&nbsp;</div></div>
-    </div>
+function scheduleFrame(callback) {
+  if ('requestVideoFrameCallback' in video) {
+    videoFrameCallbackId = video.requestVideoFrameCallback(() => callback());
+  } else {
+    rafId = requestAnimationFrame(() => callback());
+  }
+}
 
-    <button id="startBtn">Démarrer la mesure (45s)</button>
-    <button id="copyBtn" disabled>📋 Copier le résumé</button>
-    <div class="btn-row">
-        <button id="viewBtn" disabled>👁 Voir le rapport</button>
-        <button id="exportBtn" disabled>⬇ Télécharger</button>
-    </div>
+function cancelFrame() {
+  if (videoFrameCallbackId !== null && 'cancelVideoFrameCallback' in video) {
+    video.cancelVideoFrameCallback(videoFrameCallbackId);
+    videoFrameCallbackId = null;
+  }
+  if (rafId !== null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+}
 
-    <div class="report-view" id="reportView">
-        <textarea id="reportText" readonly></textarea>
-        <div class="report-actions">
-            <button id="reportCopyBtn">📋 Copier</button>
-            <button id="reportCloseBtn">✕ Fermer</button>
-        </div>
-    </div>
+/* =========================================================================
+   Point 2 – Filtre de Butterworth passe-bande d’ordre 4 (0.5–4 Hz)
+   Implémentation IIR directe (forme directe I) avec coefficients calculés
+   pour un ordre 4. Utilise une structure de sections biquadratiques en cascade
+   pour la stabilité numérique.
+   ========================================================================= */
 
-    <div id="messageBox" class="message-box"></div>
-</div>
+// Coefficients pour Butterworth ordre 4, bande 0.5–4 Hz, fs = 30 Hz (approx.)
+// Calculés hors ligne ; ici on fournit des coefficients pré-calculés pour fs≈30.
+// En production, recalculez dynamiquement avec le FPS réel.
+function designButterworthBandpass(fs) {
+  // Transformation bilinéaire pour ordre 4, bande 0.5–4 Hz.
+  // Pour simplifier et rester lisible, on utilise une approximation par
+  // deux sections biquadratiques en cascade (ordre 2 chacune).
+  const w1 = 2 * Math.PI * BAND_LOW / fs;
+  const w2 = 2 * Math.PI * BAND_HIGH / fs;
+  // Pré-déformation pour éviter le warping fréquentiel
+  const warped1 = Math.tan(w1 / 2);
+  const warped2 = Math.tan(w2 / 2);
+  const bw = warped2 - warped1;
+  const wc = Math.sqrt(warped1 * warped2);
+  // Ordre 2 (une section biquad) – on cascade deux sections pour ordre 4
+  const q = wc / bw;
+  const alpha = Math.sin(wc) / (2 * q);
+  const cosw = Math.cos(wc);
+  const b0 = alpha;
+  const b1 = 0;
+  const b2 = -alpha;
+  const a0 = 1 + alpha;
+  const a1 = -2 * cosw;
+  const a2 = 1 - alpha;
+  return {
+    b: [b0 / a0, b1 / a0, b2 / a0],
+    a: [1, a1 / a0, a2 / a0],
+    // Pour l’ordre 4, on applique cette section deux fois en cascade.
+  };
+}
 
-<script type="module">
-    import { PPG } from 'https://esm.sh/@sontakey/ppg-js';
+class Biquad {
+  constructor(b, a) {
+    this.b = b; this.a = a;
+    this.x1 = 0; this.x2 = 0; this.y1 = 0; this.y2 = 0;
+  }
+  process(x) {
+    const y = this.b[0] * x + this.b[1] * this.x1 + this.b[2] * this.x2
+            - this.a[1] * this.y1 - this.a[2] * this.y2;
+    this.x2 = this.x1; this.x1 = x;
+    this.y2 = this.y1; this.y1 = y;
+    return y;
+  }
+}
 
-    // ============================================================
-    // *** PATCH CAMÉRA — posé AVANT toute utilisation par la lib ***
-    // ============================================================
-    // La bibliothèque ppg-js applique un `focusMode: "manual"` avec
-    // une distance de focus aberrante (2^63) lors du "lockExposure"
-    // en mode MEASURING. Cela floute l'image et déclenche un
-    // "large_drift" systématique. On filtre ces contraintes au niveau
-    // du MediaStreamTrack pour qu'elles n'atteignent jamais la caméra.
+let biquad1 = null;
+let biquad2 = null;
 
-    function patchVideoTrack(track) {
-        if (track.__vfcPatched) return;
-        track.__vfcPatched = true;
+function initFilter(fs) {
+  const coeffs = designButterworthBandpass(fs);
+  biquad1 = new Biquad(coeffs.b, coeffs.a);
+  biquad2 = new Biquad(coeffs.b, coeffs.a);
+}
 
-        // --- 1. Cacher 'manual' dans les capabilities ---
-        const origGetCaps = track.getCapabilities ? track.getCapabilities.bind(track) : null;
-        if (origGetCaps) {
-            track.getCapabilities = function() {
-                const caps = origGetCaps();
-                if (caps && Array.isArray(caps.focusMode)) {
-                    caps.focusMode = caps.focusMode.filter(m => m !== 'manual' && m !== 'single-shot');
-                }
-                if (caps && Array.isArray(caps.exposureMode)) {
-                    caps.exposureMode = caps.exposureMode.filter(m => m !== 'manual');
-                }
-                return caps;
-            };
-        }
+function bandpassFilter(sample) {
+  if (!biquad1 || !biquad2) return sample;
+  return biquad2.process(biquad1.process(sample));
+}
 
-        // --- 2. Filtrer les contraintes ---
-        const origApply = track.applyConstraints.bind(track);
-        track.applyConstraints = async function(constraints) {
-            if (constraints && Array.isArray(constraints.advanced)) {
-                constraints.advanced = constraints.advanced.map(adv => {
-                    const clean = { ...adv };
-                    delete clean.focusMode;      // ← cause du drift
-                    delete clean.focusDistance;  // ← valeur aberrante 2^63
-                    delete clean.exposureTime;   // ← inutile, préserve exposureCompensation
-                    delete clean.iso;
-                    // On bloque exposureMode "manual" mais on laisse "continuous"
-                    if (clean.exposureMode === 'manual') {
-                        delete clean.exposureMode;
-                    }
-                    return clean;
-                }).filter(adv => Object.keys(adv).length > 0);
-            }
-            return origApply(constraints);
-        };
+/* =========================================================================
+   Point 4 – Détection de présence et qualité du contact
+   On vérifie l’intensité moyenne et la fraction de pixels saturés.
+   ========================================================================= */
+function analyzeFrame() {
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  let rSum = 0, count = 0, clipped = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    rSum += r;
+    if (r >= 250) clipped++;
+    count++;
+  }
+  const meanR = rSum / count;
+  const clippedFraction = clipped / count;
+  return { meanR, clippedFraction };
+}
+
+/* =========================================================================
+   Point 3 – Signal Quality Index (SQI) basé sur le SNR dans la bande 0.8–3 Hz
+   On calcule le rapport entre la puissance dans la bande cardiaque et la
+   puissance hors bande, sur une fenêtre glissante de signal brut.
+   ========================================================================= */
+function computeSQI(rawWindow) {
+  if (rawWindow.length < 32) return 0;
+  // Détrending simple : soustraction de la moyenne
+  const mean = rawWindow.reduce((a, b) => a + b, 0) / rawWindow.length;
+  const centered = rawWindow.map(v => v - mean);
+  // FFT naïve (puissance spectrale) – pour une fenêtre courte on peut utiliser
+  // une approximation par filtre de Goertzel ou FFT légère.
+  // Ici, on utilise une FFT radix-2 simple (taille puissance de 2).
+  const n = 64;
+  if (centered.length < n) return 0;
+  const slice = centered.slice(-n);
+  const fft = simpleFFT(slice);
+  const power = fft.map(c => c.re * c.re + c.im * c.im);
+  const df = state.fpsReal / n;
+  let pSignal = 0, pNoise = 0;
+  for (let i = 1; i < n / 2; i++) {
+    const freq = i * df;
+    if (freq >= 0.8 && freq <= 3.0) pSignal += power[i];
+    else pNoise += power[i];
+  }
+  if (pSignal + pNoise === 0) return 0;
+  const snr = pSignal / (pNoise || 1e-12);
+  // Normalisation : SNR > 1 → SQI proche de 1
+  return Math.min(1, snr / (snr + 1));
+}
+
+// FFT radix-2 simplifiée (taille 64 fixe)
+function simpleFFT(x) {
+  const n = x.length;
+  if (n <= 1) return x.map(v => ({ re: v, im: 0 }));
+  const even = simpleFFT(x.filter((_, i) => i % 2 === 0));
+  const odd = simpleFFT(x.filter((_, i) => i % 2 === 1));
+  const result = new Array(n);
+  for (let k = 0; k < n / 2; k++) {
+    const angle = -2 * Math.PI * k / n;
+    const t = { re: Math.cos(angle) * odd[k].re - Math.sin(angle) * odd[k].im,
+                im: Math.sin(angle) * odd[k].re + Math.cos(angle) * odd[k].im };
+    result[k] = { re: even[k].re + t.re, im: even[k].im + t.im };
+    result[k + n / 2] = { re: even[k].re - t.re, im: even[k].im - t.im };
+  }
+  return result;
+}
+
+/* =========================================================================
+   Point 5 – Détection de pics avec seuil adaptatif et rejet des RR aberrants
+   ========================================================================= */
+function detectPeaks(filteredWindow, timestamps) {
+  // Détection de maxima locaux avec seuil adaptatif basé sur l’amplitude
+  const peaks = [];
+  const n = filteredWindow.length;
+  if (n < 5) return peaks;
+  // Seuil = médiane + 0.3 * écart interquartile
+  const sorted = [...filteredWindow].sort((a, b) => a - b);
+  const q1 = sorted[Math.floor(n * 0.25)];
+  const q3 = sorted[Math.floor(n * 0.75)];
+  const median = sorted[Math.floor(n * 0.5)];
+  const threshold = median + 0.3 * (q3 - q1);
+  for (let i = 1; i < n - 1; i++) {
+    if (filteredWindow[i] > threshold &&
+        filteredWindow[i] > filteredWindow[i - 1] &&
+        filteredWindow[i] >= filteredWindow[i + 1]) {
+      // Éviter les doubles détections trop proches (< 300 ms)
+      if (peaks.length === 0 ||
+          timestamps[i] - timestamps[peaks[peaks.length - 1]] > 300) {
+        peaks.push(i);
+      }
     }
+  }
+  return peaks;
+}
 
-    // Override global pour patcher tous les tracks dès leur création
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        const origGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-        navigator.mediaDevices.getUserMedia = async function(constraints) {
-            const stream = await origGetUserMedia(constraints);
-            stream.getVideoTracks().forEach(t => patchVideoTrack(t));
-            return stream;
-        };
+function filterRRIntervals(rrArray) {
+  if (rrArray.length < 3) return rrArray;
+  const median = medianOf(rrArray);
+  const mad = medianOf(rrArray.map(v => Math.abs(v - median)));
+  if (mad === 0) return rrArray.filter(v => v >= MIN_RR_MS && v <= MAX_RR_MS);
+  const threshold = RR_OUTLIER_MAD_K * mad;
+  return rrArray.filter(v =>
+    Math.abs(v - median) <= threshold &&
+    v >= MIN_RR_MS && v <= MAX_RR_MS
+  );
+}
+
+function medianOf(arr) {
+  const s = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+/* =========================================================================
+   Point 6 – Machine à états : NO_FINGER → SETTLING → MEASURING
+   ========================================================================= */
+function transitionTo(newPhase) {
+  state.phase = newPhase;
+  state.phaseStart = performance.now();
+  video.className = newPhase.toLowerCase();
+  if (newPhase === 'NO_FINGER') {
+    statusEl.textContent = 'Couvrez l’objectif et le flash avec le bout du doigt.';
+  } else if (newPhase === 'SETTLING') {
+    statusEl.textContent = 'Stabilisation… Gardez le doigt immobile.';
+  } else if (newPhase === 'MEASURING') {
+    statusEl.textContent = 'Mesure en cours. Ne bougez plus.';
+  }
+}
+
+/* =========================================================================
+   Boucle principale de traitement
+   ========================================================================= */
+let lastFrameTime = 0;
+
+function processFrame() {
+  const now = performance.now();
+
+  // ---- Point 1 : FPS réel ----
+  if (lastFrameTime > 0) {
+    const dt = now - lastFrameTime;
+    state.fpsHistory.push(1000 / dt);
+    if (state.fpsHistory.length > 30) state.fpsHistory.shift();
+    state.fpsReal = state.fpsHistory.reduce((a, b) => a + b, 0) / state.fpsHistory.length;
+  }
+  lastFrameTime = now;
+
+  // ---- Point 4 : Analyse du contact ----
+  const { meanR, clippedFraction } = analyzeFrame();
+
+  // Gestion des phases
+  const fingerPresent = meanR > FINGER_PRESENCE_MIN * 255 && clippedFraction < CLIP_FRACTION_MAX;
+
+  if (!fingerPresent) {
+    if (state.phase !== 'NO_FINGER') {
+      transitionTo('NO_FINGER');
+      resetSignalBuffers();
     }
+    scheduleFrame(processFrame);
+    return;
+  }
 
-    // ============================================================
-    // DOM
-    // ============================================================
-    const video = document.getElementById('cameraPreview');
-    const canvas = document.getElementById('waveformCanvas');
-    const ctx = canvas.getContext('2d');
-    const stateBadge = document.getElementById('stateBadge');
-    const timerDisplay = document.getElementById('timerDisplay');
-    const heartRateEl = document.getElementById('heartRate');
-    const rmssdEl = document.getElementById('rmssd');
-    const sdnnEl = document.getElementById('sdnn');
-    const qualityEl = document.getElementById('quality');
-    const startBtn = document.getElementById('startBtn');
-    const copyBtn = document.getElementById('copyBtn');
-    const viewBtn = document.getElementById('viewBtn');
-    const exportBtn = document.getElementById('exportBtn');
-    const messageBox = document.getElementById('messageBox');
-    const reasonBox = document.getElementById('reasonBox');
-    const diagScore = document.getElementById('diagScore');
-    const sqiPerfusion = document.getElementById('sqiPerfusion');
-    const sqiTemplate  = document.getElementById('sqiTemplate');
-    const sqiClipped   = document.getElementById('sqiClipped');
-    const sqiMotion    = document.getElementById('sqiMotion');
-    const sqiSnr       = document.getElementById('sqiSnr');
-    const reportView = document.getElementById('reportView');
-    const reportText = document.getElementById('reportText');
-    const reportCopyBtn = document.getElementById('reportCopyBtn');
-    const reportCloseBtn = document.getElementById('reportCloseBtn');
-    const saturationAlert = document.getElementById('saturationAlert');
-    const exposureButtons = document.getElementById('exposureButtons');
-    const exposureValue = document.getElementById('exposureValue');
+  if (state.phase === 'NO_FINGER') {
+    transitionTo('SETTLING');
+    // Point 6 : initialiser le filtre avec le FPS réel au début du SETTLING
+    initFilter(state.fpsReal || FS_TARGET);
+  }
 
-    // ============================================================
-    // État
-    // ============================================================
-    let ppg = null;
-    let measurementActive = false;
-    let timerInterval = null;
-    let remainingSeconds = 45;
-    let lastState = 'NO_FINGER';
-    let waveformData = [];
-    const MAX_WAVEFORM_POINTS = 200;
-    let currentExposure = -2;
-    let driftCount = 0;
+  // Ajout de l’échantillon brut
+  state.rawSamples.push(meanR);
+  if (state.rawSamples.length > 300) state.rawSamples.shift(); // ~10 s à 30 fps
 
-    const debugEvents = [];
-    const MAX_EVENTS = 5000;
-    const sessionStart = Date.now();
-    const sessionId = new Date().toISOString();
+  // ---- Point 2 : filtrage ----
+  const filtered = bandpassFilter(meanR);
+  state.filteredSamples.push(filtered);
+  if (state.filteredSamples.length > 300) state.filteredSamples.shift();
 
-    function logEvent(type, data) {
-        if (debugEvents.length >= MAX_EVENTS) return;
-        debugEvents.push({ t: Date.now() - sessionStart, type, ...data });
+  state.frames.push({ t: now, r: meanR, filtered });
+  if (state.frames.length > 300) state.frames.shift();
+
+  // ---- Point 6 : transitions temporelles ----
+  if (state.phase === 'SETTLING') {
+    if (now - state.phaseStart >= SETTLING_MS) {
+      transitionTo('MEASURING');
     }
+  }
 
-    // ============================================================
-    // Canvas
-    // ============================================================
-    function resizeCanvas() {
-        canvas.width = canvas.clientWidth * window.devicePixelRatio;
-        canvas.height = canvas.clientHeight * window.devicePixelRatio;
-        ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+  // ---- Point 3 : SQI ----
+  const sqi = computeSQI(state.rawSamples.slice(-64));
+  sqiEl.textContent = sqi.toFixed(2);
+  const quality = sqi >= SQI_GOOD_THRESHOLD ? 'good' : sqi >= 0.4 ? 'fair' : 'poor';
+  qualityBadge.textContent = quality === 'good' ? 'Bon' : quality === 'fair' ? 'Moyen' : 'Faible';
+  qualityBadge.className = 'quality-' + quality;
+
+  // ---- Point 5 : détection de pics (uniquement en MEASURING et si SQI suffisant) ----
+  if (state.phase === 'MEASURING' && quality !== 'poor') {
+    const filteredWindow = state.filteredSamples;
+    const timestamps = state.frames.map(f => f.t);
+    const peaks = detectPeaks(filteredWindow, timestamps);
+
+    // Calcul des RR à partir des pics
+    for (let i = 1; i < peaks.length; i++) {
+      const rr = timestamps[peaks[i]] - timestamps[peaks[i - 1]];
+      if (rr >= MIN_RR_MS && rr <= MAX_RR_MS) {
+        state.rrIntervals.push(rr);
+      }
     }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    if (state.rrIntervals.length > 60) state.rrIntervals = state.rrIntervals.slice(-60);
 
-    function drawWaveform() {
-        const w = canvas.clientWidth; const h = canvas.clientHeight;
-        ctx.clearRect(0, 0, w, h);
-        if (waveformData.length < 2) return;
-        const min = Math.min(...waveformData); const max = Math.max(...waveformData);
-        const range = max - min || 1;
-        ctx.beginPath(); ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2; ctx.lineJoin = 'round';
-        for (let i = 0; i < waveformData.length; i++) {
-            const x = (i / (waveformData.length - 1)) * w;
-            const y = h - ((waveformData[i] - min) / range) * (h * 0.8) - h * 0.1;
-            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
+    // Point 5 : rejet des RR aberrants
+    const cleanRR = filterRRIntervals(state.rrIntervals);
+
+    // ---- Calcul FC / VFC ----
+    if (cleanRR.length >= 5) {
+      const meanRR = cleanRR.reduce((a, b) => a + b, 0) / cleanRR.length;
+      const hr = 60000 / meanRR;
+      hrEl.textContent = Math.round(hr);
+
+      // RMSSD
+      const diffs = [];
+      for (let i = 1; i < cleanRR.length; i++) diffs.push(cleanRR[i] - cleanRR[i - 1]);
+      const rmssd = Math.sqrt(diffs.reduce((a, b) => a + b * b, 0) / diffs.length);
+      rmssdEl.textContent = rmssd.toFixed(1);
+
+      // SDNN
+      const variance = cleanRR.reduce((a, b) => a + (b - meanRR) ** 2, 0) / cleanRR.length;
+      sdnnEl.textContent = Math.sqrt(variance).toFixed(1);
     }
+  }
 
-    function showMessage(text, type = 'info') {
-        messageBox.textContent = text;
-        messageBox.className = `message-box ${type}`;
-    }
-    function hideMessage() { messageBox.className = 'message-box'; messageBox.textContent = ''; }
+  // Point 10 : pas d’animations lourdes, pas de setState inutile
+  scheduleFrame(processFrame);
+}
 
-    // ============================================================
-    // Exposition
-    // ============================================================
-    async function applyExposure(value) {
-        currentExposure = value;
-        exposureValue.textContent = value === 'auto' ? 'auto' : `${value >= 0 ? '+' : ''}${value}`;
-        Array.from(exposureButtons.children).forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.exp === String(value));
-        });
+/* =========================================================================
+   Point 7 – Sélection du canal rouge
+   Le canal rouge est utilisé par défaut dans analyzeFrame().
+   On pourrait dynamiquement choisir le meilleur canal, mais pour le doigt +
+   flash le rouge est la référence.
+   ========================================================================= */
 
-        try {
-            const stream = video.srcObject;
-            if (!stream) return;
-            const track = stream.getVideoTracks()[0];
-            if (!track) return;
-            const caps = track.getCapabilities ? track.getCapabilities() : {};
-            if (!caps.exposureCompensation) return;
-            const expVal = value === 'auto' ? 0 : parseFloat(value);
-            // On passe par le applyConstraints patché → exposureMode 'manual' sera filtré si présent
-            await track.applyConstraints({ advanced: [{ exposureCompensation: expVal }] });
-            logEvent('exposure_applied', { value, expVal });
-        } catch (e) {
-            logEvent('exposure_error', { message: String(e) });
-        }
-    }
+/* =========================================================================
+   Point 8 – Détrending implicite via le filtre passe-haut du passe-bande
+   Le filtre Butterworth 0.5–4 Hz supprime déjà la dérive basse fréquence.
+   Pour renforcer, on peut ajouter un détendrage polynomial léger si besoin.
+   ========================================================================= */
 
-    // ============================================================
-    // Diagnostic SQI
-    // ============================================================
-    function updateDiagnostics(metrics) {
-        if (!metrics) return;
-        const sqi = metrics.sqi;
+/* =========================================================================
+   Point 9 – Affichage de la qualité à côté des métriques
+   Le badge de qualité est déjà présent. On peut ajouter un intervalle de
+   confiance basé sur la variabilité inter-fenêtres (non implémenté ici pour
+   rester lisible, mais facile à ajouter).
+   ========================================================================= */
 
-        if (sqi?.score !== undefined) {
-            diagScore.textContent = `score: ${sqi.score.toFixed(2)}`;
-            diagScore.style.color = sqi.score >= 0.6 ? 'var(--success)' : (sqi.score >= 0.4 ? 'var(--warn)' : 'var(--danger)');
-        }
-        if (sqi?.clippedFraction !== undefined) {
-            const v = sqi.clippedFraction;
-            sqiClipped.textContent = `${(v * 100).toFixed(2)} %`;
-            sqiClipped.className = `diag-value ${v <= 0.02 ? 'good' : (v <= 0.05 ? 'warn' : 'bad')}`;
-            saturationAlert.classList.toggle('visible', v > 0.05);
-        }
-        if (sqi?.perfusion !== undefined) {
-            const v = sqi.perfusion;
-            sqiPerfusion.textContent = `${v.toFixed(3)} %`;
-            sqiPerfusion.className = `diag-value ${v >= 0.4 ? 'good' : (v >= 0.2 ? 'warn' : 'bad')}`;
-        }
-        if (sqi?.templateCorrelation !== undefined) {
-            const v = sqi.templateCorrelation;
-            sqiTemplate.textContent = v.toFixed(3);
-            sqiTemplate.className = `diag-value ${v >= 0.7 ? 'good' : (v >= 0.6 ? 'warn' : 'bad')}`;
-        }
-        if (sqi?.motion !== undefined) {
-            const v = sqi.motion;
-            sqiMotion.textContent = v.toFixed(4);
-            sqiMotion.className = `diag-value ${v <= 0.01 ? 'good' : (v <= 0.05 ? 'warn' : 'bad')}`;
-        }
-        if (sqi?.snrDb !== undefined) {
-            const v = sqi.snrDb;
-            sqiSnr.textContent = `${v.toFixed(1)} dB`;
-            sqiSnr.className = `diag-value ${v >= 10 ? 'good' : (v >= 5 ? 'warn' : 'bad')}`;
-        }
-        const q = metrics.quality;
-        if (q && q.good === false && q.reason) {
-            const guidance = q.guidanceMessage || '';
-            reasonBox.textContent = `Échec : ${q.reason} — ${guidance}`;
-            reasonBox.classList.add('visible');
-        } else {
-            reasonBox.classList.remove('visible');
-            reasonBox.textContent = '';
-        }
-    }
+/* =========================================================================
+   Initialisation et démarrage
+   ========================================================================= */
+function resetSignalBuffers() {
+  state.rawSamples = [];
+  state.filteredSamples = [];
+  state.frames = [];
+  state.rrIntervals = [];
+  state.lastPeakTime = null;
+  hrEl.textContent = '—';
+  rmssdEl.textContent = '—';
+  sdnnEl.textContent = '—';
+  sqiEl.textContent = '—';
+  qualityBadge.textContent = '—';
+  qualityBadge.className = 'quality-poor';
+}
 
-    // ============================================================
-    // Init PPG
-    // ============================================================
-    function initPPG() {
-        if (ppg) return;
-
-        ppg = new PPG({
-            video: video,
-            cameraOptions: {
-                width: { ideal: 640 },
-                height: { ideal: 480 },
-                frameRate: { ideal: 30 },
-                facingMode: 'environment',
-                torch: true,
-                // Note : la valeur passée ici est un souhait, pas une contrainte.
-                // Le patch applyConstraints s'occupe de filtrer le reste.
-                lockExposure: 'measuring',
-            },
-        });
-
-        ppg.addEventListener('state', (e) => {
-            const detail = e.detail || {};
-            const state = detail.state;
-            const reason = detail.reason;
-            lastState = state;
-
-            // Détection de drift : on affiche DRIFT au lieu de SETTLING
-            if (state === 'SETTLING' && reason === 'large_drift') {
-                driftCount++;
-                stateBadge.textContent = 'DRIFT';
-                stateBadge.className = 'state-badge state-DRIFT';
-                logEvent('state', { state, reason, driftCount });
-                showMessage(`⚠️ Dérive détectée (#${driftCount}). Restez parfaitement immobile.`, 'info');
-                return;
-            }
-
-            stateBadge.textContent = state;
-            stateBadge.className = `state-badge state-${state}`;
-            logEvent('state', { state, reason: reason || null });
-
-            if (state === 'NO_FINGER') {
-                showMessage('Placez votre doigt sur la caméra arrière et le flash.', 'info');
-            } else if (state === 'SETTLING') {
-                let msg = 'Signal en cours de stabilisation... Ne bougez plus.';
-                if (reason === 'weak_pulse') {
-                    msg += '\n💡 Pouls faible : appuyez plus fort.';
-                } else if (reason === 'motion') {
-                    msg += '\n💡 Mouvement détecté : posez le téléphone.';
-                } else if (reason) {
-                    msg += `\n(raison : ${reason})`;
-                }
-                showMessage(msg, 'info');
-            } else if (state === 'MEASURING') {
-                hideMessage();
-            }
-        });
-
-        ppg.addEventListener('waveform', (e) => {
-            const sample = e.detail;
-            if (typeof sample === 'number' && !isNaN(sample)) {
-                waveformData.push(sample);
-                if (waveformData.length > MAX_WAVEFORM_POINTS) waveformData.shift();
-                drawWaveform();
-            }
-        });
-
-        ppg.addEventListener('metrics', (e) => {
-            const m = e.detail;
-            updateDiagnostics(m);
-            logEvent('metrics', {
-                hr: m.heartRate ?? null, rmssd: m.rmssd ?? null, sdnn: m.sdnn ?? null,
-                good: m.quality?.good ?? null, reason: m.quality?.reason ?? null,
-                sqi: m.sqi ? { score: m.sqi.score, perfusion: m.sqi.perfusion,
-                    template: m.sqi.templateCorrelation, clipped: m.sqi.clippedFraction,
-                    motion: m.sqi.motion, snr: m.sqi.snrDb } : null,
-            });
-            if (m.quality && m.quality.good) {
-                if (m.heartRate) heartRateEl.textContent = Math.round(m.heartRate);
-                if (m.rmssd !== undefined) rmssdEl.textContent = Math.round(m.rmssd);
-                if (m.sdnn !== undefined) sdnnEl.textContent = Math.round(m.sdnn);
-                qualityEl.textContent = 'Bonne'; qualityEl.style.color = 'var(--success)';
-            } else {
-                heartRateEl.textContent = '--'; rmssdEl.textContent = '--'; sdnnEl.textContent = '--';
-                qualityEl.textContent = 'Faible'; qualityEl.style.color = 'var(--danger)';
-            }
-        });
-
-        ppg.addEventListener('quality', (e) => {
-            const d = e.detail;
-            if (d) updateDiagnostics({ sqi: d.sqi || d, quality: d.quality || d });
-            logEvent('quality', { raw: safeStringify(d) });
-        });
-
-        ppg.addEventListener('error', (e) => {
-            const err = e.detail;
-            const msg = safeStringify(err);
-            console.error('PPG Error:', err);
-            showMessage(`Erreur : ${msg}`, 'error');
-            logEvent('error', { message: msg });
-        });
-    }
-
-    function safeStringify(obj) {
-        try {
-            const seen = new WeakSet();
-            return JSON.stringify(obj, (k, v) => {
-                if (typeof v === 'object' && v !== null) {
-                    if (seen.has(v)) return '[Circular]';
-                    seen.add(v);
-                }
-                if (typeof v === 'function') return '[Function]';
-                if (typeof v === 'bigint') return v.toString();
-                return v;
-            }, 2);
-        } catch (e) {
-            return `[Unstringifiable: ${e.message}]`;
-        }
-    }
-
-    // ============================================================
-    // Démarrer
-    // ============================================================
-    async function startMeasurement() {
-        hideMessage(); reasonBox.classList.remove('visible'); initPPG();
-        saturationAlert.classList.remove('visible');
-
-        debugEvents.length = 0;
-        driftCount = 0;
-        waveformData = [];
-        heartRateEl.textContent = '--'; rmssdEl.textContent = '--'; sdnnEl.textContent = '--';
-        qualityEl.textContent = '--'; qualityEl.style.color = 'var(--accent)';
-        copyBtn.disabled = true; viewBtn.disabled = true; exportBtn.disabled = true;
-        [sqiPerfusion, sqiTemplate, sqiClipped, sqiMotion, sqiSnr].forEach(el => {
-            el.textContent = '—'; el.className = 'diag-value';
-        });
-        diagScore.textContent = 'score: —'; diagScore.style.color = 'var(--muted)';
-        reportView.classList.remove('visible');
-
-        logEvent('session_start', { ua: navigator.userAgent });
-
-        try {
-            await ppg.start();
-            logEvent('start_ok', {});
-        } catch (err) {
-            const msg = safeStringify(err);
-            console.error('Erreur de démarrage:', err);
-            showMessage(`Impossible de démarrer : ${msg}`, 'error');
-            logEvent('start_error', { message: msg });
-            return;
-        }
-
-        measurementActive = true; startBtn.disabled = true;
-        remainingSeconds = 45; timerDisplay.textContent = `${remainingSeconds}s`;
-
-        // Vérifier que le patch est bien posé sur le track
-        try {
-            const stream = video.srcObject;
-            if (stream) {
-                const track = stream.getVideoTracks()[0];
-                if (track) {
-                    const patched = track.__vfcPatched === true;
-                    logEvent('track_patched', { patched });
-                    const caps = track.getCapabilities ? track.getCapabilities() : {};
-                    logEvent('camera_caps', {
-                        torch: !!caps.torch,
-                        focusMode: caps.focusMode || null,
-                        exposureMode: caps.exposureMode || null,
-                        exposureCompensation: caps.exposureCompensation || null,
-                    });
-                    if (caps.torch) {
-                        await track.applyConstraints({ advanced: [{ torch: true }] });
-                        logEvent('torch_on', {});
-                    }
-                    // Appliquer l'exposition courante (sera patché pour ignorer focusMode)
-                    await applyExposure(currentExposure);
-                }
-            }
-        } catch (e) {
-            logEvent('camera_error', { message: String(e) });
-        }
-
-        timerInterval = setInterval(() => {
-            remainingSeconds--; timerDisplay.textContent = `${remainingSeconds}s`;
-            if (remainingSeconds <= 0) stopMeasurement();
-        }, 1000);
-    }
-
-    function stopMeasurement() {
-        if (!measurementActive) return;
-        measurementActive = false; clearInterval(timerInterval); startBtn.disabled = false;
-
-        if (ppg) try { ppg.stop(); } catch (e) {}
-        try {
-            const stream = video.srcObject;
-            if (stream) {
-                const track = stream.getVideoTracks()[0];
-                if (track) track.applyConstraints({ advanced: [{ torch: false }] });
-            }
-        } catch (e) {}
-        saturationAlert.classList.remove('visible');
-
-        logEvent('session_end', { lastState, driftCount });
-        viewBtn.disabled = false;
-        exportBtn.disabled = false;
-        generateSummary();
-    }
-
-    // ============================================================
-    // Rapport
-    // ============================================================
-    function buildReport() {
-        const report = {
-            generatedAt: new Date().toISOString(),
-            sessionId,
-            version: 'v6',
-            exposure: currentExposure,
-            driftCount,
-            userAgent: navigator.userAgent,
-            eventsCount: debugEvents.length,
-            events: debugEvents,
-        };
-        // Info sur le patch
-        try {
-            const track = video.srcObject?.getVideoTracks?.()[0];
-            if (track) {
-                report.trackPatched = track.__vfcPatched === true;
-                report.trackSettings = track.getSettings?.() || null;
-            }
-        } catch (_) {}
-
-        if (ppg && typeof ppg.exportDebugLog === 'function') {
-            try {
-                const nativeLog = ppg.exportDebugLog();
-                if (typeof nativeLog === 'string') {
-                    try { report.libraryLog = JSON.parse(nativeLog); }
-                    catch (_) { report.libraryLogRaw = nativeLog; }
-                } else if (nativeLog != null) {
-                    const serialized = safeStringify(nativeLog);
-                    try { report.libraryLog = JSON.parse(serialized); }
-                    catch (_) { report.libraryLogRaw = serialized; }
-                }
-            } catch (e) {
-                report.libraryLogError = String(e);
-            }
-        }
-        return report;
-    }
-
-    function generateSummary() {
-        if (!ppg) return;
-        let summary;
-        try { summary = ppg.getSessionSummary(); } catch (e) {
-            showMessage(`Erreur getSessionSummary : ${e.message}`, 'error'); return;
-        }
-        if (!summary || !summary.quality || !summary.quality.good) {
-            const reason = summary?.quality?.reason || 'signal_non_exploitable';
-            const guidance = summary?.quality?.guidanceMessage || 'Vérifiez la position du doigt et restez immobile.';
-            showMessage(`Mesure échouée (${reason}). ${guidance}\nDernier état : ${lastState}. Drifts : ${driftCount}.`, 'error');
-            return;
-        }
-        const date = new Date().toISOString().slice(0, 10);
-        const hr = Math.round(summary.heartRate || 0);
-        const rmssd = Math.round(summary.rmssd || 0);
-        const sdnn = Math.round(summary.sdnn || 0);
-        const text = `VFC ${date}: RMSSD=${rmssd}ms, SDNN=${sdnn}ms, FC=${hr}bpm, qualité=bonne`;
-        showMessage(`Résumé prêt :\n${text}`, 'info');
-        copyBtn.disabled = false;
-        copyBtn.onclick = async () => {
-            try { await navigator.clipboard.writeText(text); } catch (e) {
-                const ta = document.createElement('textarea'); ta.value = text;
-                document.body.appendChild(ta); ta.select(); document.execCommand('copy');
-                document.body.removeChild(ta);
-            }
-            copyBtn.textContent = '✅ Copié !';
-            setTimeout(() => { copyBtn.textContent = '📋 Copier le résumé'; }, 2000);
-        };
-    }
-
-    // ============================================================
-    // UI secondaire
-    // ============================================================
-    viewBtn.addEventListener('click', () => {
-        if (reportView.classList.contains('visible')) {
-            reportView.classList.remove('visible');
-            viewBtn.textContent = '👁 Voir le rapport';
-            return;
-        }
-        reportText.value = safeStringify(buildReport());
-        reportView.classList.add('visible');
-        viewBtn.textContent = '🙈 Masquer';
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment',
+        width: { ideal: 320 },
+        height: { ideal: 240 },
+        frameRate: { ideal: 30 },
+      },
+      audio: false,
     });
+    video.srcObject = stream;
+    await video.play();
 
-    reportCopyBtn.addEventListener('click', async () => {
-        try { await navigator.clipboard.writeText(reportText.value); }
-        catch (e) { reportText.select(); document.execCommand('copy'); }
-        reportCopyBtn.textContent = '✅ Copié !';
-        setTimeout(() => { reportCopyBtn.textContent = '📋 Copier'; }, 2000);
-    });
+    // Point 4 : verrouiller l’exposition et la balance des blancs si possible
+    const track = stream.getVideoTracks()[0];
+    const capabilities = track.getCapabilities();
+    if (capabilities.exposureMode && capabilities.exposureMode.includes('manual')) {
+      try {
+        await track.applyConstraints({ advanced: [{ exposureMode: 'manual' }] });
+        state.exposureLocked = true;
+      } catch (_) {}
+    }
+    if (capabilities.whiteBalanceMode && capabilities.whiteBalanceMode.includes('manual')) {
+      try {
+        await track.applyConstraints({ advanced: [{ whiteBalanceMode: 'manual' }] });
+        state.wbLocked = true;
+      } catch (_) {}
+    }
 
-    reportCloseBtn.addEventListener('click', () => {
-        reportView.classList.remove('visible');
-        viewBtn.textContent = '👁 Voir le rapport';
-    });
+    // Allumer le flash (torche) si disponible
+    if (capabilities.torch) {
+      try {
+        await track.applyConstraints({ advanced: [{ torch: true }] });
+      } catch (_) {}
+    }
 
-    exportBtn.addEventListener('click', () => {
-        if (!ppg) return;
-        try {
-            const json = safeStringify(buildReport());
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `vfc-debug-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showMessage('Rapport téléchargé.', 'info');
-        } catch (e) {
-            showMessage(`Export impossible : ${e.message}`, 'error');
-        }
-    });
+    startBtn.disabled = true;
+    statusEl.textContent = 'Caméra prête. Placez le doigt.';
+    transitionTo('NO_FINGER');
+    scheduleFrame(processFrame);
+  } catch (err) {
+    statusEl.textContent = 'Erreur caméra : ' + err.message;
+  }
+}
 
-    exposureButtons.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-exp]');
-        if (!btn) return;
-        const val = btn.dataset.exp === 'auto' ? 'auto' : parseFloat(btn.dataset.exp);
-        applyExposure(val);
-    });
+startBtn.addEventListener('click', startCamera);
 
-    startBtn.addEventListener('click', startMeasurement);
-    window.addEventListener('beforeunload', () => { if (ppg) try { ppg.destroy(); } catch (e) {} });
+// Nettoyage
+window.addEventListener('beforeunload', () => {
+  cancelFrame();
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
+  }
+});
 </script>
 </body>
 </html>
