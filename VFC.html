@@ -156,7 +156,7 @@ const MIN_RR_MS = 300, MAX_RR_MS = 2000;
 const SETTLING_MS = 5000;
 const MEASURE_GOOD_MS = 60000;     
 const MEASURE_MAX_MS  = 180000;    
-const MIN_RR_FOR_VFC = 10;
+const MIN_RR_FOR_VFC = 5;          // Baissé à 5 pour éviter les erreurs de calcul
 const SQI_GOOD_THRESHOLD = 0.6;
 const SQI_FAIR_THRESHOLD = 0.4;
 const CLIP_FRACTION_MAX = 0.25;    
@@ -173,6 +173,7 @@ const state = {
   rawSamples: [],
   filteredSamples: [],
   rrIntervals: [],
+  lastPeakTime: null, // <-- NOUVEAU : Permet de garder l'historique
   fpsReal: 0,
   fpsHistory: [],
   quality: null,
@@ -449,6 +450,7 @@ function resetSignalBuffers() {
   state.filteredSamples = [];
   state.frames = [];
   state.rrIntervals = [];
+  state.lastPeakTime = null; // Reset
   state.sqiSum = 0;
   state.sqiCount = 0;
   state.totalRejectedRR = 0;
@@ -682,13 +684,20 @@ function processFrame() {
 
     if (state.quality !== 'poor') {
       const peaks = detectPeaks(state.filteredSamples, state.frames.map(f => f.t));
-      state.rrIntervals = []; 
-      for (let i = 1; i < peaks.length; i++) {
-        const rr = peaks[i].t - peaks[i-1].t;
-        if (rr >= MIN_RR_MS && rr <= MAX_RR_MS) {
-          state.rrIntervals.push(rr);
-        } else {
-          state.totalRejectedRR++;
+      
+      // --- NOUVELLE LOGIQUE D'ACCUMULATION ---
+      for (let i = 0; i < peaks.length; i++) {
+        const p = peaks[i];
+        if (state.lastPeakTime === null) {
+          state.lastPeakTime = p.t;
+        } else if (p.t > state.lastPeakTime) {
+          const rr = p.t - state.lastPeakTime;
+          if (rr >= MIN_RR_MS && rr <= MAX_RR_MS) {
+            state.rrIntervals.push(rr);
+          } else {
+            state.totalRejectedRR++;
+          }
+          state.lastPeakTime = p.t;
         }
       }
 
@@ -718,7 +727,6 @@ function processFrame() {
     updateProgressDisplay();
   }
 
-  // Mise à jour de l'UI et relance de la boucle, peu importe la phase
   updateGuidance(meanR, clippedFraction);
   scheduleFrame(processFrame);
 }
