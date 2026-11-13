@@ -11,95 +11,83 @@
       background: #0b0f14; color: #e6edf3;
       display: flex; flex-direction: column; align-items: center;
       min-height: 100vh; padding: 16px;
+      padding-bottom: 60px;
     }
-    #video {
-      width: 200px; height: 200px; border-radius: 50%; object-fit: cover;
-      background: #1a1f26; border: 3px solid #2a3038;
-      transition: border-color 0.2s;
+    
+    #video-container {
+      position: relative; width: 200px; height: 200px;
+      border-radius: 50%; overflow: hidden; background: #1a1f26;
+      border: 3px solid #2a3038; transition: border-color 0.2s;
     }
-    #video.no_finger { border-color: #d04040; }
-    #video.settling { border-color: #f0a030; }
-    #video.measuring { border-color: #30c060; }
-    #video.complete { border-color: #1f6feb; }
+    #video { width: 100%; height: 100%; object-fit: cover; }
+    #video-container.no_finger { border-color: #d04040; }
+    #video-container.settling { border-color: #f0a030; }
+    #video-container.measuring { border-color: #30c060; }
+    #video-container.complete { border-color: #1f6feb; }
+    
+    #complete-icon {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      display: none; align-items: center; justify-content: center;
+      font-size: 80px; background: rgba(11, 15, 20, 0.85); color: #1f6feb;
+    }
+    #video-container.complete #complete-icon { display: flex; }
 
     #quality-badge {
       display: inline-block; padding: 3px 10px; border-radius: 4px;
-      font-size: 12px; font-weight: 600; margin-top: 8px;
+      font-size: 12px; font-weight: 600; margin-top: 12px;
     }
     .quality-good { background: #1a3a24; color: #30c060; }
     .quality-fair { background: #3a2f1a; color: #f0a030; }
     .quality-poor { background: #3a1a1a; color: #d04040; }
     .quality-none { background: #1a1f26; color: #8b949e; }
 
-    #status {
-      margin-top: 8px; font-size: 14px; font-weight: 500;
-      text-align: center; min-height: 20px; max-width: 340px;
-    }
-    #guidance {
-      margin-top: 4px; font-size: 13px; color: #8b949e;
-      text-align: center; min-height: 20px; max-width: 340px; line-height: 1.4;
-    }
+    #status { margin-top: 8px; font-size: 15px; font-weight: 600; text-align: center; min-height: 22px; max-width: 340px; }
+    #guidance { margin-top: 4px; font-size: 13px; color: #8b949e; text-align: center; min-height: 20px; max-width: 340px; line-height: 1.4; }
 
-    #progress-container {
-      width: 100%; max-width: 320px; height: 8px;
-      background: #1a1f26; border-radius: 4px;
-      margin-top: 12px; overflow: hidden;
-    }
-    #progress-bar {
-      height: 100%; width: 0%;
-      background: linear-gradient(90deg, #1f6feb, #30c060);
-      transition: width 0.25s linear;
-    }
+    #progress-container { width: 100%; max-width: 320px; height: 8px; background: #1a1f26; border-radius: 4px; margin-top: 16px; overflow: hidden; }
+    #progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #1f6feb, #30c060); transition: width 0.25s linear; }
     #progress-bar.paused { background: #484f58; }
-    #progress-label {
-      font-size: 12px; color: #8b949e; margin-top: 6px;
-      text-align: center; max-width: 340px; min-height: 16px;
-    }
+    #progress-label { font-size: 12px; color: #8b949e; margin-top: 6px; text-align: center; max-width: 340px; min-height: 16px; }
 
     #metrics {
-      margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr;
-      gap: 8px 24px; font-size: 15px; width: 100%; max-width: 320px;
+      margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px 24px; font-size: 15px; width: 100%; max-width: 320px;
+      background: #161b22; padding: 16px; border-radius: 8px; border: 1px solid #2a3038;
     }
     .metric-label { color: #8b949e; }
-    .metric-value { font-variant-numeric: tabular-nums; font-weight: 600; }
+    .metric-value { font-variant-numeric: tabular-nums; font-weight: 700; text-align: right; }
 
+    .btn-group { display: flex; gap: 8px; width: 100%; max-width: 320px; margin-top: 16px; }
     button {
-      margin-top: 16px; padding: 12px 28px; font-size: 15px; font-weight: 600;
-      border: none; border-radius: 8px; cursor: pointer;
+      padding: 12px 16px; font-size: 14px; font-weight: 600;
+      border: none; border-radius: 8px; cursor: pointer; flex: 1;
     }
-    #start-btn { background: #1f6feb; color: white; }
-    #start-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    #start-btn { background: #1f6feb; color: white; width: 100%; max-width: 320px; margin-top: 16px; }
     #restart-btn { background: #1f6feb; color: white; }
-    #info-btn {
-      background: transparent; color: #8b949e; font-weight: 500;
-      padding: 8px 12px; font-size: 13px; margin-top: 12px;
-      border: 1px solid #2a3038;
-    }
+    #export-json-btn { background: #238636; color: white; }
+    #export-csv-btn { background: #238636; color: white; }
+    #info-btn { background: transparent; color: #8b949e; font-weight: 500; padding: 8px 12px; font-size: 13px; margin-top: 12px; border: 1px solid #2a3038; width: 100%; max-width: 320px; }
 
-    #info-panel {
+    #info-panel, #history-panel {
       max-width: 360px; margin-top: 16px; padding: 14px 16px;
       background: #161b22; border-radius: 8px; font-size: 13px;
-      line-height: 1.6; color: #c9d1d9;
+      line-height: 1.6; color: #c9d1d9; border: 1px solid #2a3038;
+      width: 100%;
     }
-    #info-panel h3 {
-      font-size: 13px; margin-top: 10px; margin-bottom: 4px;
-      color: #e6edf3; text-transform: uppercase; letter-spacing: 0.5px;
-    }
-    #info-panel h3:first-child { margin-top: 0; }
-    #info-panel p { margin-bottom: 6px; }
-    #info-panel ul { margin-left: 18px; margin-bottom: 6px; }
-    #info-panel .badge {
-      display: inline-block; padding: 1px 6px; border-radius: 3px;
-      font-size: 11px; font-weight: 600;
-    }
-    #info-panel code {
-      background: #0d1117; padding: 1px 4px; border-radius: 3px;
-      font-size: 12px;
-    }
+    #info-panel h3, #history-panel h3 { font-size: 13px; margin-top: 14px; margin-bottom: 6px; color: #e6edf3; text-transform: uppercase; }
+    #info-panel h3:first-child, #history-panel h3:first-child { margin-top: 0; }
+    #info-panel .badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px; }
+    #history-panel table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
+    #history-panel th, #history-panel td { padding: 4px; border-bottom: 1px solid #2a3038; text-align: left; }
+    #history-panel th { color: #8b949e; }
   </style>
 </head>
 <body>
-  <video id="video" autoplay playsinline muted></video>
+  
+  <div id="video-container" class="no_finger">
+    <video id="video" autoplay playsinline muted></video>
+    <div id="complete-icon">✅</div>
+  </div>
 
   <div id="quality-badge" class="quality-none">—</div>
   <div id="status">Appuyez sur « Démarrer » pour commencer.</div>
@@ -112,47 +100,39 @@
     <span class="metric-label">FC (bpm)</span><span class="metric-value" id="hr">—</span>
     <span class="metric-label">RMSSD (ms)</span><span class="metric-value" id="rmssd">—</span>
     <span class="metric-label">SDNN (ms)</span><span class="metric-value" id="sdnn">—</span>
-    <span class="metric-label">SQI</span><span class="metric-value" id="sqi">—</span>
+    <span class="metric-label">pNN50 (%)</span><span class="metric-value" id="pnn50">—</span>
+    <span class="metric-label">SQI moyen</span><span class="metric-value" id="sqi">—</span>
   </div>
 
   <button id="start-btn">Démarrer la mesure</button>
-  <button id="restart-btn" hidden>Nouvelle mesure</button>
+  
+  <div class="btn-group" id="action-buttons" hidden>
+    <button id="restart-btn">Nouvelle mesure</button>
+    <button id="export-json-btn">Export JSON</button>
+    <button id="export-csv-btn">CSV</button>
+  </div>
 
   <button id="info-btn">ⓘ Comprendre la mesure</button>
 
   <div id="info-panel" hidden>
     <h3>Qualité du signal (SQI)</h3>
-    <p>
-      <span class="badge quality-good">Bon</span>
-      SQI ≥ 0,60 — signal stable, mesures fiables.
-    </p>
-    <p>
-      <span class="badge quality-fair">Moyen</span>
-      SQI entre 0,40 et 0,60 — mesures indicatives, à interpréter avec prudence.
-    </p>
-    <p>
-      <span class="badge quality-poor">Faible</span>
-      SQI &lt; 0,40 — mesures masquées car non fiables.
-    </p>
+    <p><span class="badge quality-good">Bon</span> SQI ≥ 0,60 — signal stable, mesures fiables.</p>
+    <p><span class="badge quality-fair">Moyen</span> SQI 0,40 - 0,60 — mesures indicatives.</p>
+    <p><span class="badge quality-poor">Faible</span> SQI &lt; 0,40 — mesures masquées.</p>
+    <h3>Valeurs de VFC</h3>
+    <p><b>FC</b> : Fréquence cardiaque moyenne.</p>
+    <p><b>RMSSD</b> : Variabilité battement à battement (souvent 20-50 ms au repos).</p>
+    <p><b>SDNN</b> : Variabilité globale (doit normalement être > au RMSSD).</p>
+    <p><b>pNN50</b> : Pourcentage de battements espacés de plus de 50 ms.</p>
+  </div>
 
-    <h3>Déroulement d’une mesure</h3>
-    <ul>
-      <li><b>Recherche</b> — couvrez l’objectif + flash avec le bout du doigt.</li>
-      <li><b>Stabilisation</b> (5 s) — la caméra et le filtre se stabilisent, ne bougez pas.</li>
-      <li><b>Mesure</b> — accumulation de <b>60 s de signal valide</b> (qualité bonne ou moyenne). Le décompte se met en pause si la qualité tombe à « Faible ».</li>
-      <li><b>Terminé</b> — résultats finaux affichés, avec la qualité globale de la session.</li>
-    </ul>
-
-    <h3>Conseils</h3>
-    <ul>
-      <li>Ne pas appuyer trop fort : cela réduit la circulation et dégrade le signal.</li>
-      <li>Ne pas bouger, ne pas parler, respirer calmement.</li>
-      <li>Éviter la lumière ambiante autour du doigt.</li>
-      <li>Si vous perdez le contact, la mesure reprend depuis zéro.</li>
-    </ul>
-
-    <h3>Durée</h3>
-    <p>La mesure se termine dès que 60 s de signal valide sont accumulées, ou au plus tard après 180 s (pour éviter d’attendre indéfiniment).</p>
+  <div id="history-panel" hidden>
+    <h3>Historique des mesures</h3>
+    <table id="history-table">
+      <thead><tr><th>Date</th><th>FC</th><th>RMSSD</th><th>SDNN</th><th>Qualité</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button id="clear-history-btn" style="margin-top:12px; background:#d04040; width:100%; font-size:12px;">Vider l'historique</button>
   </div>
 
 <script>
@@ -164,9 +144,9 @@ const BAND_LOW = 0.5, BAND_HIGH = 4.0;
 const RR_OUTLIER_MAD_K = 3.5;
 const MIN_RR_MS = 300, MAX_RR_MS = 2000;
 const SETTLING_MS = 5000;
-const MEASURE_GOOD_MS = 60000;     // 60 s de signal valide à accumuler
-const MEASURE_MAX_MS  = 180000;    // plafond absolu (3 min)
-const MIN_RR_FOR_VFC = 10;         // nombre minimal d’intervalles pour publier la VFC
+const MEASURE_GOOD_MS = 60000;     // 60 s
+const MEASURE_MAX_MS  = 180000;    // 3 min
+const MIN_RR_FOR_VFC = 10;
 const SQI_GOOD_THRESHOLD = 0.6;
 const SQI_FAIR_THRESHOLD = 0.4;
 const CLIP_FRACTION_MAX = 0.05;
@@ -182,19 +162,27 @@ const state = {
   rawSamples: [],
   filteredSamples: [],
   rrIntervals: [],
+  allRrIntervals: [], // Pour le calcul final
   fpsReal: 0,
   fpsHistory: [],
-  quality: null,                    // 'good' | 'fair' | 'poor'
-  qualityTime: { good: 0, fair: 0, poor: 0 }, // ms cumulées
-  goodTimeMs: 0,                    // ms de qualité non-poor en MEASURING
+  quality: null,
+  qualityTime: { good: 0, fair: 0, poor: 0 },
+  goodTimeMs: 0,
   hadInterruption: false,
   videoTrack: null,
+  sqiSum: 0,
+  sqiCount: 0,
+  totalRejectedRR: 0,
+  debugInfo: {}
 };
+
+let sessionHistory = JSON.parse(localStorage.getItem('vfc_history') || '[]');
 
 /* ======================================================================
    DOM
    ====================================================================== */
 const video = document.getElementById('video');
+const videoContainer = document.getElementById('video-container');
 const statusEl = document.getElementById('status');
 const guidanceEl = document.getElementById('guidance');
 const qualityBadge = document.getElementById('quality-badge');
@@ -203,11 +191,18 @@ const progressLabel = document.getElementById('progress-label');
 const hrEl = document.getElementById('hr');
 const rmssdEl = document.getElementById('rmssd');
 const sdnnEl = document.getElementById('sdnn');
+const pnn50El = document.getElementById('pnn50');
 const sqiEl = document.getElementById('sqi');
 const startBtn = document.getElementById('start-btn');
+const actionButtons = document.getElementById('action-buttons');
 const restartBtn = document.getElementById('restart-btn');
+const exportJsonBtn = document.getElementById('export-json-btn');
+const exportCsvBtn = document.getElementById('export-csv-btn');
 const infoBtn = document.getElementById('info-btn');
 const infoPanel = document.getElementById('info-panel');
+const historyPanel = document.getElementById('history-panel');
+const historyTable = document.getElementById('history-table').querySelector('tbody');
+const clearHistoryBtn = document.getElementById('clear-history-btn');
 
 /* ======================================================================
    CANVAS DE LECTURE
@@ -217,7 +212,7 @@ canvas.width = 64; canvas.height = 64;
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
 /* ======================================================================
-   BOUCLE FRAME (Point 1)
+   BOUCLE FRAME
    ====================================================================== */
 let videoFrameCallbackId = null, rafId = null, lastFrameTime = 0;
 
@@ -236,13 +231,12 @@ function cancelFrame() {
 }
 
 /* ======================================================================
-   FILTRE BUTTERWORTH (Point 2)
+   FILTRE
    ====================================================================== */
 class Biquad {
   constructor(b, a) { this.b = b; this.a = a; this.x1 = this.x2 = this.y1 = this.y2 = 0; }
   process(x) {
-    const y = this.b[0]*x + this.b[1]*this.x1 + this.b[2]*this.x2
-            - this.a[1]*this.y1 - this.a[2]*this.y2;
+    const y = this.b[0]*x + this.b[1]*this.x1 + this.b[2]*this.x2 - this.a[1]*this.y1 - this.a[2]*this.y2;
     this.x2 = this.x1; this.x1 = x; this.y2 = this.y1; this.y1 = y;
     return y;
   }
@@ -252,16 +246,9 @@ let biquad1 = null, biquad2 = null;
 function designBandpass(fs) {
   const w1 = 2*Math.PI*BAND_LOW/fs, w2 = 2*Math.PI*BAND_HIGH/fs;
   const w1p = Math.tan(w1/2), w2p = Math.tan(w2/2);
-  const wc = Math.sqrt(w1p*w2p);
-  const bw = w2p - w1p;
-  const q = wc / bw;
-  const alpha = Math.sin(wc) / (2*q);
-  const cosw = Math.cos(wc);
-  const a0 = 1 + alpha;
-  return {
-    b: [alpha/a0, 0, -alpha/a0],
-    a: [1, -2*cosw/a0, (1-alpha)/a0],
-  };
+  const wc = Math.sqrt(w1p*w2p), bw = w2p - w1p;
+  const q = wc / bw, alpha = Math.sin(wc) / (2*q), cosw = Math.cos(wc), a0 = 1 + alpha;
+  return { b: [alpha/a0, 0, -alpha/a0], a: [1, -2*cosw/a0, (1-alpha)/a0] };
 }
 function initFilter(fs) {
   const c = designBandpass(fs);
@@ -274,22 +261,18 @@ function bandpassFilter(x) {
 }
 
 /* ======================================================================
-   ANALYSE DE FRAME (Point 4 + 7)
+   ANALYSE FRAME & SQI
    ====================================================================== */
 function analyzeFrame() {
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
   const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
   let rSum = 0, count = 0, clipped = 0;
   for (let i = 0; i < data.length; i += 4) {
-    const r = data[i];
-    rSum += r; if (r >= 250) clipped++; count++;
+    const r = data[i]; rSum += r; if (r >= 250) clipped++; count++;
   }
   return { meanR: rSum / count, clippedFraction: clipped / count };
 }
 
-/* ======================================================================
-   SQI (Point 3)
-   ====================================================================== */
 function simpleFFT(x) {
   const n = x.length;
   if (n <= 1) return x.map(v => ({ re: v, im: 0 }));
@@ -327,23 +310,32 @@ function computeSQI(rawWindow) {
 }
 
 /* ======================================================================
-   PICS + RR (Point 5)
+   DÉTECTION DES PICS (avec interpolation parabolique)
    ====================================================================== */
 function detectPeaks(signal, timestamps) {
   const n = signal.length;
   if (n < 5) return [];
   const sorted = [...signal].sort((a,b) => a-b);
-  const q1 = sorted[Math.floor(n*0.25)];
-  const q3 = sorted[Math.floor(n*0.75)];
+  const q1 = sorted[Math.floor(n*0.25)], q3 = sorted[Math.floor(n*0.75)];
   const med = sorted[Math.floor(n*0.5)];
   const threshold = med + 0.3 * (q3 - q1);
   const peaks = [];
+  
   for (let i = 1; i < n-1; i++) {
-    if (signal[i] > threshold &&
-        signal[i] > signal[i-1] &&
-        signal[i] >= signal[i+1]) {
-      if (!peaks.length || timestamps[i] - timestamps[peaks[peaks.length-1]] > 300) {
-        peaks.push(i);
+    if (signal[i] > threshold && signal[i] > signal[i-1] && signal[i] >= signal[i+1]) {
+      // Interpolation parabolique pour trouver le vrai pic entre les frames
+      let t = timestamps[i];
+      if (i > 0 && i < n - 1) {
+        const alpha = signal[i-1], beta = signal[i], gamma = signal[i+1];
+        const denominator = 2 * (alpha - 2*beta + gamma);
+        if (denominator !== 0) {
+          const offset = (alpha - gamma) / denominator;
+          const dt = timestamps[i+1] - timestamps[i-1];
+          t = timestamps[i] + offset * (dt / 2);
+        }
+      }
+      if (!peaks.length || t - peaks[peaks.length-1].t > 300) {
+        peaks.push({ index: i, t: t });
       }
     }
   }
@@ -366,53 +358,43 @@ function filterRR(rr) {
 }
 
 /* ======================================================================
-   PHASES + MESSAGES
+   UI ET PHASES
    ====================================================================== */
 function transitionTo(newPhase) {
   state.phase = newPhase;
   state.phaseStart = performance.now();
-  video.className = newPhase.toLowerCase();
+  videoContainer.className = newPhase.toLowerCase();
+  
   if (newPhase === 'NO_FINGER') {
-    statusEl.textContent = 'Recherche du doigt — couvrez l’objectif + flash.';
+    statusEl.textContent = 'Recherche du doigt…';
+    guidanceEl.textContent = 'Couvrez l’objectif + flash avec le bout du doigt.';
   } else if (newPhase === 'SETTLING') {
-    statusEl.textContent = 'Stabilisation en cours… Gardez le doigt immobile.';
+    statusEl.textContent = 'Stabilisation en cours…';
+    guidanceEl.textContent = 'Gardez le doigt immobile.';
   } else if (newPhase === 'MEASURING') {
-    statusEl.textContent = 'Mesure en cours — restez immobile.';
+    statusEl.textContent = 'Mesure en cours';
   } else if (newPhase === 'COMPLETE') {
-    statusEl.textContent = 'Mesure terminée.';
+    statusEl.textContent = 'Mesure terminée !';
   }
 }
 
 function updateGuidance(meanR, clippedFraction) {
   if (state.phase === 'NO_FINGER') {
-    if (state.hadInterruption) {
-      guidanceEl.textContent = '⚠️ Signal perdu — replacez le doigt. La mesure reprend depuis zéro.';
-    } else {
-      guidanceEl.textContent = 'Posez le bout du doigt sans appuyer fort.';
-    }
+    if (state.hadInterruption) guidanceEl.textContent = '⚠️ Signal perdu — replacez le doigt. (Reprise à zéro)';
     return;
   }
-  if (clippedFraction > CLIP_FRACTION_MAX) {
-    guidanceEl.textContent = '⚠️ Trop de lumière — appuyez moins fort sur l’objectif.';
-    return;
-  }
-  if (meanR < FINGER_PRESENCE_MIN * 255) {
-    guidanceEl.textContent = '⚠️ Signal faible — couvrez mieux l’objectif et le flash.';
-    return;
-  }
+  if (clippedFraction > CLIP_FRACTION_MAX) { guidanceEl.textContent = '⚠️ Trop de lumière — appuyez moins fort.'; return; }
+  if (meanR < FINGER_PRESENCE_MIN * 255) { guidanceEl.textContent = '⚠️ Signal faible — couvrez mieux l’objectif.'; return; }
+  
   if (state.phase === 'SETTLING') {
     const left = Math.max(0, Math.ceil((SETTLING_MS - (performance.now() - state.phaseStart)) / 1000));
-    guidanceEl.textContent = `Stabilisation… ${left} s`;
+    guidanceEl.textContent = `Ne bougez plus… ${left} s`;
     return;
   }
   if (state.phase === 'MEASURING') {
-    if (state.quality === 'poor') {
-      guidanceEl.textContent = '⚠️ Qualité insuffisante — décompte en pause. Restez immobile.';
-    } else if (state.quality === 'fair') {
-      guidanceEl.textContent = 'Signal acceptable — restez immobile pour passer en bonne qualité.';
-    } else if (state.quality === 'good') {
-      guidanceEl.textContent = '✅ Signal excellent — gardez cette position.';
-    }
+    if (state.quality === 'poor') guidanceEl.textContent = '⚠️ Qualité insuffisante — décompte en pause.';
+    else if (state.quality === 'fair') guidanceEl.textContent = 'Signal acceptable — restez bien immobile.';
+    else if (state.quality === 'good') guidanceEl.textContent = '✅ Signal excellent — gardez cette position.';
   }
 }
 
@@ -420,96 +402,169 @@ function updateProgressDisplay() {
   const pct = Math.min(100, 100 * state.goodTimeMs / MEASURE_GOOD_MS);
   progressBar.style.width = pct + '%';
 
-  if (state.phase === 'COMPLETE') {
-    progressBar.className = '';
-    progressLabel.textContent = 'Mesure terminée';
-    return;
-  }
+  if (state.phase === 'COMPLETE') return;
+  
   if (state.phase === 'MEASURING' && state.quality === 'poor') {
     progressBar.className = 'paused';
-    const s = Math.floor(state.goodTimeMs / 1000);
-    progressLabel.textContent = `⏸ ${s} s / 60 s — décompte en pause (qualité insuffisante)`;
+    progressLabel.textContent = `⏸ ${Math.floor(state.goodTimeMs / 1000)} s / 60 s — décompte en pause`;
   } else {
     progressBar.className = '';
-    const s = Math.floor(state.goodTimeMs / 1000);
-    progressLabel.textContent = `${s} s / 60 s de signal valide`;
+    progressLabel.textContent = `${Math.floor(state.goodTimeMs / 1000)} s / 60 s de signal valide`;
   }
 }
 
 function updateQualityBadge() {
-  if (!state.quality) {
-    qualityBadge.className = 'quality-none';
-    qualityBadge.textContent = '—';
-    return;
-  }
+  if (!state.quality || state.phase === 'COMPLETE') return;
   const map = {
-    good: { cls: 'quality-good', label: 'Bon' },
-    fair: { cls: 'quality-fair', label: 'Moyen' },
-    poor: { cls: 'quality-poor', label: 'Faible' },
+    good: { cls: 'quality-good', label: 'Qualité : Bonne' },
+    fair: { cls: 'quality-fair', label: 'Qualité : Moyenne' },
+    poor: { cls: 'quality-poor', label: 'Qualité : Faible' },
   };
   qualityBadge.className = map[state.quality].cls;
   qualityBadge.textContent = map[state.quality].label;
 }
 
-function resetSignalBuffers() {
-  state.rawSamples = [];
-  state.filteredSamples = [];
-  state.frames = [];
-  state.rrIntervals = [];
-}
-
 /* ======================================================================
-   FINALISATION
+   FINALISATION ET EXPORT
    ====================================================================== */
 function finalizeMeasurement() {
-  const prevPhase = state.phase;
   transitionTo('COMPLETE');
   cancelFrame();
   if (state.videoTrack) { try { state.videoTrack.stop(); } catch(_){} }
   if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
 
   const cleanRR = filterRR(state.rrIntervals);
-  const total = state.qualityTime.good + state.qualityTime.fair + state.qualityTime.poor;
-  const pctGood = total > 0 ? Math.round(100 * state.qualityTime.good / total) : 0;
+  const avgSQI = state.sqiCount > 0 ? (state.sqiSum / state.sqiCount) : 0;
+  
+  sqiEl.textContent = avgSQI.toFixed(2);
 
-  if (cleanRR.length < MIN_RR_FOR_VFC) {
-    statusEl.textContent = 'Mesure terminée, mais signal trop bruité.';
-    guidanceEl.textContent = 'Recommencez en gardant le doigt parfaitement immobile.';
-    qualityBadge.className = 'quality-poor';
-    qualityBadge.textContent = 'Insuffisant';
-    hrEl.textContent = '—'; rmssdEl.textContent = '—'; sdnnEl.textContent = '—';
-    sqiEl.textContent = '—';
-  } else {
+  // Calcul des métriques finales sur TOUS les RR valides de la session
+  let hr = 0, rmssd = 0, sdnn = 0, pnn50 = 0;
+  if (cleanRR.length >= MIN_RR_FOR_VFC) {
     const meanRR = cleanRR.reduce((a,b)=>a+b,0)/cleanRR.length;
-    const hr = 60000 / meanRR;
+    hr = 60000 / meanRR;
+    
     const diffs = [];
     for (let i = 1; i < cleanRR.length; i++) diffs.push(cleanRR[i] - cleanRR[i-1]);
-    const rmssd = Math.sqrt(diffs.reduce((a,b)=>a+b*b,0)/diffs.length);
+    rmssd = Math.sqrt(diffs.reduce((a,b)=>a+b*b,0)/diffs.length);
+    
     const variance = cleanRR.reduce((a,b)=>a+(b-meanRR)**2,0)/cleanRR.length;
-    const sdnn = Math.sqrt(variance);
+    sdnn = Math.sqrt(variance);
+    
+    const nn50 = diffs.filter(d => Math.abs(d) > 50).length;
+    pnn50 = (nn50 / diffs.length) * 100;
 
     hrEl.textContent = Math.round(hr);
     rmssdEl.textContent = rmssd.toFixed(1);
     sdnnEl.textContent = sdnn.toFixed(1);
+    pnn50El.textContent = pnn50.toFixed(1);
+  } else {
+    hrEl.textContent = '—'; rmssdEl.textContent = '—'; sdnnEl.textContent = '—'; pnn50El.textContent = '—';
+  }
 
-    let sessionQuality;
-    if (pctGood >= 70) sessionQuality = 'good';
-    else if (pctGood >= 40) sessionQuality = 'fair';
-    else sessionQuality = 'poor';
-    qualityBadge.className = 'quality-' + sessionQuality;
-    qualityBadge.textContent = 'Session : ' + (
-      sessionQuality === 'good' ? 'bonne' :
-      sessionQuality === 'fair' ? 'moyenne' : 'faible');
-
-    statusEl.textContent = `Mesure terminée — ${pctGood}% du temps en bonne qualité.`;
+  // Détermination de la qualité de session basée sur le SQI Moyen
+  let sessionQuality, badgeText;
+  if (avgSQI >= SQI_GOOD_THRESHOLD) { sessionQuality = 'good'; badgeText = 'Session : Bonne'; }
+  else if (avgSQI >= SQI_FAIR_THRESHOLD) { sessionQuality = 'fair'; badgeText = 'Session : Moyenne'; }
+  else { sessionQuality = 'poor'; badgeText = 'Session : Faible'; }
+  
+  qualityBadge.className = 'quality-' + sessionQuality;
+  qualityBadge.textContent = badgeText;
+  
+  if (cleanRR.length < MIN_RR_FOR_VFC) {
+    statusEl.textContent = 'Mesure terminée, signal insuffisant.';
+    guidanceEl.textContent = 'Recommencez en gardant le doigt immobile.';
+  } else {
+    statusEl.textContent = `Terminé — ${Math.round(100 * state.qualityTime.good / (state.qualityTime.good + state.qualityTime.fair + state.qualityTime.poor))}% du temps optimal.`;
     guidanceEl.textContent = `Basé sur ${cleanRR.length} intervalles RR valides.`;
   }
 
-  progressBar.className = '';
-  progressBar.style.width = '100%';
-  progressLabel.textContent = 'Mesure terminée';
+  progressBar.style.width = '100%'; progressBar.className = '';
+  progressLabel.textContent = 'Analyse terminée';
   startBtn.hidden = true;
-  restartBtn.hidden = false;
+  actionButtons.hidden = false;
+
+  // --- CRÉATION DU RAPPORT ---
+  const report = {
+    meta: {
+      id: Date.now(),
+      date_iso: new Date().toISOString(),
+      user_agent: navigator.userAgent,
+      duration_sec: Math.round((performance.now() - state.phaseStart) / 1000) // Approximation
+    },
+    results: {
+      hr_bpm: Math.round(hr),
+      rmssd_ms: parseFloat(rmssd.toFixed(1)),
+      sdnn_ms: parseFloat(sdnn.toFixed(1)),
+      pnn50_pct: parseFloat(pnn50.toFixed(1)),
+      sqi_avg: parseFloat(avgSQI.toFixed(2)),
+      session_quality: sessionQuality,
+      rr_count_valid: cleanRR.length
+    },
+    debug: {
+      fps_avg: parseFloat(state.fpsReal.toFixed(1)),
+      frames_captured: state.frames.length,
+      rr_rejected_count: state.totalRejectedRR,
+      quality_time_ms: state.qualityTime,
+      good_time_accumulated_ms: Math.round(state.goodTimeMs)
+    },
+    // Tableau complet pour analyse externe
+    rr_intervals_valid_ms: cleanRR
+  };
+
+  // Sauvegarde de l'historique
+  sessionHistory.push(report);
+  localStorage.setItem('vfc_history', JSON.stringify(sessionHistory));
+  updateHistoryUI();
+}
+
+function updateHistoryUI() {
+  if (sessionHistory.length === 0) {
+    historyPanel.hidden = true;
+    return;
+  }
+  historyPanel.hidden = false;
+  historyTable.innerHTML = '';
+  sessionHistory.slice().reverse().forEach(session => {
+    const tr = document.createElement('tr');
+    const date = new Date(session.meta.date_iso);
+    tr.innerHTML = `
+      <td>${date.toLocaleTimeString()}</td>
+      <td>${session.results.hr_bpm}</td>
+      <td>${session.results.rmssd_ms}</td>
+      <td>${session.results.sdnn_ms}</td>
+      <td><span class="badge quality-${session.results.session_quality}">${session.results.sqi_avg}</span></td>
+    `;
+    historyTable.appendChild(tr);
+  });
+}
+
+// Fonction d'export JSON
+function exportJSON() {
+  if (sessionHistory.length === 0) return;
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sessionHistory, null, 2));
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", `vfc_rapport_${new Date().getTime()}.json`);
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
+// Fonction d'export CSV
+function exportCSV() {
+  if (sessionHistory.length === 0) return;
+  let csv = "Date,ID,FC_bpm,RMSSD_ms,SDNN_ms,pNN50_pct,SQI_Moyen,Qualite,RR_Valides,FPS_Moyen,Temps_Optimal_ms\n";
+  sessionHistory.forEach(s => {
+    csv += `${s.meta.date_iso},${s.meta.id},${s.results.hr_bpm},${s.results.rmssd_ms},${s.results.sdnn_ms},${s.results.pnn50_pct},${s.results.sqi_avg},${s.results.session_quality},${s.results.rr_count_valid},${s.debug.fps_avg},${s.debug.good_time_accumulated_ms}\n`;
+  });
+  const dataStr = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", `vfc_donnees_${new Date().getTime()}.csv`);
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
 }
 
 /* ======================================================================
@@ -520,23 +575,20 @@ function processFrame() {
   const dt = lastFrameTime > 0 ? now - lastFrameTime : 0;
   lastFrameTime = now;
 
-  // FPS réel (Point 1)
   if (dt > 0 && dt < 2000) {
     state.fpsHistory.push(1000 / dt);
     if (state.fpsHistory.length > 30) state.fpsHistory.shift();
     state.fpsReal = state.fpsHistory.reduce((a,b)=>a+b,0) / state.fpsHistory.length;
   }
 
-  // Analyse frame
   const { meanR, clippedFraction } = analyzeFrame();
   const fingerPresent = meanR > FINGER_PRESENCE_MIN * 255 && clippedFraction < CLIP_FRACTION_MAX;
 
-  // Perte de contact
   if (!fingerPresent) {
     const wasPhase = state.phase;
-    if (wasPhase !== 'NO_FINGER') {
+    if (wasPhase !== 'NO_FINGER' && wasPhase !== 'COMPLETE') {
       transitionTo('NO_FINGER');
-      resetSignalBuffers();
+      state.rawSamples = []; state.filteredSamples = []; state.frames = []; state.rrIntervals = [];
       if (wasPhase === 'MEASURING') {
         state.hadInterruption = true;
         state.goodTimeMs = 0;
@@ -545,23 +597,23 @@ function processFrame() {
       updateProgressDisplay();
       updateQualityBadge();
     }
-    updateGuidance(meanR, clippedFraction);
-    scheduleFrame(processFrame);
+    if (state.phase !== 'COMPLETE') {
+      updateGuidance(meanR, clippedFraction);
+      scheduleFrame(processFrame);
+    }
     return;
   }
 
-  // Contact présent
   if (state.phase === 'NO_FINGER') {
     transitionTo('SETTLING');
     initFilter(state.fpsReal || FS_TARGET);
     state.hadInterruption = false;
+    state.sqiSum = 0; state.sqiCount = 0; state.totalRejectedRR = 0;
   }
 
-  // Échantillon brut
   state.rawSamples.push(meanR);
   if (state.rawSamples.length > 300) state.rawSamples.shift();
 
-  // Filtrage (Point 2)
   const filtered = bandpassFilter(meanR);
   state.filteredSamples.push(filtered);
   if (state.filteredSamples.length > 300) state.filteredSamples.shift();
@@ -569,33 +621,39 @@ function processFrame() {
   state.frames.push({ t: now, filtered });
   if (state.frames.length > 300) state.frames.shift();
 
-  // SETTLING → MEASURING
   if (state.phase === 'SETTLING' && now - state.phaseStart >= SETTLING_MS) {
     transitionTo('MEASURING');
   }
 
-  // SQI + qualité (Point 3)
   const sqi = computeSQI(state.rawSamples);
-  sqiEl.textContent = sqi.toFixed(2);
-  state.quality = sqi >= SQI_GOOD_THRESHOLD ? 'good'
-                : sqi >= SQI_FAIR_THRESHOLD ? 'fair' : 'poor';
-  updateQualityBadge();
+  state.quality = sqi >= SQI_GOOD_THRESHOLD ? 'good' : sqi >= SQI_FAIR_THRESHOLD ? 'fair' : 'poor';
+  
+  if (state.phase !== 'COMPLETE') updateQualityBadge();
 
-  // Accumulation et métriques en MEASURING
   if (state.phase === 'MEASURING') {
+    state.sqiSum += sqi;
+    state.sqiCount++;
+
     if (dt > 0 && dt < 500) {
       state.qualityTime[state.quality] += dt;
       if (state.quality !== 'poor') state.goodTimeMs += dt;
     }
 
-    // Détection de pics + RR
     if (state.quality !== 'poor') {
+      // On passe tout le buffer de frames pour trouver les pics
       const peaks = detectPeaks(state.filteredSamples, state.frames.map(f => f.t));
+      
+      // On reconstruit les RR de la session (on ne garde que les nouveaux)
+      // Pour être plus précis sur le débogage, on garde le compte total
+      state.rrIntervals = []; 
       for (let i = 1; i < peaks.length; i++) {
-        const rr = state.frames[peaks[i]].t - state.frames[peaks[i-1]].t;
-        if (rr >= MIN_RR_MS && rr <= MAX_RR_MS) state.rrIntervals.push(rr);
+        const rr = peaks[i].t - peaks[i-1].t;
+        if (rr >= MIN_RR_MS && rr <= MAX_RR_MS) {
+          state.rrIntervals.push(rr);
+        } else {
+          state.totalRejectedRR++;
+        }
       }
-      if (state.rrIntervals.length > 120) state.rrIntervals = state.rrIntervals.slice(-120);
 
       const cleanRR = filterRR(state.rrIntervals);
       if (cleanRR.length >= 5) {
@@ -605,13 +663,15 @@ function processFrame() {
         for (let i = 1; i < cleanRR.length; i++) diffs.push(cleanRR[i] - cleanRR[i-1]);
         if (diffs.length) {
           rmssdEl.textContent = Math.sqrt(diffs.reduce((a,b)=>a+b*b,0)/diffs.length).toFixed(1);
+          const nn50 = diffs.filter(d => Math.abs(d) > 50).length;
+          pnn50El.textContent = ((nn50 / diffs.length) * 100).toFixed(1);
         }
         const v = cleanRR.reduce((a,b)=>a+(b-meanRR)**2,0)/cleanRR.length;
         sdnnEl.textContent = Math.sqrt(v).toFixed(1);
+        sqiEl.textContent = sqi.toFixed(2); 
       }
     }
 
-    // Fin de mesure
     const wallElapsed = now - state.phaseStart;
     if (state.goodTimeMs >= MEASURE_GOOD_MS || wallElapsed >= MEASURE_MAX_MS) {
       finalizeMeasurement();
@@ -619,23 +679,18 @@ function processFrame() {
     }
 
     updateProgressDisplay();
+    updateGuidance(meanR, clippedFraction);
+    scheduleFrame(processFrame);
   }
-
-  updateGuidance(meanR, clippedFraction);
-  scheduleFrame(processFrame);
 }
 
 /* ======================================================================
-   CAMÉRA + DÉMARRAGE
+   INITIALISATION
    ====================================================================== */
 async function startCamera() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: 'environment',
-        width: { ideal: 320 }, height: { ideal: 240 },
-        frameRate: { ideal: 30 },
-      },
+      video: { facingMode: 'environment', width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 30 } },
       audio: false,
     });
     video.srcObject = stream;
@@ -658,7 +713,7 @@ async function startCamera() {
     updateProgressDisplay();
     scheduleFrame(processFrame);
   } catch (err) {
-    statusEl.textContent = 'Erreur caméra : ' + err.message;
+    statusEl.textContent = 'Erreur caméra';
     guidanceEl.textContent = 'Autorisez l’accès à la caméra pour continuer.';
     startBtn.disabled = false;
     startBtn.hidden = false;
@@ -666,7 +721,6 @@ async function startCamera() {
 }
 
 function startNewMeasurement() {
-  resetSignalBuffers();
   state.goodTimeMs = 0;
   state.qualityTime = { good: 0, fair: 0, poor: 0 };
   state.quality = null;
@@ -675,34 +729,42 @@ function startNewMeasurement() {
   state.fpsHistory = [];
   state.fpsReal = 0;
   lastFrameTime = 0;
-  hrEl.textContent = '—'; rmssdEl.textContent = '—'; sdnnEl.textContent = '—'; sqiEl.textContent = '—';
+  state.sqiSum = 0; state.sqiCount = 0; state.totalRejectedRR = 0;
+  
+  hrEl.textContent = '—'; rmssdEl.textContent = '—'; sdnnEl.textContent = '—'; pnn50El.textContent = '—'; sqiEl.textContent = '—';
   qualityBadge.className = 'quality-none'; qualityBadge.textContent = '—';
   progressBar.style.width = '0%'; progressBar.className = '';
   progressLabel.textContent = '0 s / 60 s de signal valide';
-  restartBtn.hidden = true;
+  actionButtons.hidden = true;
   startBtn.hidden = true;
   startBtn.disabled = true;
+  
   startCamera();
 }
 
-startBtn.addEventListener('click', () => {
-  startBtn.disabled = true;
-  startNewMeasurement();
-});
-
-restartBtn.addEventListener('click', () => {
-  startNewMeasurement();
-});
-
+startBtn.addEventListener('click', () => { startBtn.disabled = true; startNewMeasurement(); });
+restartBtn.addEventListener('click', () => startNewMeasurement());
+exportJsonBtn.addEventListener('click', exportJSON);
+exportCsvBtn.addEventListener('click', exportCSV);
 infoBtn.addEventListener('click', () => {
   infoPanel.hidden = !infoPanel.hidden;
   infoBtn.textContent = infoPanel.hidden ? 'ⓘ Comprendre la mesure' : '✕ Fermer l’explication';
+});
+clearHistoryBtn.addEventListener('click', () => {
+  if (confirm("Voulez-vous vraiment effacer tout l'historique ?")) {
+    sessionHistory = [];
+    localStorage.removeItem('vfc_history');
+    updateHistoryUI();
+  }
 });
 
 window.addEventListener('beforeunload', () => {
   cancelFrame();
   if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
 });
+
+// Au chargement, on restaure l'historique visuel
+updateHistoryUI();
 </script>
 </body>
 </html>
