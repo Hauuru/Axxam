@@ -96,6 +96,7 @@
     <div class="debug-item">Lum: <span id="dbg-lum">0</span></div>
     <div class="debug-item">Sat: <span id="dbg-sat">0%</span></div>
     <div class="debug-item">FPS: <span id="dbg-fps">0</span></div>
+    <div class="debug-item">RR: <span id="dbg-rr">0</span></div>
     <div class="debug-item">État: <span id="dbg-state">IDLE</span></div>
   </div>
 
@@ -152,11 +153,12 @@
 const FS_TARGET = 30;
 const BAND_LOW = 0.5, BAND_HIGH = 4.0;
 const RR_OUTLIER_MAD_K = 3.5;
-const MIN_RR_MS = 300, MAX_RR_MS = 2000;
+const MIN_RR_MS = 400;             // <-- AUGMENTÉ : 400ms = 150 bpm. Élimine le dicrotisme.
+const MAX_RR_MS = 2000;
 const SETTLING_MS = 5000;
 const MEASURE_GOOD_MS = 60000;     
 const MEASURE_MAX_MS  = 180000;    
-const MIN_RR_FOR_VFC = 5;          // Baissé à 5 pour éviter les erreurs de calcul
+const MIN_RR_FOR_VFC = 5;          
 const SQI_GOOD_THRESHOLD = 0.6;
 const SQI_FAIR_THRESHOLD = 0.4;
 const CLIP_FRACTION_MAX = 0.25;    
@@ -173,7 +175,7 @@ const state = {
   rawSamples: [],
   filteredSamples: [],
   rrIntervals: [],
-  lastPeakTime: null, // <-- NOUVEAU : Permet de garder l'historique
+  lastPeakTime: null,
   fpsReal: 0,
   fpsHistory: [],
   quality: null,
@@ -223,6 +225,7 @@ const clearHistoryBtn = document.getElementById('clear-history-btn');
 const dbgLum = document.getElementById('dbg-lum');
 const dbgSat = document.getElementById('dbg-sat');
 const dbgFps = document.getElementById('dbg-fps');
+const dbgRr = document.getElementById('dbg-rr');
 const dbgState = document.getElementById('dbg-state');
 
 /* ======================================================================
@@ -233,13 +236,24 @@ canvas.width = 64; canvas.height = 64;
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
 /* ======================================================================
-   BOUCLE FRAME
+   BOUCLE FRAME (avec filtre anti-doublon)
    ====================================================================== */
 let videoFrameCallbackId = null, rafId = null, lastFrameTime = 0;
+let lastPresentedFrames = -1;
 
 function scheduleFrame(cb) {
   if ('requestVideoFrameCallback' in video) {
-    videoFrameCallbackId = video.requestVideoFrameCallback(() => cb());
+    videoFrameCallbackId = video.requestVideoFrameCallback((now, metadata) => {
+      // Si le navigateur renvoie la même image, on l'ignore
+      if (metadata.presentedFrames !== undefined) {
+        if (metadata.presentedFrames === lastPresentedFrames) {
+          scheduleFrame(cb); // On attend la vraie prochaine image
+          return;
+        }
+        lastPresentedFrames = metadata.presentedFrames;
+      }
+      cb();
+    });
   } else {
     rafId = requestAnimationFrame(() => cb());
   }
@@ -354,7 +368,8 @@ function detectPeaks(signal, timestamps) {
           t = timestamps[i] + offset * (dt / 2);
         }
       }
-      if (!peaks.length || t - peaks[peaks.length-1].t > 300) {
+      // On applique le temps mort strict ici aussi
+      if (!peaks.length || t - peaks[peaks.length-1].t > MIN_RR_MS) {
         peaks.push({ index: i, t: t });
       }
     }
@@ -450,7 +465,7 @@ function resetSignalBuffers() {
   state.filteredSamples = [];
   state.frames = [];
   state.rrIntervals = [];
-  state.lastPeakTime = null; // Reset
+  state.lastPeakTime = null;
   state.sqiSum = 0;
   state.sqiCount = 0;
   state.totalRejectedRR = 0;
@@ -610,6 +625,7 @@ function processFrame() {
   dbgLum.textContent = Math.round(meanR);
   dbgSat.textContent = (clippedFraction * 100).toFixed(1) + '%';
   dbgFps.textContent = state.fpsReal.toFixed(1);
+  dbgRr.textContent = state.rrIntervals.length;
 
   const fingerPresent = meanR > FINGER_PRESENCE_MIN * 255 && clippedFraction < CLIP_FRACTION_MAX;
 
@@ -654,15 +670,18 @@ function processFrame() {
     }
   }
 
+  // Fenêtre glissante basée sur le TEMPS (10 secondes) et non sur le nombre de frames
+  const maxSamples = Math.max(30, Math.round((state.fpsReal || FS_TARGET) * 10));
+  
   state.rawSamples.push(meanR);
-  if (state.rawSamples.length > 300) state.rawSamples.shift();
+  if (state.rawSamples.length > maxSamples) state.rawSamples.shift();
 
   const filtered = bandpassFilter(meanR);
   state.filteredSamples.push(filtered);
-  if (state.filteredSamples.length > 300) state.filteredSamples.shift();
+  if (state.filteredSamples.length > maxSamples) state.filteredSamples.shift();
 
   state.frames.push({ t: now, filtered });
-  if (state.frames.length > 300) state.frames.shift();
+  if (state.frames.length > maxSamples) state.frames.shift();
 
   if (state.phase === 'SETTLING' && now - state.phaseStart >= SETTLING_MS) {
     transitionTo('MEASURING');
@@ -685,7 +704,6 @@ function processFrame() {
     if (state.quality !== 'poor') {
       const peaks = detectPeaks(state.filteredSamples, state.frames.map(f => f.t));
       
-      // --- NOUVELLE LOGIQUE D'ACCUMULATION ---
       for (let i = 0; i < peaks.length; i++) {
         const p = peaks[i];
         if (state.lastPeakTime === null) {
@@ -766,6 +784,7 @@ function startNewMeasurement() {
   state.fpsHistory = [];
   state.fpsReal = 0;
   lastFrameTime = 0;
+  lastPresentedFrames = -1;
   state.lastFingerLossTime = null;
   
   resetSignalBuffers();
