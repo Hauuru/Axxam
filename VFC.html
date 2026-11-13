@@ -5,324 +5,344 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>VFC – Captation PPG stabilisée</title>
   <style>
-    /* [Point 10] UI minimaliste pendant la mesure : pas d'animations coûteuses */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: system-ui, -apple-system, sans-serif;
-      background: #0b0f14;
-      color: #e6edf3;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      padding: 16px;
+      background: #0b0f14; color: #e6edf3;
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh; padding: 16px;
     }
     #video {
-      width: 200px; height: 200px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #1a1f26;
-      border: 3px solid #2a3038;
-      transition: border-color 0.2s; /* transition légère, pas d'animation lourde */
+      width: 200px; height: 200px; border-radius: 50%; object-fit: cover;
+      background: #1a1f26; border: 3px solid #2a3038;
+      transition: border-color 0.2s;
     }
+    #video.no_finger { border-color: #d04040; }
     #video.settling { border-color: #f0a030; }
     #video.measuring { border-color: #30c060; }
-    #video.nofinger { border-color: #d04040; }
-    #status {
-      margin-top: 12px;
-      font-size: 14px;
-      text-align: center;
-      min-height: 40px;
-      line-height: 1.5;
+    #video.complete { border-color: #1f6feb; }
+
+    #quality-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 4px;
+      font-size: 12px; font-weight: 600; margin-top: 8px;
     }
+    .quality-good { background: #1a3a24; color: #30c060; }
+    .quality-fair { background: #3a2f1a; color: #f0a030; }
+    .quality-poor { background: #3a1a1a; color: #d04040; }
+    .quality-none { background: #1a1f26; color: #8b949e; }
+
+    #status {
+      margin-top: 8px; font-size: 14px; font-weight: 500;
+      text-align: center; min-height: 20px; max-width: 340px;
+    }
+    #guidance {
+      margin-top: 4px; font-size: 13px; color: #8b949e;
+      text-align: center; min-height: 20px; max-width: 340px; line-height: 1.4;
+    }
+
+    #progress-container {
+      width: 100%; max-width: 320px; height: 8px;
+      background: #1a1f26; border-radius: 4px;
+      margin-top: 12px; overflow: hidden;
+    }
+    #progress-bar {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #1f6feb, #30c060);
+      transition: width 0.25s linear;
+    }
+    #progress-bar.paused { background: #484f58; }
+    #progress-label {
+      font-size: 12px; color: #8b949e; margin-top: 6px;
+      text-align: center; max-width: 340px; min-height: 16px;
+    }
+
     #metrics {
-      margin-top: 16px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px 24px;
-      font-size: 15px;
-      width: 100%;
-      max-width: 320px;
+      margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px 24px; font-size: 15px; width: 100%; max-width: 320px;
     }
     .metric-label { color: #8b949e; }
     .metric-value { font-variant-numeric: tabular-nums; font-weight: 600; }
-    .quality-good { color: #30c060; }
-    .quality-fair { color: #f0a030; }
-    .quality-poor { color: #d04040; }
-    #quality-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 600;
-      margin-top: 8px;
+
+    button {
+      margin-top: 16px; padding: 12px 28px; font-size: 15px; font-weight: 600;
+      border: none; border-radius: 8px; cursor: pointer;
     }
-    #start-btn {
-      margin-top: 20px;
-      padding: 12px 32px;
-      font-size: 16px;
-      font-weight: 600;
-      border: none;
-      border-radius: 8px;
-      background: #1f6feb;
-      color: white;
-      cursor: pointer;
-    }
+    #start-btn { background: #1f6feb; color: white; }
     #start-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    #guide {
-      margin-top: 12px;
-      font-size: 13px;
-      color: #8b949e;
-      text-align: center;
-      max-width: 320px;
+    #restart-btn { background: #1f6feb; color: white; }
+    #info-btn {
+      background: transparent; color: #8b949e; font-weight: 500;
+      padding: 8px 12px; font-size: 13px; margin-top: 12px;
+      border: 1px solid #2a3038;
+    }
+
+    #info-panel {
+      max-width: 360px; margin-top: 16px; padding: 14px 16px;
+      background: #161b22; border-radius: 8px; font-size: 13px;
+      line-height: 1.6; color: #c9d1d9;
+    }
+    #info-panel h3 {
+      font-size: 13px; margin-top: 10px; margin-bottom: 4px;
+      color: #e6edf3; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    #info-panel h3:first-child { margin-top: 0; }
+    #info-panel p { margin-bottom: 6px; }
+    #info-panel ul { margin-left: 18px; margin-bottom: 6px; }
+    #info-panel .badge {
+      display: inline-block; padding: 1px 6px; border-radius: 3px;
+      font-size: 11px; font-weight: 600;
+    }
+    #info-panel code {
+      background: #0d1117; padding: 1px 4px; border-radius: 3px;
+      font-size: 12px;
     }
   </style>
 </head>
 <body>
   <video id="video" autoplay playsinline muted></video>
-  <div id="status">Appuyez sur « Démarrer » et couvrez l’objectif + flash avec le bout du doigt.</div>
-  <div id="guide">Ne pas appuyer trop fort. Garder le doigt immobile.</div>
-  <div id="quality-badge" class="quality-poor">—</div>
+
+  <div id="quality-badge" class="quality-none">—</div>
+  <div id="status">Appuyez sur « Démarrer » pour commencer.</div>
+  <div id="guidance">Couvrez l’objectif + flash avec le bout du doigt.</div>
+
+  <div id="progress-container"><div id="progress-bar"></div></div>
+  <div id="progress-label">0 s / 60 s de signal valide</div>
+
   <div id="metrics">
     <span class="metric-label">FC (bpm)</span><span class="metric-value" id="hr">—</span>
     <span class="metric-label">RMSSD (ms)</span><span class="metric-value" id="rmssd">—</span>
     <span class="metric-label">SDNN (ms)</span><span class="metric-value" id="sdnn">—</span>
     <span class="metric-label">SQI</span><span class="metric-value" id="sqi">—</span>
   </div>
+
   <button id="start-btn">Démarrer la mesure</button>
+  <button id="restart-btn" hidden>Nouvelle mesure</button>
+
+  <button id="info-btn">ⓘ Comprendre la mesure</button>
+
+  <div id="info-panel" hidden>
+    <h3>Qualité du signal (SQI)</h3>
+    <p>
+      <span class="badge quality-good">Bon</span>
+      SQI ≥ 0,60 — signal stable, mesures fiables.
+    </p>
+    <p>
+      <span class="badge quality-fair">Moyen</span>
+      SQI entre 0,40 et 0,60 — mesures indicatives, à interpréter avec prudence.
+    </p>
+    <p>
+      <span class="badge quality-poor">Faible</span>
+      SQI &lt; 0,40 — mesures masquées car non fiables.
+    </p>
+
+    <h3>Déroulement d’une mesure</h3>
+    <ul>
+      <li><b>Recherche</b> — couvrez l’objectif + flash avec le bout du doigt.</li>
+      <li><b>Stabilisation</b> (5 s) — la caméra et le filtre se stabilisent, ne bougez pas.</li>
+      <li><b>Mesure</b> — accumulation de <b>60 s de signal valide</b> (qualité bonne ou moyenne). Le décompte se met en pause si la qualité tombe à « Faible ».</li>
+      <li><b>Terminé</b> — résultats finaux affichés, avec la qualité globale de la session.</li>
+    </ul>
+
+    <h3>Conseils</h3>
+    <ul>
+      <li>Ne pas appuyer trop fort : cela réduit la circulation et dégrade le signal.</li>
+      <li>Ne pas bouger, ne pas parler, respirer calmement.</li>
+      <li>Éviter la lumière ambiante autour du doigt.</li>
+      <li>Si vous perdez le contact, la mesure reprend depuis zéro.</li>
+    </ul>
+
+    <h3>Durée</h3>
+    <p>La mesure se termine dès que 60 s de signal valide sont accumulées, ou au plus tard après 180 s (pour éviter d’attendre indéfiniment).</p>
+  </div>
 
 <script>
-/* =========================================================================
-   VFC – pipeline PPG stabilisé
-   Points 1 à 10 intégrés et commentés.
-   ========================================================================= */
+/* ======================================================================
+   CONSTANTES
+   ====================================================================== */
+const FS_TARGET = 30;
+const BAND_LOW = 0.5, BAND_HIGH = 4.0;
+const RR_OUTLIER_MAD_K = 3.5;
+const MIN_RR_MS = 300, MAX_RR_MS = 2000;
+const SETTLING_MS = 5000;
+const MEASURE_GOOD_MS = 60000;     // 60 s de signal valide à accumuler
+const MEASURE_MAX_MS  = 180000;    // plafond absolu (3 min)
+const MIN_RR_FOR_VFC = 10;         // nombre minimal d’intervalles pour publier la VFC
+const SQI_GOOD_THRESHOLD = 0.6;
+const SQI_FAIR_THRESHOLD = 0.4;
+const CLIP_FRACTION_MAX = 0.05;
+const FINGER_PRESENCE_MIN = 0.15;
 
-// ---------- Constantes physiologiques et de traitement ----------
-const FS_TARGET = 30;                 // FPS cible indicatif (jamais utilisé pour le timing réel)
-const BAND_LOW = 0.5;                 // Hz – Point 2 : passe-bande physiologique
-const BAND_HIGH = 4.0;                // Hz – Point 2
-const RR_OUTLIER_MAD_K = 3.5;         // Point 5 : seuil MAD pour rejeter les RR aberrants
-const MIN_RR_MS = 300;                // 200 bpm – rejet physiologique
-const MAX_RR_MS = 2000;               // 30 bpm – rejet physiologique
-const SETTLING_MS = 5000;             // Point 6 : 5 s de stabilisation avant mesure
-const MEASURE_WINDOW_MS = 30000;      // Point 6 : 30 s de signal qualifié avant d’afficher la VFC
-const SQI_GOOD_THRESHOLD = 0.6;       // Point 3 : seuil de qualité
-const CLIP_FRACTION_MAX = 0.05;       // Point 4 : fraction de pixels saturés tolérée
-const FINGER_PRESENCE_MIN = 0.15;     // Point 4 : intensité relative minimale pour “doigt présent”
-
-// ---------- État global ----------
+/* ======================================================================
+   ÉTAT
+   ====================================================================== */
 const state = {
-  phase: 'IDLE',            // IDLE | NO_FINGER | SETTLING | MEASURING
+  phase: 'IDLE',
   phaseStart: 0,
-  frames: [],               // { t: timestamp ms, r: intensité rouge }
-  rawSamples: [],           // échantillons bruts pour le SQI
-  filteredSamples: [],      // signal filtré
-  rrIntervals: [],          // intervalles RR valides (ms)
-  lastPeakTime: null,
+  frames: [],
+  rawSamples: [],
+  filteredSamples: [],
+  rrIntervals: [],
   fpsReal: 0,
   fpsHistory: [],
-  exposureLocked: false,
-  wbLocked: false,
+  quality: null,                    // 'good' | 'fair' | 'poor'
+  qualityTime: { good: 0, fair: 0, poor: 0 }, // ms cumulées
+  goodTimeMs: 0,                    // ms de qualité non-poor en MEASURING
+  hadInterruption: false,
+  videoTrack: null,
 };
 
-// ---------- Éléments DOM ----------
+/* ======================================================================
+   DOM
+   ====================================================================== */
 const video = document.getElementById('video');
 const statusEl = document.getElementById('status');
+const guidanceEl = document.getElementById('guidance');
 const qualityBadge = document.getElementById('quality-badge');
+const progressBar = document.getElementById('progress-bar');
+const progressLabel = document.getElementById('progress-label');
 const hrEl = document.getElementById('hr');
 const rmssdEl = document.getElementById('rmssd');
 const sdnnEl = document.getElementById('sdnn');
 const sqiEl = document.getElementById('sqi');
 const startBtn = document.getElementById('start-btn');
+const restartBtn = document.getElementById('restart-btn');
+const infoBtn = document.getElementById('info-btn');
+const infoPanel = document.getElementById('info-panel');
 
-// ---------- Canvas hors écran pour lire les pixels ----------
+/* ======================================================================
+   CANVAS DE LECTURE
+   ====================================================================== */
 const canvas = document.createElement('canvas');
-canvas.width = 64;
-canvas.height = 64;
+canvas.width = 64; canvas.height = 64;
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-/* =========================================================================
-   Point 1 – Horodatage par frame et FPS réel
-   On n’utilise plus “frameIndex / 30”. Chaque frame reçoit performance.now()
-   et on estime le FPS réel sur une fenêtre glissante.
-   ========================================================================= */
-let videoFrameCallbackId = null;
-let rafId = null;
+/* ======================================================================
+   BOUCLE FRAME (Point 1)
+   ====================================================================== */
+let videoFrameCallbackId = null, rafId = null, lastFrameTime = 0;
 
-function scheduleFrame(callback) {
+function scheduleFrame(cb) {
   if ('requestVideoFrameCallback' in video) {
-    videoFrameCallbackId = video.requestVideoFrameCallback(() => callback());
+    videoFrameCallbackId = video.requestVideoFrameCallback(() => cb());
   } else {
-    rafId = requestAnimationFrame(() => callback());
+    rafId = requestAnimationFrame(() => cb());
   }
 }
-
 function cancelFrame() {
   if (videoFrameCallbackId !== null && 'cancelVideoFrameCallback' in video) {
-    video.cancelVideoFrameCallback(videoFrameCallbackId);
-    videoFrameCallbackId = null;
+    video.cancelVideoFrameCallback(videoFrameCallbackId); videoFrameCallbackId = null;
   }
-  if (rafId !== null) {
-    cancelAnimationFrame(rafId);
-    rafId = null;
-  }
+  if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
 }
 
-/* =========================================================================
-   Point 2 – Filtre de Butterworth passe-bande d’ordre 4 (0.5–4 Hz)
-   Implémentation IIR directe (forme directe I) avec coefficients calculés
-   pour un ordre 4. Utilise une structure de sections biquadratiques en cascade
-   pour la stabilité numérique.
-   ========================================================================= */
-
-// Coefficients pour Butterworth ordre 4, bande 0.5–4 Hz, fs = 30 Hz (approx.)
-// Calculés hors ligne ; ici on fournit des coefficients pré-calculés pour fs≈30.
-// En production, recalculez dynamiquement avec le FPS réel.
-function designButterworthBandpass(fs) {
-  // Transformation bilinéaire pour ordre 4, bande 0.5–4 Hz.
-  // Pour simplifier et rester lisible, on utilise une approximation par
-  // deux sections biquadratiques en cascade (ordre 2 chacune).
-  const w1 = 2 * Math.PI * BAND_LOW / fs;
-  const w2 = 2 * Math.PI * BAND_HIGH / fs;
-  // Pré-déformation pour éviter le warping fréquentiel
-  const warped1 = Math.tan(w1 / 2);
-  const warped2 = Math.tan(w2 / 2);
-  const bw = warped2 - warped1;
-  const wc = Math.sqrt(warped1 * warped2);
-  // Ordre 2 (une section biquad) – on cascade deux sections pour ordre 4
-  const q = wc / bw;
-  const alpha = Math.sin(wc) / (2 * q);
-  const cosw = Math.cos(wc);
-  const b0 = alpha;
-  const b1 = 0;
-  const b2 = -alpha;
-  const a0 = 1 + alpha;
-  const a1 = -2 * cosw;
-  const a2 = 1 - alpha;
-  return {
-    b: [b0 / a0, b1 / a0, b2 / a0],
-    a: [1, a1 / a0, a2 / a0],
-    // Pour l’ordre 4, on applique cette section deux fois en cascade.
-  };
-}
-
+/* ======================================================================
+   FILTRE BUTTERWORTH (Point 2)
+   ====================================================================== */
 class Biquad {
-  constructor(b, a) {
-    this.b = b; this.a = a;
-    this.x1 = 0; this.x2 = 0; this.y1 = 0; this.y2 = 0;
-  }
+  constructor(b, a) { this.b = b; this.a = a; this.x1 = this.x2 = this.y1 = this.y2 = 0; }
   process(x) {
-    const y = this.b[0] * x + this.b[1] * this.x1 + this.b[2] * this.x2
-            - this.a[1] * this.y1 - this.a[2] * this.y2;
-    this.x2 = this.x1; this.x1 = x;
-    this.y2 = this.y1; this.y1 = y;
+    const y = this.b[0]*x + this.b[1]*this.x1 + this.b[2]*this.x2
+            - this.a[1]*this.y1 - this.a[2]*this.y2;
+    this.x2 = this.x1; this.x1 = x; this.y2 = this.y1; this.y1 = y;
     return y;
   }
 }
+let biquad1 = null, biquad2 = null;
 
-let biquad1 = null;
-let biquad2 = null;
-
+function designBandpass(fs) {
+  const w1 = 2*Math.PI*BAND_LOW/fs, w2 = 2*Math.PI*BAND_HIGH/fs;
+  const w1p = Math.tan(w1/2), w2p = Math.tan(w2/2);
+  const wc = Math.sqrt(w1p*w2p);
+  const bw = w2p - w1p;
+  const q = wc / bw;
+  const alpha = Math.sin(wc) / (2*q);
+  const cosw = Math.cos(wc);
+  const a0 = 1 + alpha;
+  return {
+    b: [alpha/a0, 0, -alpha/a0],
+    a: [1, -2*cosw/a0, (1-alpha)/a0],
+  };
+}
 function initFilter(fs) {
-  const coeffs = designButterworthBandpass(fs);
-  biquad1 = new Biquad(coeffs.b, coeffs.a);
-  biquad2 = new Biquad(coeffs.b, coeffs.a);
+  const c = designBandpass(fs);
+  biquad1 = new Biquad(c.b, c.a);
+  biquad2 = new Biquad(c.b, c.a);
+}
+function bandpassFilter(x) {
+  if (!biquad1 || !biquad2) return x;
+  return biquad2.process(biquad1.process(x));
 }
 
-function bandpassFilter(sample) {
-  if (!biquad1 || !biquad2) return sample;
-  return biquad2.process(biquad1.process(sample));
-}
-
-/* =========================================================================
-   Point 4 – Détection de présence et qualité du contact
-   On vérifie l’intensité moyenne et la fraction de pixels saturés.
-   ========================================================================= */
+/* ======================================================================
+   ANALYSE DE FRAME (Point 4 + 7)
+   ====================================================================== */
 function analyzeFrame() {
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
   let rSum = 0, count = 0, clipped = 0;
   for (let i = 0; i < data.length; i += 4) {
     const r = data[i];
-    rSum += r;
-    if (r >= 250) clipped++;
-    count++;
+    rSum += r; if (r >= 250) clipped++; count++;
   }
-  const meanR = rSum / count;
-  const clippedFraction = clipped / count;
-  return { meanR, clippedFraction };
+  return { meanR: rSum / count, clippedFraction: clipped / count };
 }
 
-/* =========================================================================
-   Point 3 – Signal Quality Index (SQI) basé sur le SNR dans la bande 0.8–3 Hz
-   On calcule le rapport entre la puissance dans la bande cardiaque et la
-   puissance hors bande, sur une fenêtre glissante de signal brut.
-   ========================================================================= */
-function computeSQI(rawWindow) {
-  if (rawWindow.length < 32) return 0;
-  // Détrending simple : soustraction de la moyenne
-  const mean = rawWindow.reduce((a, b) => a + b, 0) / rawWindow.length;
-  const centered = rawWindow.map(v => v - mean);
-  // FFT naïve (puissance spectrale) – pour une fenêtre courte on peut utiliser
-  // une approximation par filtre de Goertzel ou FFT légère.
-  // Ici, on utilise une FFT radix-2 simple (taille puissance de 2).
-  const n = 64;
-  if (centered.length < n) return 0;
-  const slice = centered.slice(-n);
-  const fft = simpleFFT(slice);
-  const power = fft.map(c => c.re * c.re + c.im * c.im);
-  const df = state.fpsReal / n;
-  let pSignal = 0, pNoise = 0;
-  for (let i = 1; i < n / 2; i++) {
-    const freq = i * df;
-    if (freq >= 0.8 && freq <= 3.0) pSignal += power[i];
-    else pNoise += power[i];
-  }
-  if (pSignal + pNoise === 0) return 0;
-  const snr = pSignal / (pNoise || 1e-12);
-  // Normalisation : SNR > 1 → SQI proche de 1
-  return Math.min(1, snr / (snr + 1));
-}
-
-// FFT radix-2 simplifiée (taille 64 fixe)
+/* ======================================================================
+   SQI (Point 3)
+   ====================================================================== */
 function simpleFFT(x) {
   const n = x.length;
   if (n <= 1) return x.map(v => ({ re: v, im: 0 }));
   const even = simpleFFT(x.filter((_, i) => i % 2 === 0));
-  const odd = simpleFFT(x.filter((_, i) => i % 2 === 1));
-  const result = new Array(n);
-  for (let k = 0; k < n / 2; k++) {
-    const angle = -2 * Math.PI * k / n;
-    const t = { re: Math.cos(angle) * odd[k].re - Math.sin(angle) * odd[k].im,
-                im: Math.sin(angle) * odd[k].re + Math.cos(angle) * odd[k].im };
-    result[k] = { re: even[k].re + t.re, im: even[k].im + t.im };
-    result[k + n / 2] = { re: even[k].re - t.re, im: even[k].im - t.im };
+  const odd  = simpleFFT(x.filter((_, i) => i % 2 === 1));
+  const out = new Array(n);
+  for (let k = 0; k < n/2; k++) {
+    const ang = -2*Math.PI*k/n;
+    const tRe = Math.cos(ang)*odd[k].re - Math.sin(ang)*odd[k].im;
+    const tIm = Math.sin(ang)*odd[k].re + Math.cos(ang)*odd[k].im;
+    out[k] = { re: even[k].re + tRe, im: even[k].im + tIm };
+    out[k + n/2] = { re: even[k].re - tRe, im: even[k].im - tIm };
   }
-  return result;
+  return out;
 }
 
-/* =========================================================================
-   Point 5 – Détection de pics avec seuil adaptatif et rejet des RR aberrants
-   ========================================================================= */
-function detectPeaks(filteredWindow, timestamps) {
-  // Détection de maxima locaux avec seuil adaptatif basé sur l’amplitude
+function computeSQI(rawWindow) {
+  if (rawWindow.length < 64) return 0;
+  const n = 64;
+  const slice = rawWindow.slice(-n);
+  const mean = slice.reduce((a,b) => a+b, 0) / n;
+  const centered = slice.map(v => v - mean);
+  const fft = simpleFFT(centered);
+  const power = fft.map(c => c.re*c.re + c.im*c.im);
+  const df = (state.fpsReal || FS_TARGET) / n;
+  let pSig = 0, pNoise = 0;
+  for (let i = 1; i < n/2; i++) {
+    const f = i * df;
+    if (f >= 0.8 && f <= 3.0) pSig += power[i];
+    else pNoise += power[i];
+  }
+  if (pSig + pNoise === 0) return 0;
+  const snr = pSig / (pNoise || 1e-12);
+  return Math.min(1, snr / (snr + 1));
+}
+
+/* ======================================================================
+   PICS + RR (Point 5)
+   ====================================================================== */
+function detectPeaks(signal, timestamps) {
+  const n = signal.length;
+  if (n < 5) return [];
+  const sorted = [...signal].sort((a,b) => a-b);
+  const q1 = sorted[Math.floor(n*0.25)];
+  const q3 = sorted[Math.floor(n*0.75)];
+  const med = sorted[Math.floor(n*0.5)];
+  const threshold = med + 0.3 * (q3 - q1);
   const peaks = [];
-  const n = filteredWindow.length;
-  if (n < 5) return peaks;
-  // Seuil = médiane + 0.3 * écart interquartile
-  const sorted = [...filteredWindow].sort((a, b) => a - b);
-  const q1 = sorted[Math.floor(n * 0.25)];
-  const q3 = sorted[Math.floor(n * 0.75)];
-  const median = sorted[Math.floor(n * 0.5)];
-  const threshold = median + 0.3 * (q3 - q1);
-  for (let i = 1; i < n - 1; i++) {
-    if (filteredWindow[i] > threshold &&
-        filteredWindow[i] > filteredWindow[i - 1] &&
-        filteredWindow[i] >= filteredWindow[i + 1]) {
-      // Éviter les doubles détections trop proches (< 300 ms)
-      if (peaks.length === 0 ||
-          timestamps[i] - timestamps[peaks[peaks.length - 1]] > 300) {
+  for (let i = 1; i < n-1; i++) {
+    if (signal[i] > threshold &&
+        signal[i] > signal[i-1] &&
+        signal[i] >= signal[i+1]) {
+      if (!peaks.length || timestamps[i] - timestamps[peaks[peaks.length-1]] > 300) {
         peaks.push(i);
       }
     }
@@ -330,188 +350,290 @@ function detectPeaks(filteredWindow, timestamps) {
   return peaks;
 }
 
-function filterRRIntervals(rrArray) {
-  if (rrArray.length < 3) return rrArray;
-  const median = medianOf(rrArray);
-  const mad = medianOf(rrArray.map(v => Math.abs(v - median)));
-  if (mad === 0) return rrArray.filter(v => v >= MIN_RR_MS && v <= MAX_RR_MS);
-  const threshold = RR_OUTLIER_MAD_K * mad;
-  return rrArray.filter(v =>
-    Math.abs(v - median) <= threshold &&
-    v >= MIN_RR_MS && v <= MAX_RR_MS
-  );
-}
-
 function medianOf(arr) {
-  const s = [...arr].sort((a, b) => a - b);
-  const mid = Math.floor(s.length / 2);
-  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+  const s = [...arr].sort((a,b) => a-b);
+  const m = Math.floor(s.length/2);
+  return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2;
 }
 
-/* =========================================================================
-   Point 6 – Machine à états : NO_FINGER → SETTLING → MEASURING
-   ========================================================================= */
+function filterRR(rr) {
+  if (rr.length < 3) return rr.filter(v => v >= MIN_RR_MS && v <= MAX_RR_MS);
+  const med = medianOf(rr);
+  const mad = medianOf(rr.map(v => Math.abs(v - med)));
+  if (mad === 0) return rr.filter(v => v >= MIN_RR_MS && v <= MAX_RR_MS);
+  const th = RR_OUTLIER_MAD_K * mad;
+  return rr.filter(v => Math.abs(v - med) <= th && v >= MIN_RR_MS && v <= MAX_RR_MS);
+}
+
+/* ======================================================================
+   PHASES + MESSAGES
+   ====================================================================== */
 function transitionTo(newPhase) {
   state.phase = newPhase;
   state.phaseStart = performance.now();
   video.className = newPhase.toLowerCase();
   if (newPhase === 'NO_FINGER') {
-    statusEl.textContent = 'Couvrez l’objectif et le flash avec le bout du doigt.';
+    statusEl.textContent = 'Recherche du doigt — couvrez l’objectif + flash.';
   } else if (newPhase === 'SETTLING') {
-    statusEl.textContent = 'Stabilisation… Gardez le doigt immobile.';
+    statusEl.textContent = 'Stabilisation en cours… Gardez le doigt immobile.';
   } else if (newPhase === 'MEASURING') {
-    statusEl.textContent = 'Mesure en cours. Ne bougez plus.';
+    statusEl.textContent = 'Mesure en cours — restez immobile.';
+  } else if (newPhase === 'COMPLETE') {
+    statusEl.textContent = 'Mesure terminée.';
   }
 }
 
-/* =========================================================================
-   Boucle principale de traitement
-   ========================================================================= */
-let lastFrameTime = 0;
-
-function processFrame() {
-  const now = performance.now();
-
-  // ---- Point 1 : FPS réel ----
-  if (lastFrameTime > 0) {
-    const dt = now - lastFrameTime;
-    state.fpsHistory.push(1000 / dt);
-    if (state.fpsHistory.length > 30) state.fpsHistory.shift();
-    state.fpsReal = state.fpsHistory.reduce((a, b) => a + b, 0) / state.fpsHistory.length;
-  }
-  lastFrameTime = now;
-
-  // ---- Point 4 : Analyse du contact ----
-  const { meanR, clippedFraction } = analyzeFrame();
-
-  // Gestion des phases
-  const fingerPresent = meanR > FINGER_PRESENCE_MIN * 255 && clippedFraction < CLIP_FRACTION_MAX;
-
-  if (!fingerPresent) {
-    if (state.phase !== 'NO_FINGER') {
-      transitionTo('NO_FINGER');
-      resetSignalBuffers();
+function updateGuidance(meanR, clippedFraction) {
+  if (state.phase === 'NO_FINGER') {
+    if (state.hadInterruption) {
+      guidanceEl.textContent = '⚠️ Signal perdu — replacez le doigt. La mesure reprend depuis zéro.';
+    } else {
+      guidanceEl.textContent = 'Posez le bout du doigt sans appuyer fort.';
     }
-    scheduleFrame(processFrame);
     return;
   }
-
-  if (state.phase === 'NO_FINGER') {
-    transitionTo('SETTLING');
-    // Point 6 : initialiser le filtre avec le FPS réel au début du SETTLING
-    initFilter(state.fpsReal || FS_TARGET);
+  if (clippedFraction > CLIP_FRACTION_MAX) {
+    guidanceEl.textContent = '⚠️ Trop de lumière — appuyez moins fort sur l’objectif.';
+    return;
   }
-
-  // Ajout de l’échantillon brut
-  state.rawSamples.push(meanR);
-  if (state.rawSamples.length > 300) state.rawSamples.shift(); // ~10 s à 30 fps
-
-  // ---- Point 2 : filtrage ----
-  const filtered = bandpassFilter(meanR);
-  state.filteredSamples.push(filtered);
-  if (state.filteredSamples.length > 300) state.filteredSamples.shift();
-
-  state.frames.push({ t: now, r: meanR, filtered });
-  if (state.frames.length > 300) state.frames.shift();
-
-  // ---- Point 6 : transitions temporelles ----
+  if (meanR < FINGER_PRESENCE_MIN * 255) {
+    guidanceEl.textContent = '⚠️ Signal faible — couvrez mieux l’objectif et le flash.';
+    return;
+  }
   if (state.phase === 'SETTLING') {
-    if (now - state.phaseStart >= SETTLING_MS) {
-      transitionTo('MEASURING');
+    const left = Math.max(0, Math.ceil((SETTLING_MS - (performance.now() - state.phaseStart)) / 1000));
+    guidanceEl.textContent = `Stabilisation… ${left} s`;
+    return;
+  }
+  if (state.phase === 'MEASURING') {
+    if (state.quality === 'poor') {
+      guidanceEl.textContent = '⚠️ Qualité insuffisante — décompte en pause. Restez immobile.';
+    } else if (state.quality === 'fair') {
+      guidanceEl.textContent = 'Signal acceptable — restez immobile pour passer en bonne qualité.';
+    } else if (state.quality === 'good') {
+      guidanceEl.textContent = '✅ Signal excellent — gardez cette position.';
     }
   }
-
-  // ---- Point 3 : SQI ----
-  const sqi = computeSQI(state.rawSamples.slice(-64));
-  sqiEl.textContent = sqi.toFixed(2);
-  const quality = sqi >= SQI_GOOD_THRESHOLD ? 'good' : sqi >= 0.4 ? 'fair' : 'poor';
-  qualityBadge.textContent = quality === 'good' ? 'Bon' : quality === 'fair' ? 'Moyen' : 'Faible';
-  qualityBadge.className = 'quality-' + quality;
-
-  // ---- Point 5 : détection de pics (uniquement en MEASURING et si SQI suffisant) ----
-  if (state.phase === 'MEASURING' && quality !== 'poor') {
-    const filteredWindow = state.filteredSamples;
-    const timestamps = state.frames.map(f => f.t);
-    const peaks = detectPeaks(filteredWindow, timestamps);
-
-    // Calcul des RR à partir des pics
-    for (let i = 1; i < peaks.length; i++) {
-      const rr = timestamps[peaks[i]] - timestamps[peaks[i - 1]];
-      if (rr >= MIN_RR_MS && rr <= MAX_RR_MS) {
-        state.rrIntervals.push(rr);
-      }
-    }
-    if (state.rrIntervals.length > 60) state.rrIntervals = state.rrIntervals.slice(-60);
-
-    // Point 5 : rejet des RR aberrants
-    const cleanRR = filterRRIntervals(state.rrIntervals);
-
-    // ---- Calcul FC / VFC ----
-    if (cleanRR.length >= 5) {
-      const meanRR = cleanRR.reduce((a, b) => a + b, 0) / cleanRR.length;
-      const hr = 60000 / meanRR;
-      hrEl.textContent = Math.round(hr);
-
-      // RMSSD
-      const diffs = [];
-      for (let i = 1; i < cleanRR.length; i++) diffs.push(cleanRR[i] - cleanRR[i - 1]);
-      const rmssd = Math.sqrt(diffs.reduce((a, b) => a + b * b, 0) / diffs.length);
-      rmssdEl.textContent = rmssd.toFixed(1);
-
-      // SDNN
-      const variance = cleanRR.reduce((a, b) => a + (b - meanRR) ** 2, 0) / cleanRR.length;
-      sdnnEl.textContent = Math.sqrt(variance).toFixed(1);
-    }
-  }
-
-  // Point 10 : pas d’animations lourdes, pas de setState inutile
-  scheduleFrame(processFrame);
 }
 
-/* =========================================================================
-   Point 7 – Sélection du canal rouge
-   Le canal rouge est utilisé par défaut dans analyzeFrame().
-   On pourrait dynamiquement choisir le meilleur canal, mais pour le doigt +
-   flash le rouge est la référence.
-   ========================================================================= */
+function updateProgressDisplay() {
+  const pct = Math.min(100, 100 * state.goodTimeMs / MEASURE_GOOD_MS);
+  progressBar.style.width = pct + '%';
 
-/* =========================================================================
-   Point 8 – Détrending implicite via le filtre passe-haut du passe-bande
-   Le filtre Butterworth 0.5–4 Hz supprime déjà la dérive basse fréquence.
-   Pour renforcer, on peut ajouter un détendrage polynomial léger si besoin.
-   ========================================================================= */
+  if (state.phase === 'COMPLETE') {
+    progressBar.className = '';
+    progressLabel.textContent = 'Mesure terminée';
+    return;
+  }
+  if (state.phase === 'MEASURING' && state.quality === 'poor') {
+    progressBar.className = 'paused';
+    const s = Math.floor(state.goodTimeMs / 1000);
+    progressLabel.textContent = `⏸ ${s} s / 60 s — décompte en pause (qualité insuffisante)`;
+  } else {
+    progressBar.className = '';
+    const s = Math.floor(state.goodTimeMs / 1000);
+    progressLabel.textContent = `${s} s / 60 s de signal valide`;
+  }
+}
 
-/* =========================================================================
-   Point 9 – Affichage de la qualité à côté des métriques
-   Le badge de qualité est déjà présent. On peut ajouter un intervalle de
-   confiance basé sur la variabilité inter-fenêtres (non implémenté ici pour
-   rester lisible, mais facile à ajouter).
-   ========================================================================= */
+function updateQualityBadge() {
+  if (!state.quality) {
+    qualityBadge.className = 'quality-none';
+    qualityBadge.textContent = '—';
+    return;
+  }
+  const map = {
+    good: { cls: 'quality-good', label: 'Bon' },
+    fair: { cls: 'quality-fair', label: 'Moyen' },
+    poor: { cls: 'quality-poor', label: 'Faible' },
+  };
+  qualityBadge.className = map[state.quality].cls;
+  qualityBadge.textContent = map[state.quality].label;
+}
 
-/* =========================================================================
-   Initialisation et démarrage
-   ========================================================================= */
 function resetSignalBuffers() {
   state.rawSamples = [];
   state.filteredSamples = [];
   state.frames = [];
   state.rrIntervals = [];
-  state.lastPeakTime = null;
-  hrEl.textContent = '—';
-  rmssdEl.textContent = '—';
-  sdnnEl.textContent = '—';
-  sqiEl.textContent = '—';
-  qualityBadge.textContent = '—';
-  qualityBadge.className = 'quality-poor';
 }
 
+/* ======================================================================
+   FINALISATION
+   ====================================================================== */
+function finalizeMeasurement() {
+  const prevPhase = state.phase;
+  transitionTo('COMPLETE');
+  cancelFrame();
+  if (state.videoTrack) { try { state.videoTrack.stop(); } catch(_){} }
+  if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+
+  const cleanRR = filterRR(state.rrIntervals);
+  const total = state.qualityTime.good + state.qualityTime.fair + state.qualityTime.poor;
+  const pctGood = total > 0 ? Math.round(100 * state.qualityTime.good / total) : 0;
+
+  if (cleanRR.length < MIN_RR_FOR_VFC) {
+    statusEl.textContent = 'Mesure terminée, mais signal trop bruité.';
+    guidanceEl.textContent = 'Recommencez en gardant le doigt parfaitement immobile.';
+    qualityBadge.className = 'quality-poor';
+    qualityBadge.textContent = 'Insuffisant';
+    hrEl.textContent = '—'; rmssdEl.textContent = '—'; sdnnEl.textContent = '—';
+    sqiEl.textContent = '—';
+  } else {
+    const meanRR = cleanRR.reduce((a,b)=>a+b,0)/cleanRR.length;
+    const hr = 60000 / meanRR;
+    const diffs = [];
+    for (let i = 1; i < cleanRR.length; i++) diffs.push(cleanRR[i] - cleanRR[i-1]);
+    const rmssd = Math.sqrt(diffs.reduce((a,b)=>a+b*b,0)/diffs.length);
+    const variance = cleanRR.reduce((a,b)=>a+(b-meanRR)**2,0)/cleanRR.length;
+    const sdnn = Math.sqrt(variance);
+
+    hrEl.textContent = Math.round(hr);
+    rmssdEl.textContent = rmssd.toFixed(1);
+    sdnnEl.textContent = sdnn.toFixed(1);
+
+    let sessionQuality;
+    if (pctGood >= 70) sessionQuality = 'good';
+    else if (pctGood >= 40) sessionQuality = 'fair';
+    else sessionQuality = 'poor';
+    qualityBadge.className = 'quality-' + sessionQuality;
+    qualityBadge.textContent = 'Session : ' + (
+      sessionQuality === 'good' ? 'bonne' :
+      sessionQuality === 'fair' ? 'moyenne' : 'faible');
+
+    statusEl.textContent = `Mesure terminée — ${pctGood}% du temps en bonne qualité.`;
+    guidanceEl.textContent = `Basé sur ${cleanRR.length} intervalles RR valides.`;
+  }
+
+  progressBar.className = '';
+  progressBar.style.width = '100%';
+  progressLabel.textContent = 'Mesure terminée';
+  startBtn.hidden = true;
+  restartBtn.hidden = false;
+}
+
+/* ======================================================================
+   BOUCLE PRINCIPALE
+   ====================================================================== */
+function processFrame() {
+  const now = performance.now();
+  const dt = lastFrameTime > 0 ? now - lastFrameTime : 0;
+  lastFrameTime = now;
+
+  // FPS réel (Point 1)
+  if (dt > 0 && dt < 2000) {
+    state.fpsHistory.push(1000 / dt);
+    if (state.fpsHistory.length > 30) state.fpsHistory.shift();
+    state.fpsReal = state.fpsHistory.reduce((a,b)=>a+b,0) / state.fpsHistory.length;
+  }
+
+  // Analyse frame
+  const { meanR, clippedFraction } = analyzeFrame();
+  const fingerPresent = meanR > FINGER_PRESENCE_MIN * 255 && clippedFraction < CLIP_FRACTION_MAX;
+
+  // Perte de contact
+  if (!fingerPresent) {
+    const wasPhase = state.phase;
+    if (wasPhase !== 'NO_FINGER') {
+      transitionTo('NO_FINGER');
+      resetSignalBuffers();
+      if (wasPhase === 'MEASURING') {
+        state.hadInterruption = true;
+        state.goodTimeMs = 0;
+        state.qualityTime = { good: 0, fair: 0, poor: 0 };
+      }
+      updateProgressDisplay();
+      updateQualityBadge();
+    }
+    updateGuidance(meanR, clippedFraction);
+    scheduleFrame(processFrame);
+    return;
+  }
+
+  // Contact présent
+  if (state.phase === 'NO_FINGER') {
+    transitionTo('SETTLING');
+    initFilter(state.fpsReal || FS_TARGET);
+    state.hadInterruption = false;
+  }
+
+  // Échantillon brut
+  state.rawSamples.push(meanR);
+  if (state.rawSamples.length > 300) state.rawSamples.shift();
+
+  // Filtrage (Point 2)
+  const filtered = bandpassFilter(meanR);
+  state.filteredSamples.push(filtered);
+  if (state.filteredSamples.length > 300) state.filteredSamples.shift();
+
+  state.frames.push({ t: now, filtered });
+  if (state.frames.length > 300) state.frames.shift();
+
+  // SETTLING → MEASURING
+  if (state.phase === 'SETTLING' && now - state.phaseStart >= SETTLING_MS) {
+    transitionTo('MEASURING');
+  }
+
+  // SQI + qualité (Point 3)
+  const sqi = computeSQI(state.rawSamples);
+  sqiEl.textContent = sqi.toFixed(2);
+  state.quality = sqi >= SQI_GOOD_THRESHOLD ? 'good'
+                : sqi >= SQI_FAIR_THRESHOLD ? 'fair' : 'poor';
+  updateQualityBadge();
+
+  // Accumulation et métriques en MEASURING
+  if (state.phase === 'MEASURING') {
+    if (dt > 0 && dt < 500) {
+      state.qualityTime[state.quality] += dt;
+      if (state.quality !== 'poor') state.goodTimeMs += dt;
+    }
+
+    // Détection de pics + RR
+    if (state.quality !== 'poor') {
+      const peaks = detectPeaks(state.filteredSamples, state.frames.map(f => f.t));
+      for (let i = 1; i < peaks.length; i++) {
+        const rr = state.frames[peaks[i]].t - state.frames[peaks[i-1]].t;
+        if (rr >= MIN_RR_MS && rr <= MAX_RR_MS) state.rrIntervals.push(rr);
+      }
+      if (state.rrIntervals.length > 120) state.rrIntervals = state.rrIntervals.slice(-120);
+
+      const cleanRR = filterRR(state.rrIntervals);
+      if (cleanRR.length >= 5) {
+        const meanRR = cleanRR.reduce((a,b)=>a+b,0)/cleanRR.length;
+        hrEl.textContent = Math.round(60000 / meanRR);
+        const diffs = [];
+        for (let i = 1; i < cleanRR.length; i++) diffs.push(cleanRR[i] - cleanRR[i-1]);
+        if (diffs.length) {
+          rmssdEl.textContent = Math.sqrt(diffs.reduce((a,b)=>a+b*b,0)/diffs.length).toFixed(1);
+        }
+        const v = cleanRR.reduce((a,b)=>a+(b-meanRR)**2,0)/cleanRR.length;
+        sdnnEl.textContent = Math.sqrt(v).toFixed(1);
+      }
+    }
+
+    // Fin de mesure
+    const wallElapsed = now - state.phaseStart;
+    if (state.goodTimeMs >= MEASURE_GOOD_MS || wallElapsed >= MEASURE_MAX_MS) {
+      finalizeMeasurement();
+      return;
+    }
+
+    updateProgressDisplay();
+  }
+
+  updateGuidance(meanR, clippedFraction);
+  scheduleFrame(processFrame);
+}
+
+/* ======================================================================
+   CAMÉRA + DÉMARRAGE
+   ====================================================================== */
 async function startCamera() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: 'environment',
-        width: { ideal: 320 },
-        height: { ideal: 240 },
+        width: { ideal: 320 }, height: { ideal: 240 },
         frameRate: { ideal: 30 },
       },
       audio: false,
@@ -519,46 +641,67 @@ async function startCamera() {
     video.srcObject = stream;
     await video.play();
 
-    // Point 4 : verrouiller l’exposition et la balance des blancs si possible
     const track = stream.getVideoTracks()[0];
-    const capabilities = track.getCapabilities();
-    if (capabilities.exposureMode && capabilities.exposureMode.includes('manual')) {
-      try {
-        await track.applyConstraints({ advanced: [{ exposureMode: 'manual' }] });
-        state.exposureLocked = true;
-      } catch (_) {}
+    state.videoTrack = track;
+    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    if (caps.exposureMode && caps.exposureMode.includes('manual')) {
+      try { await track.applyConstraints({ advanced: [{ exposureMode: 'manual' }] }); } catch(_){}
     }
-    if (capabilities.whiteBalanceMode && capabilities.whiteBalanceMode.includes('manual')) {
-      try {
-        await track.applyConstraints({ advanced: [{ whiteBalanceMode: 'manual' }] });
-        state.wbLocked = true;
-      } catch (_) {}
+    if (caps.whiteBalanceMode && caps.whiteBalanceMode.includes('manual')) {
+      try { await track.applyConstraints({ advanced: [{ whiteBalanceMode: 'manual' }] }); } catch(_){}
+    }
+    if (caps.torch) {
+      try { await track.applyConstraints({ advanced: [{ torch: true }] }); } catch(_){}
     }
 
-    // Allumer le flash (torche) si disponible
-    if (capabilities.torch) {
-      try {
-        await track.applyConstraints({ advanced: [{ torch: true }] });
-      } catch (_) {}
-    }
-
-    startBtn.disabled = true;
-    statusEl.textContent = 'Caméra prête. Placez le doigt.';
     transitionTo('NO_FINGER');
+    updateProgressDisplay();
     scheduleFrame(processFrame);
   } catch (err) {
     statusEl.textContent = 'Erreur caméra : ' + err.message;
+    guidanceEl.textContent = 'Autorisez l’accès à la caméra pour continuer.';
+    startBtn.disabled = false;
+    startBtn.hidden = false;
   }
 }
 
-startBtn.addEventListener('click', startCamera);
+function startNewMeasurement() {
+  resetSignalBuffers();
+  state.goodTimeMs = 0;
+  state.qualityTime = { good: 0, fair: 0, poor: 0 };
+  state.quality = null;
+  state.phase = 'IDLE';
+  state.hadInterruption = false;
+  state.fpsHistory = [];
+  state.fpsReal = 0;
+  lastFrameTime = 0;
+  hrEl.textContent = '—'; rmssdEl.textContent = '—'; sdnnEl.textContent = '—'; sqiEl.textContent = '—';
+  qualityBadge.className = 'quality-none'; qualityBadge.textContent = '—';
+  progressBar.style.width = '0%'; progressBar.className = '';
+  progressLabel.textContent = '0 s / 60 s de signal valide';
+  restartBtn.hidden = true;
+  startBtn.hidden = true;
+  startBtn.disabled = true;
+  startCamera();
+}
 
-// Nettoyage
+startBtn.addEventListener('click', () => {
+  startBtn.disabled = true;
+  startNewMeasurement();
+});
+
+restartBtn.addEventListener('click', () => {
+  startNewMeasurement();
+});
+
+infoBtn.addEventListener('click', () => {
+  infoPanel.hidden = !infoPanel.hidden;
+  infoBtn.textContent = infoPanel.hidden ? 'ⓘ Comprendre la mesure' : '✕ Fermer l’explication';
+});
+
 window.addEventListener('beforeunload', () => {
   cancelFrame();
-  if (video.srcObject) {
-    video.srcObject.getTracks().forEach(t => t.stop());
-  }
+  if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
 });
 </script>
 </body>
