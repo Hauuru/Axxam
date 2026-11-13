@@ -151,19 +151,20 @@
    CONSTANTES
    ====================================================================== */
 const FS_TARGET = 30;
-const BAND_LOW = 0.5, BAND_HIGH = 4.0;
-const RR_OUTLIER_MAD_K = 3.5;
-const MIN_RR_MS = 400;             // <-- AUGMENTÉ : 400ms = 150 bpm. Élimine le dicrotisme.
+const BAND_LOW = 0.5, BAND_HIGH = 3.0; // <-- BAISSÉ : 3.0 Hz pour lisser le dicrotisme
+const RR_OUTLIER_MAD_K = 3.0;
+const MIN_RR_MS = 500;             // <-- AUGMENTÉ : 500ms = 120 bpm max
 const MAX_RR_MS = 2000;
 const SETTLING_MS = 5000;
 const MEASURE_GOOD_MS = 60000;     
 const MEASURE_MAX_MS  = 180000;    
 const MIN_RR_FOR_VFC = 5;          
-const SQI_GOOD_THRESHOLD = 0.6;
-const SQI_FAIR_THRESHOLD = 0.4;
+const SQI_GOOD_THRESHOLD = 0.60;
+const SQI_FAIR_THRESHOLD = 0.50;   // <-- AUGMENTÉ : exige un signal un peu meilleur
 const CLIP_FRACTION_MAX = 0.25;    
 const FINGER_PRESENCE_MIN = 0.10;  
 const FINGER_LOSS_TOLERANCE_MS = 1000; 
+const MAX_RR_CHANGE_PCT = 0.20;    // <-- NOUVEAU : rejet si saut de + de 20%
 
 /* ======================================================================
    ÉTAT
@@ -171,6 +172,7 @@ const FINGER_LOSS_TOLERANCE_MS = 1000;
 const state = {
   phase: 'IDLE',
   phaseStart: 0,
+  startTime: 0, // <-- NOUVEAU : pour la durée réelle
   frames: [],
   rawSamples: [],
   filteredSamples: [],
@@ -236,7 +238,7 @@ canvas.width = 64; canvas.height = 64;
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
 /* ======================================================================
-   BOUCLE FRAME (avec filtre anti-doublon)
+   BOUCLE FRAME
    ====================================================================== */
 let videoFrameCallbackId = null, rafId = null, lastFrameTime = 0;
 let lastPresentedFrames = -1;
@@ -244,10 +246,9 @@ let lastPresentedFrames = -1;
 function scheduleFrame(cb) {
   if ('requestVideoFrameCallback' in video) {
     videoFrameCallbackId = video.requestVideoFrameCallback((now, metadata) => {
-      // Si le navigateur renvoie la même image, on l'ignore
       if (metadata.presentedFrames !== undefined) {
         if (metadata.presentedFrames === lastPresentedFrames) {
-          scheduleFrame(cb); // On attend la vraie prochaine image
+          scheduleFrame(cb);
           return;
         }
         lastPresentedFrames = metadata.presentedFrames;
@@ -345,30 +346,41 @@ function computeSQI(rawWindow) {
 }
 
 /* ======================================================================
-   DÉTECTION DES PICS
+   LISSAGE & DÉTECTION DES PICS
    ====================================================================== */
-function detectPeaks(signal, timestamps) {
-  const n = signal.length;
+function smoothSignal(signal) {
+  if (signal.length < 3) return signal;
+  const smoothed = [];
+  for (let i = 1; i < signal.length - 1; i++) {
+    smoothed.push((signal[i-1] + signal[i] + signal[i+1]) / 3);
+  }
+  return smoothed;
+}
+
+function detectPeaks(smoothedSignal, timestamps) {
+  const n = smoothedSignal.length;
   if (n < 5) return [];
-  const sorted = [...signal].sort((a,b) => a-b);
+  // smoothedSignal a 2 éléments de moins que timestamps
+  const timeOffset = timestamps.length - smoothedSignal.length;
+  
+  const sorted = [...smoothedSignal].sort((a,b) => a-b);
   const q1 = sorted[Math.floor(n*0.25)], q3 = sorted[Math.floor(n*0.75)];
   const med = sorted[Math.floor(n*0.5)];
   const threshold = med + 0.3 * (q3 - q1);
   const peaks = [];
   
   for (let i = 1; i < n-1; i++) {
-    if (signal[i] > threshold && signal[i] > signal[i-1] && signal[i] >= signal[i+1]) {
-      let t = timestamps[i];
+    if (smoothedSignal[i] > threshold && smoothedSignal[i] > smoothedSignal[i-1] && smoothedSignal[i] >= smoothedSignal[i+1]) {
+      let t = timestamps[i + timeOffset];
       if (i > 0 && i < n - 1) {
-        const alpha = signal[i-1], beta = signal[i], gamma = signal[i+1];
+        const alpha = smoothedSignal[i-1], beta = smoothedSignal[i], gamma = smoothedSignal[i+1];
         const denominator = 2 * (alpha - 2*beta + gamma);
         if (denominator !== 0) {
           const offset = (alpha - gamma) / denominator;
-          const dt = timestamps[i+1] - timestamps[i-1];
-          t = timestamps[i] + offset * (dt / 2);
+          const dt = timestamps[i + timeOffset + 1] - timestamps[i + timeOffset - 1];
+          t = timestamps[i + timeOffset] + offset * (dt / 2);
         }
       }
-      // On applique le temps mort strict ici aussi
       if (!peaks.length || t - peaks[peaks.length-1].t > MIN_RR_MS) {
         peaks.push({ index: i, t: t });
       }
@@ -534,7 +546,7 @@ function finalizeMeasurement() {
       id: Date.now(),
       date_iso: new Date().toISOString(),
       user_agent: navigator.userAgent,
-      duration_sec: Math.round((performance.now() - state.phaseStart) / 1000)
+      duration_sec: Math.round((performance.now() - state.startTime) / 1000) // <-- CORRIGÉ
     },
     results: {
       hr_bpm: Math.round(hr),
@@ -670,7 +682,6 @@ function processFrame() {
     }
   }
 
-  // Fenêtre glissante basée sur le TEMPS (10 secondes) et non sur le nombre de frames
   const maxSamples = Math.max(30, Math.round((state.fpsReal || FS_TARGET) * 10));
   
   state.rawSamples.push(meanR);
@@ -702,7 +713,9 @@ function processFrame() {
     }
 
     if (state.quality !== 'poor') {
-      const peaks = detectPeaks(state.filteredSamples, state.frames.map(f => f.t));
+      // Application du lissage
+      const smoothed = smoothSignal(state.filteredSamples);
+      const peaks = detectPeaks(smoothed, state.frames.map(f => f.t));
       
       for (let i = 0; i < peaks.length; i++) {
         const p = peaks[i];
@@ -710,7 +723,18 @@ function processFrame() {
           state.lastPeakTime = p.t;
         } else if (p.t > state.lastPeakTime) {
           const rr = p.t - state.lastPeakTime;
-          if (rr >= MIN_RR_MS && rr <= MAX_RR_MS) {
+          
+          let isValid = true;
+          if (rr < MIN_RR_MS || rr > MAX_RR_MS) {
+            isValid = false;
+          } else if (state.rrIntervals.length > 0) {
+            const lastRR = state.rrIntervals[state.rrIntervals.length - 1];
+            if (Math.abs(rr - lastRR) / lastRR > MAX_RR_CHANGE_PCT) {
+              isValid = false; // Rejet si saut de plus de 20%
+            }
+          }
+
+          if (isValid) {
             state.rrIntervals.push(rr);
           } else {
             state.totalRejectedRR++;
@@ -786,6 +810,7 @@ function startNewMeasurement() {
   lastFrameTime = 0;
   lastPresentedFrames = -1;
   state.lastFingerLossTime = null;
+  state.startTime = performance.now(); // <-- Initialisation du chrono
   
   resetSignalBuffers();
   
