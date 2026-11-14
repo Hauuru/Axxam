@@ -14,6 +14,7 @@
     --accent: #4ade80;
     --warn: #fbbf24;
     --bad: #f87171;
+    --info: #60a5fa;
   }
   * { box-sizing: border-box; }
   body {
@@ -36,6 +37,20 @@
   h1 { font-size: 1.25rem; margin: 0; font-weight: 600; }
   .subtitle { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
 
+  .status-panel {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    border: 1px solid;
+    white-space: pre-wrap;
+  }
+  .status-panel.info    { background: #0f2136; color: var(--info); border-color: #1e40af; }
+  .status-panel.warn    { background: #2a1f07; color: var(--warn); border-color: #a16207; }
+  .status-panel.error   { background: #2a0e0e; color: var(--bad);  border-color: #b91c1c; }
+  .status-panel.success { background: #0d2416; color: var(--accent); border-color: #15803d; }
+  .status-panel b { color: inherit; }
+
   .preview-wrap {
     position: relative;
     background: #000;
@@ -51,6 +66,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    background: #000;
   }
   #video.hidden { display: none; }
   .placeholder {
@@ -86,13 +102,10 @@
   }
   .bpm-unit { color: var(--muted); font-size: 0.85rem; margin-left: 4px; }
 
-  .quality-value {
-    font-size: 1.25rem;
-    font-weight: 600;
-  }
+  .quality-value { font-size: 1.25rem; font-weight: 600; }
   .quality-value[data-level="good"] { color: var(--accent); }
-  .quality-value[data-level="mid"] { color: var(--warn); }
-  .quality-value[data-level="bad"] { color: var(--bad); }
+  .quality-value[data-level="mid"]  { color: var(--warn); }
+  .quality-value[data-level="bad"]  { color: var(--bad); }
 
   .reason {
     color: var(--muted);
@@ -101,7 +114,7 @@
     margin-top: 4px;
   }
   .reason[data-code="clip"], .reason[data-code="motion"] { color: var(--warn); }
-  .reason[data-code="weak"], .reason[data-code="noisy"] { color: var(--bad); }
+  .reason[data-code="weak"], .reason[data-code="noisy"]   { color: var(--bad); }
 
   #signal-canvas {
     width: 100%;
@@ -127,6 +140,22 @@
   button:disabled { opacity: 0.5; cursor: not-allowed; }
   button.stop { background: var(--bad); color: #1a0505; }
 
+  details.diag {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  details.diag summary { cursor: pointer; color: var(--muted); }
+  details.diag summary:hover { color: var(--text); }
+  #diag-content { padding-top: 8px; line-height: 1.7; }
+  #diag-content b { color: var(--text); }
+  #diag-content .ok    { color: var(--accent); }
+  #diag-content .ko    { color: var(--bad); }
+  #diag-content .warn  { color: var(--warn); }
+
   .debug {
     font-family: ui-monospace, "SF Mono", Consolas, monospace;
     font-size: 0.75rem;
@@ -139,7 +168,7 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 4px 16px;
   }
-  .debug span:nth-child(odd) { color: #6b7280; }
+  .debug span:nth-child(odd)  { color: #6b7280; }
   .debug span:nth-child(even) { color: var(--text); text-align: right; }
 </style>
 </head>
@@ -149,6 +178,8 @@
     <h1>Observation cardiaque</h1>
     <div class="subtitle">Placez votre doigt sur l'objectif arrière, sans appuyer trop fort.</div>
   </div>
+
+  <div id="status-panel" class="status-panel" style="display:none"></div>
 
   <div class="preview-wrap">
     <video id="video" class="hidden" autoplay playsinline muted></video>
@@ -175,6 +206,11 @@
   <div class="controls">
     <button id="start-btn">Démarrer</button>
   </div>
+
+  <details class="diag">
+    <summary>Diagnostic environnement</summary>
+    <div id="diag-content">Vérification…</div>
+  </details>
 
   <div class="debug">
     <span>État</span><span id="dbg-state">—</span>
@@ -215,10 +251,11 @@ const CONFIG = {
   BUFFER_SEC: 30,
   ANALYSIS_INTERVAL_MS: 250,
   MIN_BUFFER_SAMPLES: 180,
+  VIDEO_READY_TIMEOUT_MS: 10000,
 };
 
 // ============================================================
-// DSP : biquad, filtfilt, rééchantillonnage, pics, artefacts
+// DSP
 // ============================================================
 class Biquad {
   constructor(b0, b1, b2, a1, a2) {
@@ -435,7 +472,7 @@ function detectArtifacts(signal, sigmaThreshold) {
 }
 
 // ============================================================
-// Qualité : SQI et filtre RR
+// Qualité
 // ============================================================
 function computeSQI(rawGrid, clipFraction, artifacts) {
   let mean = 0, maxv = -Infinity, minv = Infinity;
@@ -480,6 +517,55 @@ function filterRR(rrList) {
 }
 
 // ============================================================
+// Diagnostic & messages d'erreur caméra
+// ============================================================
+async function getDiagnostics() {
+  const diag = {
+    https: window.isSecureContext,
+    api: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+    perm: 'inconnu',
+    iframe: (() => { try { return window.self !== window.top; } catch { return true; } })(),
+    ua: navigator.userAgent,
+  };
+  try {
+    const p = await navigator.permissions.query({ name: 'camera' });
+    diag.perm = p.state;
+  } catch {
+    diag.perm = 'non supporté';
+  }
+  return diag;
+}
+
+function describeCameraError(err) {
+  const name = err && err.name;
+  const map = {
+    NotAllowedError:
+      "Accès caméra refusé par le navigateur.\n" +
+      "→ Cliquez sur l'icône 🔒 (ou ⓘ) à gauche de l'URL → Autorisations → Caméra → Autoriser, puis rechargez la page.\n" +
+      "→ Si la page est dans une iframe, l'attribut allow=\"camera\" est obligatoire sur <iframe>.",
+    PermissionDeniedError:
+      "Accès caméra refusé. Autorisez la caméra dans les paramètres du navigateur pour ce site.",
+    NotFoundError:
+      "Aucune caméra détectée sur cet appareil.",
+    DevicesNotFoundError:
+      "Aucune caméra détectée sur cet appareil.",
+    NotReadableError:
+      "Caméra indisponible — probablement utilisée par une autre application (visio, appareil photo…).",
+    TrackStartError:
+      "Caméra indisponible — probablement utilisée par une autre application.",
+    OverconstrainedError:
+      "Les paramètres caméra demandés ne sont pas compatibles avec cet appareil.",
+    SecurityError:
+      "Accès caméra bloqué par la politique de sécurité. La page doit être servie en HTTPS.",
+    AbortError:
+      "Erreur système lors du démarrage de la caméra.",
+    TypeError:
+      "Configuration caméra invalide.",
+  };
+  return map[name] || (err && err.message) || String(err);
+}
+
+// ============================================================
 // Caméra
 // ============================================================
 class CameraController {
@@ -493,39 +579,124 @@ class CameraController {
     this.lastCaptureTime = 0;
   }
 
-  async start(videoEl, canvasEl) {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      throw new Error('Caméra indisponible — HTTPS requis');
-    }
+  async start(videoEl, canvasEl, onProgress) {
+    this.onProgress = onProgress || (() => {});
     this.videoEl = videoEl;
     canvasEl.width = CONFIG.ROI_SIZE;
     canvasEl.height = CONFIG.ROI_SIZE;
     this.ctx = canvasEl.getContext('2d', { willReadFrequently: true });
-    this.stream = await navigator.mediaDevices.getUserMedia({ video: CONFIG.VIDEO });
+
+    // --- Vérifications synchrones --------------------------------
+    if (!window.isSecureContext) {
+      throw Object.assign(new Error(
+        "La page n'est pas servie en HTTPS.\n" +
+        "L'accès caméra est interdit hors contexte sécurisé (HTTPS ou localhost)."
+      ), { name: 'SecurityError' });
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error(
+        "L'API caméra n'est pas disponible dans ce navigateur.\n" +
+        "Essayez Chrome, Firefox, Safari ou Edge à jour."
+      );
+    }
+
+    // Diagnostic permission (lancé en parallèle, non bloquant)
+    navigator.permissions.query({ name: 'camera' })
+      .then(p => {
+        if (p.state === 'denied') {
+          this.onProgress('warn',
+            "⚠ L'autorisation caméra semble avoir été bloquée précédemment pour ce site.");
+        }
+      })
+      .catch(() => { /* non supporté */ });
+
+    // --- Demande du flux (premier await, préserve l'activation)
+    this.onProgress('info', 'Demande d\'accès à la caméra…');
+    this.stream = await this._requestStream();
+
+    // --- Attachement et démarrage du flux ------------------------
+    this.onProgress('info', 'Caméra obtenue, démarrage du flux…');
     videoEl.srcObject = this.stream;
     try {
       await videoEl.play();
     } catch (e) {
       console.warn('[camera] play() :', e);
+      videoEl.play().catch(() => { /* re-tentative silencieuse */ });
     }
+
+    // --- Attente de la première image ---------------------------
+    this.onProgress('info', 'Attente de la première image…');
+    await this._waitForVideoReady(videoEl, CONFIG.VIDEO_READY_TIMEOUT_MS);
+
     this.lastCurrentTime = -1;
     this.lastCaptureTime = 0;
+  }
+
+  async _requestStream() {
+    const attempts = [
+      { video: CONFIG.VIDEO },
+      { video: { facingMode: 'user', idealWidth: 320, idealHeight: 240, idealFrameRate: 30 } },
+      { video: true },
+    ];
+    let lastErr = null;
+    const definitive = new Set([
+      'NotAllowedError', 'PermissionDeniedError',
+      'NotFoundError', 'DevicesNotFoundError', 'SecurityError',
+    ]);
+    for (let i = 0; i < attempts.length; i++) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(attempts[i]);
+        if (!stream.getVideoTracks().length) {
+          stream.getTracks().forEach(t => t.stop());
+          lastErr = new Error('Flux obtenu sans piste vidéo.');
+          continue;
+        }
+        return stream;
+      } catch (e) {
+        lastErr = e;
+        console.warn(`[camera] tentative ${i + 1} échouée : ${e.name} — ${e.message || ''}`);
+        if (definitive.has(e.name)) throw e;
+        // OverconstrainedError / NotReadableError → essayer suivant
+      }
+    }
+    throw lastErr || new Error('Impossible d\'obtenir un flux caméra.');
+  }
+
+  _waitForVideoReady(videoEl, timeoutMs) {
+    return new Promise((resolve, reject) => {
+      if (videoEl.readyState >= 2) return resolve();
+      const start = Date.now();
+      const tick = () => {
+        if (videoEl.readyState >= 2 && videoEl.videoWidth > 0) return resolve();
+        if (Date.now() - start > timeoutMs) {
+          return reject(new Error(
+            "La caméra ne fournit pas d'image (délai dépassé).\n" +
+            "Vérifiez qu'aucune autre application n'utilise la caméra."
+          ));
+        }
+        setTimeout(tick, 100);
+      };
+      videoEl.addEventListener('loadeddata', () => resolve(), { once: true });
+      videoEl.addEventListener('canplay', () => resolve(), { once: true });
+      tick();
+    });
   }
 
   async lockSettings() {
     if (this.locked || this.locking || !this.stream) return;
     this.locking = true;
-    const track = this.stream.getVideoTracks()[0];
-    if (!track) { this.locking = false; return; }
     try {
-      await track.applyConstraints({
-        advanced: [
-          { exposureMode: 'manual' },
-          { whiteBalanceMode: 'manual' },
-          { focusMode: 'manual' },
-        ],
-      });
-      this.locked = true;
+      const track = this.stream.getVideoTracks()[0];
+      if (track) {
+        await track.applyConstraints({
+          advanced: [
+            { exposureMode: 'manual' },
+            { whiteBalanceMode: 'manual' },
+            { focusMode: 'manual' },
+          ],
+        });
+        this.locked = true;
+      }
     } catch (e) {
       console.warn('[camera] verrouillage partiel :', e.name);
     } finally {
@@ -541,7 +712,6 @@ class CameraController {
 
     const ct = this.videoEl.currentTime;
     if (ct === this.lastCurrentTime) {
-      // Pas de nouvelle frame vidéo — fallback si > 100 ms écoulées
       if (this.lastCaptureTime && rafTime - this.lastCaptureTime < 100) return null;
     }
     this.lastCurrentTime = ct;
@@ -571,6 +741,8 @@ class CameraController {
     if (this.videoEl) this.videoEl.srcObject = null;
     this.locked = false;
     this.locking = false;
+    this.lastCurrentTime = -1;
+    this.lastCaptureTime = 0;
   }
 }
 
@@ -736,20 +908,57 @@ class VitalsApp {
     this.boundLoop = this.loop.bind(this);
   }
 
+  setStatus(type, message) {
+    const el = this.els.status;
+    if (!message) {
+      el.style.display = 'none';
+      el.textContent = '';
+      return;
+    }
+    el.className = 'status-panel ' + type;
+    el.textContent = message;
+    el.style.display = '';
+  }
+
   async start() {
     if (this.running) return;
     this.els.startBtn.disabled = true;
-    try {
-      const roiCanvas = document.createElement('canvas');
-      await this.camera.start(this.els.video, roiCanvas);
-    } catch (e) {
-      console.error('[app] caméra :', e);
-      alert('Impossible d’accéder à la caméra : ' + (e && e.message ? e.message : e));
-      this.els.startBtn.disabled = false;
-      return;
-    }
     this.els.video.classList.remove('hidden');
     this.els.placeholder.style.display = 'none';
+    this.setStatus('info', 'Démarrage de la caméra…');
+
+    try {
+      const roiCanvas = document.createElement('canvas');
+      await this.camera.start(
+        this.els.video,
+        roiCanvas,
+        (type, msg) => this.setStatus(type, msg)
+      );
+    } catch (e) {
+      console.error('[app] caméra :', e);
+      this.camera.stop();
+      this.els.video.classList.add('hidden');
+      this.els.placeholder.style.display = '';
+
+      const diag = await getDiagnostics();
+      const diagLine =
+        `HTTPS : ${diag.https ? '✓' : '✗'}  ·  ` +
+        `API caméra : ${diag.api ? '✓' : '✗'}  ·  ` +
+        `Autorisation : ${diag.perm}` +
+        (diag.iframe ? '  ·  ⚠ iframe' : '');
+
+      this.setStatus('error',
+        'Impossible d\'accéder à la caméra.\n' +
+        describeCameraError(e) + '\n' +
+        '— Diagnostic : ' + diagLine
+      );
+      this.els.startBtn.disabled = false;
+      this.refreshDiagnostics();
+      return;
+    }
+
+    // Succès : on cache le panneau de statut et on lance le settling
+    this.setStatus(null);
     this.vitals.reset();
     this.vitals.startSettling();
     this.running = true;
@@ -757,21 +966,27 @@ class VitalsApp {
     this.els.startBtn.classList.add('stop');
     this.els.startBtn.disabled = false;
     this.rafId = requestAnimationFrame(this.boundLoop);
+    this.refreshDiagnostics();
   }
 
   stop() {
-    if (!this.running) return;
+    if (!this.running) {
+      this.camera.stop();
+      return;
+    }
     this.running = false;
     if (this.rafId) cancelAnimationFrame(this.rafId);
     this.rafId = null;
     this.camera.stop();
     this.vitals.reset();
+    this.setStatus(null);
     this.els.video.classList.add('hidden');
     this.els.placeholder.style.display = '';
     this.els.startBtn.textContent = 'Démarrer';
     this.els.startBtn.classList.remove('stop');
     this.render(this.vitals.stats);
     this.clearSignal();
+    this.refreshDiagnostics();
   }
 
   loop(rafTime) {
@@ -869,6 +1084,21 @@ class VitalsApp {
       ctx.fill();
     }
   }
+
+  async refreshDiagnostics() {
+    const diag = await getDiagnostics();
+    const html =
+      `<div>HTTPS : <b class="${diag.https ? 'ok' : 'ko'}">${diag.https ? '✓' : '✗ requis'}</b></div>` +
+      `<div>API caméra : <b class="${diag.api ? 'ok' : 'ko'}">${diag.api ? '✓' : '✗ indisponible'}</b></div>` +
+      `<div>Autorisation caméra : <b class="${
+        diag.perm === 'granted' ? 'ok'
+        : diag.perm === 'denied' ? 'ko'
+        : diag.perm === 'prompt' ? 'warn'
+        : ''
+      }">${diag.perm}</b></div>` +
+      (diag.iframe ? `<div class="warn">⚠ Page dans une iframe — attribut allow="camera" requis sur &lt;iframe&gt;</div>` : '');
+    this.els.diagContent.innerHTML = html;
+  }
 }
 
 // ============================================================
@@ -878,10 +1108,12 @@ const els = {
   video: document.getElementById('video'),
   placeholder: document.getElementById('placeholder'),
   signalCanvas: document.getElementById('signal-canvas'),
+  status: document.getElementById('status-panel'),
   bpm: document.getElementById('bpm'),
   quality: document.getElementById('quality'),
   reason: document.getElementById('reason'),
   startBtn: document.getElementById('start-btn'),
+  diagContent: document.getElementById('diag-content'),
   dbgState: document.getElementById('dbg-state'),
   dbgFps: document.getElementById('dbg-fps'),
   dbgPeaks: document.getElementById('dbg-peaks'),
@@ -892,6 +1124,7 @@ const els = {
 };
 
 const app = new VitalsApp(els);
+app.refreshDiagnostics();
 
 els.startBtn.addEventListener('click', () => {
   if (app.running) app.stop();
