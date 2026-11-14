@@ -3,170 +3,79 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VFC — Observation cardiaque</title>
+<title>VFC v3.0.0 — Observation cardiaque</title>
 <style>
   :root {
-    --bg: #0f1115;
-    --panel: #181b22;
-    --border: #2a2f3a;
-    --text: #e6e9ef;
-    --muted: #8a92a6;
-    --accent: #4ade80;
-    --warn: #fbbf24;
-    --bad: #f87171;
-    --info: #60a5fa;
+    --bg: #0f1115; --panel: #181b22; --border: #2a2f3a;
+    --text: #e6e9ef; --muted: #8a92a6;
+    --accent: #4ade80; --warn: #fbbf24; --bad: #f87171; --info: #60a5fa;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    padding: 24px;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+    display: flex; justify-content: center; padding: 24px;
   }
-  .app {
-    width: 100%;
-    max-width: 480px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
+  .app { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 16px; }
   h1 { font-size: 1.25rem; margin: 0; font-weight: 600; }
   .subtitle { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
-
   .status-panel {
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    border: 1px solid;
-    white-space: pre-wrap;
+    padding: 12px 16px; border-radius: 8px; font-size: 0.9rem;
+    line-height: 1.5; border: 1px solid; white-space: pre-wrap;
   }
-  .status-panel.info    { background: #0f2136; color: var(--info); border-color: #1e40af; }
-  .status-panel.warn    { background: #2a1f07; color: var(--warn); border-color: #a16207; }
-  .status-panel.error   { background: #2a0e0e; color: var(--bad);  border-color: #b91c1c; }
+  .status-panel.info    { background: #0f2136; color: var(--info);   border-color: #1e40af; }
+  .status-panel.warn    { background: #2a1f07; color: var(--warn);   border-color: #a16207; }
+  .status-panel.error   { background: #2a0e0e; color: var(--bad);    border-color: #b91c1c; }
   .status-panel.success { background: #0d2416; color: var(--accent); border-color: #15803d; }
-  .status-panel b { color: inherit; }
-
   .preview-wrap {
-    position: relative;
-    background: #000;
-    border-radius: 12px;
-    overflow: hidden;
-    aspect-ratio: 1;
-    max-height: 220px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: relative; background: #000; border-radius: 12px; overflow: hidden;
+    aspect-ratio: 1; max-height: 220px; display: flex;
+    align-items: center; justify-content: center;
   }
-  #video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    background: #000;
-  }
+  #video { width: 100%; height: 100%; object-fit: cover; background: #000; }
   #video.hidden { display: none; }
-  .placeholder {
-    color: var(--muted);
-    font-size: 0.9rem;
-    padding: 16px;
-    text-align: center;
-  }
-
-  .metrics {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-  }
-  .card-label {
-    color: var(--muted);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 8px;
-  }
-  .bpm-value {
-    font-size: 3rem;
-    font-weight: 700;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-  }
+  .placeholder { color: var(--muted); font-size: 0.9rem; padding: 16px; text-align: center; }
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .card-label { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .bpm-value { font-size: 3rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
   .bpm-unit { color: var(--muted); font-size: 0.85rem; margin-left: 4px; }
-
   .quality-value { font-size: 1.25rem; font-weight: 600; }
   .quality-value[data-level="good"] { color: var(--accent); }
   .quality-value[data-level="mid"]  { color: var(--warn); }
   .quality-value[data-level="bad"]  { color: var(--bad); }
-
-  .reason {
-    color: var(--muted);
-    font-size: 0.85rem;
-    min-height: 1.2em;
-    margin-top: 4px;
-  }
+  .reason { color: var(--muted); font-size: 0.85rem; min-height: 1.2em; margin-top: 4px; }
   .reason[data-code="clip"], .reason[data-code="motion"] { color: var(--warn); }
-  .reason[data-code="weak"], .reason[data-code="noisy"]   { color: var(--bad); }
-
-  #signal-canvas {
-    width: 100%;
-    height: 80px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-  }
-
+  .reason[data-code="weak"], .reason[data-code="noisy"]  { color: var(--bad); }
+  #signal-canvas { width: 100%; height: 80px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
   .controls { display: flex; gap: 8px; }
   button {
-    flex: 1;
-    padding: 14px;
-    font-size: 1rem;
-    font-weight: 600;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    background: var(--accent);
-    color: #0a0f0a;
-    transition: opacity 0.15s;
+    flex: 1; padding: 14px; font-size: 1rem; font-weight: 600;
+    border: none; border-radius: 12px; cursor: pointer;
+    background: var(--accent); color: #0a0f0a; transition: opacity 0.15s;
   }
   button:disabled { opacity: 0.5; cursor: not-allowed; }
   button.stop { background: var(--bad); color: #1a0505; }
-
+  button.secondary { background: var(--panel); color: var(--text); border: 1px solid var(--border); font-size: 0.85rem; padding: 8px 12px; }
   details.diag {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 0.8rem;
-    color: var(--muted);
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; font-size: 0.8rem; color: var(--muted);
   }
-  details.diag summary { cursor: pointer; color: var(--muted); }
+  details.diag summary { cursor: pointer; }
   details.diag summary:hover { color: var(--text); }
-  #diag-content { padding-top: 8px; line-height: 1.7; }
+  #diag-content { padding-top: 8px; line-height: 1.8; }
   #diag-content b { color: var(--text); }
   #diag-content .ok    { color: var(--accent); }
   #diag-content .ko    { color: var(--bad); }
   #diag-content .warn  { color: var(--warn); }
-
+  #diag-content .row   { display: flex; justify-content: space-between; gap: 8px; }
+  #diag-content .row + .row { margin-top: 4px; }
   .debug {
-    font-family: ui-monospace, "SF Mono", Consolas, monospace;
-    font-size: 0.75rem;
-    color: var(--muted);
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 4px 16px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 0.75rem;
+    color: var(--muted); background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px; display: grid;
+    grid-template-columns: repeat(2, 1fr); gap: 4px 16px;
   }
   .debug span:nth-child(odd)  { color: #6b7280; }
   .debug span:nth-child(even) { color: var(--text); text-align: right; }
@@ -179,7 +88,7 @@
     <div class="subtitle">Placez votre doigt sur l'objectif arrière, sans appuyer trop fort.</div>
   </div>
 
-  <div id="status-panel" class="status-panel" style="display:none"></div>
+  <div id="status-panel" class="status-panel info" style="display:none"></div>
 
   <div class="preview-wrap">
     <video id="video" class="hidden" autoplay playsinline muted></video>
@@ -189,10 +98,7 @@
   <div class="metrics">
     <div class="card">
       <div class="card-label">Fréquence</div>
-      <div>
-        <span id="bpm" class="bpm-value">—</span>
-        <span class="bpm-unit">bpm</span>
-      </div>
+      <div><span id="bpm" class="bpm-value">—</span><span class="bpm-unit">bpm</span></div>
     </div>
     <div class="card">
       <div class="card-label">Qualité du signal</div>
@@ -209,7 +115,8 @@
 
   <details class="diag">
     <summary>Diagnostic environnement</summary>
-    <div id="diag-content">Vérification…</div>
+    <div id="diag-content">…</div>
+    <button id="test-perm-btn" class="secondary" style="margin-top:8px">Tester la permission caméra</button>
   </details>
 
   <div class="debug">
@@ -223,7 +130,46 @@
   </div>
 </div>
 
+<!-- Filet de sécurité : si le module ES ne charge pas, on prévient l'utilisateur -->
+<script>
+  window.__VFC_LOADED__ = false;
+  window.__VFC_VERSION__ = '3.0.0';
+  setTimeout(function() {
+    if (!window.__VFC_LOADED__) {
+      var el = document.getElementById('status-panel');
+      if (el) {
+        el.className = 'status-panel error';
+        el.textContent =
+          '⚠ Le script JavaScript ne s\'est pas chargé.\n' +
+          'Vérifiez que le fichier déployé est complet, ou regardez la console.';
+        el.style.display = '';
+      }
+    }
+  }, 2000);
+
+  // Filet de sécurité global pour les erreurs runtime
+  window.addEventListener('error', function(e) {
+    console.error('[VFC] erreur globale :', e.error || e.message);
+    var el = document.getElementById('status-panel');
+    if (el && window.__VFC_LOADED__) {
+      el.className = 'status-panel error';
+      el.textContent = 'Erreur JavaScript : ' + (e.error && e.error.message || e.message);
+      el.style.display = '';
+    }
+  });
+  window.addEventListener('unhandledrejection', function(e) {
+    console.error('[VFC] promesse rejetée :', e.reason);
+  });
+</script>
+
 <script type="module">
+console.log('[VFC] module chargé, version', window.__VFC_VERSION__);
+console.log('[VFC] context :', {
+  protocol: location.protocol,
+  secure: window.isSecureContext,
+  hasMediaDevices: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+});
+
 // ============================================================
 // Configuration
 // ============================================================
@@ -232,26 +178,16 @@ const CONFIG = {
   ROI_SIZE: 128,
   RESAMPLE_HZ: 60,
   BANDPASS: { low: 0.8, high: 3.0 },
-  PEAKS: {
-    minRR: 0.33,
-    maxRR: 2.0,
-    templateLen: 5,
-    templateCorr: 0.6,
-    marginSec: 0.3,
-  },
+  PEAKS: { minRR: 0.33, maxRR: 2.0, templateLen: 5, templateCorr: 0.6, marginSec: 0.3 },
   ARTIFACT: { sigmaThreshold: 5 },
-  SQI: {
-    clipMax: 0.05,
-    motionMax: 0.15,
-    acDcMin: 0.005,
-    acDcRef: 0.02,
-  },
+  SQI: { clipMax: 0.05, motionMax: 0.15, acDcMin: 0.005, acDcRef: 0.02 },
   SETTLING: { minMs: 1500, stdRatio: 0.02, windowMs: 1000, minMean: 15 },
   RR: { window: 10, madFactor: 3 },
   BUFFER_SEC: 30,
   ANALYSIS_INTERVAL_MS: 250,
   MIN_BUFFER_SAMPLES: 180,
   VIDEO_READY_TIMEOUT_MS: 10000,
+  PERMISSION_TIMEOUT_MS: 3000,
 };
 
 // ============================================================
@@ -259,8 +195,7 @@ const CONFIG = {
 // ============================================================
 class Biquad {
   constructor(b0, b1, b2, a1, a2) {
-    this.b0 = b0; this.b1 = b1; this.b2 = b2;
-    this.a1 = a1; this.a2 = a2;
+    this.b0 = b0; this.b1 = b1; this.b2 = b2; this.a1 = a1; this.a2 = a2;
     this.z1 = 0; this.z2 = 0;
   }
   reset() { this.z1 = 0; this.z2 = 0; }
@@ -271,82 +206,47 @@ class Biquad {
     return y;
   }
 }
-
 function designBiquad(fs, fc, type) {
   const w0 = 2 * Math.PI * fc / fs;
-  const cosw0 = Math.cos(w0);
-  const sinw0 = Math.sin(w0);
+  const cosw0 = Math.cos(w0), sinw0 = Math.sin(w0);
   const alpha = sinw0 / Math.SQRT2;
   let b0, b1, b2;
-  if (type === 'low') {
-    b0 = (1 - cosw0) / 2;
-    b1 = 1 - cosw0;
-    b2 = (1 - cosw0) / 2;
-  } else {
-    b0 = (1 + cosw0) / 2;
-    b1 = -(1 + cosw0);
-    b2 = (1 + cosw0) / 2;
-  }
-  const a0 = 1 + alpha;
-  const a1 = -2 * cosw0;
-  const a2 = 1 - alpha;
-  return new Biquad(b0 / a0, b1 / a0, b2 / a0, a1 / a0, a2 / a0);
+  if (type === 'low') { b0 = (1 - cosw0) / 2; b1 = 1 - cosw0; b2 = (1 - cosw0) / 2; }
+  else                { b0 = (1 + cosw0) / 2; b1 = -(1 + cosw0); b2 = (1 + cosw0) / 2; }
+  const a0 = 1 + alpha, a1 = -2 * cosw0, a2 = 1 - alpha;
+  return new Biquad(b0/a0, b1/a0, b2/a0, a1/a0, a2/a0);
 }
-
 function designBandpass(fs, lowHz, highHz) {
   return [designBiquad(fs, lowHz, 'high'), designBiquad(fs, highHz, 'low')];
 }
-
 function filtfilt(signal, filters) {
   const N = signal.length;
   if (N === 0) return new Float32Array(0);
-  const pad = 20;
-  const M = N + 2 * pad;
+  const pad = 20, M = N + 2 * pad;
   const padded = new Float64Array(M);
-  for (let i = 0; i < pad; i++) {
-    padded[i] = signal[0];
-    padded[N + pad + i] = signal[N - 1];
-  }
+  for (let i = 0; i < pad; i++) { padded[i] = signal[0]; padded[N + pad + i] = signal[N - 1]; }
   for (let i = 0; i < N; i++) padded[pad + i] = signal[i];
-
   const fwd = new Float64Array(M);
   for (const f of filters) f.reset();
-  for (let i = 0; i < M; i++) {
-    let x = padded[i];
-    for (const f of filters) x = f.process(x);
-    fwd[i] = x;
-  }
-
+  for (let i = 0; i < M; i++) { let x = padded[i]; for (const f of filters) x = f.process(x); fwd[i] = x; }
   const rev = new Float64Array(M);
   for (const f of filters) f.reset();
-  for (let i = M - 1; i >= 0; i--) {
-    let x = fwd[i];
-    for (const f of filters) x = f.process(x);
-    rev[i] = x;
-  }
-
+  for (let i = M - 1; i >= 0; i--) { let x = fwd[i]; for (const f of filters) x = f.process(x); rev[i] = x; }
   const out = new Float32Array(N);
   for (let i = 0; i < N; i++) out[i] = rev[pad + i];
   return out;
 }
-
 function resampleLinear(samples, targetHz) {
-  if (samples.length < 2) {
-    return { fs: targetHz, t0: 0, data: new Float32Array(0) };
-  }
-  const t0 = samples[0].t;
-  const tEnd = samples[samples.length - 1].t;
+  if (samples.length < 2) return { fs: targetHz, t0: 0, data: new Float32Array(0) };
+  const t0 = samples[0].t, tEnd = samples[samples.length - 1].t;
   const n = Math.max(0, Math.floor(((tEnd - t0) / 1000) * targetHz) + 1);
-  if (n < 2) {
-    return { fs: targetHz, t0, data: new Float32Array(0) };
-  }
+  if (n < 2) return { fs: targetHz, t0, data: new Float32Array(0) };
   const data = new Float32Array(n);
   let j = 0;
   for (let i = 0; i < n; i++) {
     const t = t0 + (i * 1000) / targetHz;
     while (j < samples.length - 2 && samples[j + 1].t < t) j++;
-    const a = samples[j];
-    const b = samples[j + 1];
+    const a = samples[j], b = samples[j + 1];
     const span = b.t - a.t;
     let frac = span > 0 ? (t - a.t) / span : 0;
     if (frac < 0) frac = 0;
@@ -355,59 +255,41 @@ function resampleLinear(samples, targetHz) {
   }
   return { fs: targetHz, t0, data };
 }
-
 function detectPeaks(signal, fs, opts) {
   const N = signal.length;
   if (N < 4) return [];
   const margin = Math.floor((opts.marginSec || 0) * fs);
-  const startI = Math.max(1, margin);
-  const endI = Math.min(N - 1, N - margin);
+  const startI = Math.max(1, margin), endI = Math.min(N - 1, N - margin);
   if (startI >= endI) return [];
-
   const sorted = Float32Array.from(signal).sort();
-  const median = sorted[Math.floor(N / 2)];
-  const max = sorted[N - 1];
+  const median = sorted[Math.floor(N / 2)], max = sorted[N - 1];
   const threshold = median + 0.4 * (max - median);
   const minDist = Math.max(1, Math.floor(opts.minRR * fs));
-
-  const peaks = [];
-  let lastPos = -minDist * 2;
+  const peaks = []; let lastPos = -minDist * 2;
   for (let i = startI; i < endI; i++) {
-    if (signal[i] > threshold && signal[i] > signal[i - 1] && signal[i] >= signal[i + 1]) {
-      const y0 = signal[i - 1];
-      const y1 = signal[i];
-      const y2 = signal[i + 1];
-      const denom = y0 - 2 * y1 + y2;
+    if (signal[i] > threshold && signal[i] > signal[i-1] && signal[i] >= signal[i+1]) {
+      const y0 = signal[i-1], y1 = signal[i], y2 = signal[i+1];
+      const denom = y0 - 2*y1 + y2;
       const delta = Math.abs(denom) > 1e-12 ? 0.5 * (y0 - y2) / denom : 0;
       const pos = i + delta;
-      if (pos - lastPos >= minDist) {
-        peaks.push({ pos, time: pos / fs });
-        lastPos = pos;
-      }
+      if (pos - lastPos >= minDist) { peaks.push({ pos, time: pos / fs }); lastPos = pos; }
     }
   }
   return peaks;
 }
-
 function recoverMissedPeaks(signal, fs, peaks, opts) {
   if (peaks.length < 2) return peaks;
   const out = [peaks[0]];
   for (let i = 1; i < peaks.length; i++) {
-    const prev = peaks[i - 1];
-    const cur = peaks[i];
+    const prev = peaks[i-1], cur = peaks[i];
     const rr = cur.time - prev.time;
     if (rr > opts.maxRR) {
       const mid = Math.floor((prev.pos + cur.pos) / 2);
       const radius = Math.max(2, Math.floor((cur.pos - prev.pos) / 4));
-      let bestPos = -1;
-      let bestVal = -Infinity;
-      const s = Math.max(1, mid - radius);
-      const e = Math.min(signal.length - 1, mid + radius);
+      let bestPos = -1, bestVal = -Infinity;
+      const s = Math.max(1, mid - radius), e = Math.min(signal.length - 1, mid + radius);
       for (let k = s; k < e; k++) {
-        if (signal[k] > bestVal && signal[k] > signal[k - 1] && signal[k] >= signal[k + 1]) {
-          bestVal = signal[k];
-          bestPos = k;
-        }
+        if (signal[k] > bestVal && signal[k] > signal[k-1] && signal[k] >= signal[k+1]) { bestVal = signal[k]; bestPos = k; }
       }
       if (bestPos > 0) out.push({ pos: bestPos, time: bestPos / fs });
     }
@@ -415,12 +297,10 @@ function recoverMissedPeaks(signal, fs, peaks, opts) {
   }
   return out;
 }
-
 function validateTemplate(signal, fs, peaks, opts) {
   if (peaks.length < opts.templateLen) return peaks;
   const half = Math.max(2, Math.floor(0.15 * fs));
-  const tpl = new Float32Array(2 * half);
-  let count = 0;
+  const tpl = new Float32Array(2 * half); let count = 0;
   for (let k = 0; k < opts.templateLen; k++) {
     const p = Math.round(peaks[k].pos);
     if (p - half < 0 || p + half >= signal.length) continue;
@@ -429,32 +309,22 @@ function validateTemplate(signal, fs, peaks, opts) {
   }
   if (!count) return peaks;
   for (let i = 0; i < tpl.length; i++) tpl[i] /= count;
-
   const out = [];
   for (const p of peaks) {
     const pi = Math.round(p.pos);
-    if (pi - half < 0 || pi + half >= signal.length) {
-      out.push(p);
-      continue;
-    }
+    if (pi - half < 0 || pi + half >= signal.length) { out.push(p); continue; }
     let dot = 0, na = 0, nb = 0;
     for (let i = 0; i < tpl.length; i++) {
-      const a = signal[pi - half + i];
-      const b = tpl[i];
-      dot += a * b;
-      na += a * a;
-      nb += b * b;
+      const a = signal[pi - half + i], b = tpl[i];
+      dot += a * b; na += a * a; nb += b * b;
     }
     const denom = Math.sqrt(na * nb);
-    const corr = denom > 1e-9 ? dot / denom : 0;
-    if (corr >= opts.templateCorr) out.push(p);
+    if ((denom > 1e-9 ? dot / denom : 0) >= opts.templateCorr) out.push(p);
   }
   return out;
 }
-
 function detectArtifacts(signal, sigmaThreshold) {
-  const N = signal.length;
-  const flags = new Uint8Array(N);
+  const N = signal.length, flags = new Uint8Array(N);
   if (N < 4) return flags;
   const deriv = new Float32Array(N);
   for (let i = 1; i < N; i++) deriv[i] = signal[i] - signal[i - 1];
@@ -465,47 +335,29 @@ function detectArtifacts(signal, sigmaThreshold) {
   for (let i = 1; i < N; i++) v += (deriv[i] - mean) * (deriv[i] - mean);
   const std = Math.sqrt(v / (N - 1));
   if (std === 0) return flags;
-  for (let i = 1; i < N; i++) {
-    if (Math.abs(deriv[i] - mean) > sigmaThreshold * std) flags[i] = 1;
-  }
+  for (let i = 1; i < N; i++) if (Math.abs(deriv[i] - mean) > sigmaThreshold * std) flags[i] = 1;
   return flags;
 }
-
-// ============================================================
-// Qualité
-// ============================================================
 function computeSQI(rawGrid, clipFraction, artifacts) {
   let mean = 0, maxv = -Infinity, minv = Infinity;
   for (let i = 0; i < rawGrid.length; i++) {
-    const v = rawGrid[i];
-    mean += v;
-    if (v > maxv) maxv = v;
-    if (v < minv) minv = v;
+    const v = rawGrid[i]; mean += v;
+    if (v > maxv) maxv = v; if (v < minv) minv = v;
   }
   mean /= rawGrid.length;
   const acDc = mean > 0 ? (maxv - minv) / 2 / mean : 0;
-
   const strengthScore = Math.min(1, acDc / CONFIG.SQI.acDcRef);
   const clipScore = Math.max(0, 1 - clipFraction / CONFIG.SQI.clipMax);
-
   let artFrac = 0;
-  if (artifacts.length > 0) {
-    let s = 0;
-    for (let i = 0; i < artifacts.length; i++) s += artifacts[i];
-    artFrac = s / artifacts.length;
-  }
+  if (artifacts.length > 0) { let s = 0; for (let i = 0; i < artifacts.length; i++) s += artifacts[i]; artFrac = s / artifacts.length; }
   const motionScore = Math.max(0, 1 - artFrac / CONFIG.SQI.motionMax);
-
   const score = strengthScore * clipScore * motionScore;
-
   let reason = 'ok';
   if (clipFraction > CONFIG.SQI.clipMax) reason = 'clip';
   else if (artFrac > CONFIG.SQI.motionMax) reason = 'motion';
   else if (acDc < CONFIG.SQI.acDcMin) reason = 'weak';
-
   return { score, clipFraction, artFrac, acDc, reason };
 }
-
 function filterRR(rrList) {
   if (rrList.length === 0) return [];
   const recent = rrList.slice(-CONFIG.RR.window);
@@ -517,52 +369,34 @@ function filterRR(rrList) {
 }
 
 // ============================================================
-// Diagnostic & messages d'erreur caméra
+// Diagnostic SYNCHRONE (aucune promesse, ne peut pas bloquer)
 // ============================================================
-async function getDiagnostics() {
-  const diag = {
+function getDiagnosticsSync() {
+  return {
     https: window.isSecureContext,
+    protocol: location.protocol,
+    file: location.protocol === 'file:',
     api: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
-    perm: 'inconnu',
     iframe: (() => { try { return window.self !== window.top; } catch { return true; } })(),
-    ua: navigator.userAgent,
   };
-  try {
-    const p = await navigator.permissions.query({ name: 'camera' });
-    diag.perm = p.state;
-  } catch {
-    diag.perm = 'non supporté';
-  }
-  return diag;
 }
 
-function describeCameraError(err) {
-  const name = err && err.name;
-  const map = {
-    NotAllowedError:
-      "Accès caméra refusé par le navigateur.\n" +
-      "→ Cliquez sur l'icône 🔒 (ou ⓘ) à gauche de l'URL → Autorisations → Caméra → Autoriser, puis rechargez la page.\n" +
-      "→ Si la page est dans une iframe, l'attribut allow=\"camera\" est obligatoire sur <iframe>.",
-    PermissionDeniedError:
-      "Accès caméra refusé. Autorisez la caméra dans les paramètres du navigateur pour ce site.",
-    NotFoundError:
-      "Aucune caméra détectée sur cet appareil.",
-    DevicesNotFoundError:
-      "Aucune caméra détectée sur cet appareil.",
-    NotReadableError:
-      "Caméra indisponible — probablement utilisée par une autre application (visio, appareil photo…).",
-    TrackStartError:
-      "Caméra indisponible — probablement utilisée par une autre application.",
-    OverconstrainedError:
-      "Les paramètres caméra demandés ne sont pas compatibles avec cet appareil.",
-    SecurityError:
-      "Accès caméra bloqué par la politique de sécurité. La page doit être servie en HTTPS.",
-    AbortError:
-      "Erreur système lors du démarrage de la caméra.",
-    TypeError:
-      "Configuration caméra invalide.",
-  };
-  return map[name] || (err && err.message) || String(err);
+// Query async, utilisé UNIQUEMENT par le bouton "Tester la permission", avec timeout
+function queryPermissionWithTimeout(ms) {
+  return new Promise(resolve => {
+    if (!navigator.permissions || !navigator.permissions.query) {
+      return resolve({ state: 'non supporté', reason: 'permissions API absente' });
+    }
+    let done = false;
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      resolve({ state: 'timeout', reason: `pas de réponse après ${ms} ms` });
+    }, ms);
+    navigator.permissions.query({ name: 'camera' })
+      .then(p => { if (!done) { done = true; clearTimeout(timer); resolve({ state: p.state, reason: 'ok' }); } })
+      .catch(err => { if (!done) { done = true; clearTimeout(timer); resolve({ state: 'erreur', reason: err.message }); } });
+  });
 }
 
 // ============================================================
@@ -570,63 +404,54 @@ function describeCameraError(err) {
 // ============================================================
 class CameraController {
   constructor() {
-    this.stream = null;
-    this.ctx = null;
-    this.videoEl = null;
-    this.locked = false;
-    this.locking = false;
-    this.lastCurrentTime = -1;
-    this.lastCaptureTime = 0;
+    this.stream = null; this.ctx = null; this.videoEl = null;
+    this.locked = false; this.locking = false;
+    this.lastCurrentTime = -1; this.lastCaptureTime = 0;
   }
 
   async start(videoEl, canvasEl, onProgress) {
+    console.log('[camera] start()');
     this.onProgress = onProgress || (() => {});
     this.videoEl = videoEl;
     canvasEl.width = CONFIG.ROI_SIZE;
     canvasEl.height = CONFIG.ROI_SIZE;
     this.ctx = canvasEl.getContext('2d', { willReadFrequently: true });
 
-    // --- Vérifications synchrones --------------------------------
-    if (!window.isSecureContext) {
+    if (location.protocol === 'file:') {
+      console.error('[camera] protocole file:// interdit');
       throw Object.assign(new Error(
-        "La page n'est pas servie en HTTPS.\n" +
-        "L'accès caméra est interdit hors contexte sécurisé (HTTPS ou localhost)."
+        "Le fichier est ouvert en file://. Chrome interdit l'accès caméra.\n" +
+        "Hébergez le fichier sur GitHub Pages (HTTPS) ou servez-le via http://localhost."
+      ), { name: 'SecurityError' });
+    }
+    if (!window.isSecureContext) {
+      console.error('[camera] contexte non sécurisé');
+      throw Object.assign(new Error(
+        "La page n'est pas en contexte sécurisé (HTTPS).\n" +
+        "L'accès caméra est interdit hors HTTPS/localhost."
       ), { name: 'SecurityError' });
     }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error('[camera] API getUserMedia absente');
       throw new Error(
         "L'API caméra n'est pas disponible dans ce navigateur.\n" +
-        "Essayez Chrome, Firefox, Safari ou Edge à jour."
+        "Vérifiez que vous utilisez Chrome, Firefox, Safari ou Edge à jour."
       );
     }
 
-    // Diagnostic permission (lancé en parallèle, non bloquant)
-    navigator.permissions.query({ name: 'camera' })
-      .then(p => {
-        if (p.state === 'denied') {
-          this.onProgress('warn',
-            "⚠ L'autorisation caméra semble avoir été bloquée précédemment pour ce site.");
-        }
-      })
-      .catch(() => { /* non supporté */ });
-
-    // --- Demande du flux (premier await, préserve l'activation)
     this.onProgress('info', 'Demande d\'accès à la caméra…');
+    console.log('[camera] appel getUserMedia');
     this.stream = await this._requestStream();
+    console.log('[camera] flux obtenu, pistes vidéo :', this.stream.getVideoTracks().length);
 
-    // --- Attachement et démarrage du flux ------------------------
     this.onProgress('info', 'Caméra obtenue, démarrage du flux…');
     videoEl.srcObject = this.stream;
-    try {
-      await videoEl.play();
-    } catch (e) {
-      console.warn('[camera] play() :', e);
-      videoEl.play().catch(() => { /* re-tentative silencieuse */ });
-    }
+    try { await videoEl.play(); }
+    catch (e) { console.warn('[camera] play() :', e); videoEl.play().catch(() => {}); }
 
-    // --- Attente de la première image ---------------------------
     this.onProgress('info', 'Attente de la première image…');
     await this._waitForVideoReady(videoEl, CONFIG.VIDEO_READY_TIMEOUT_MS);
+    console.log('[camera] première image OK, dimensions :', videoEl.videoWidth, '×', videoEl.videoHeight);
 
     this.lastCurrentTime = -1;
     this.lastCaptureTime = 0;
@@ -639,10 +464,7 @@ class CameraController {
       { video: true },
     ];
     let lastErr = null;
-    const definitive = new Set([
-      'NotAllowedError', 'PermissionDeniedError',
-      'NotFoundError', 'DevicesNotFoundError', 'SecurityError',
-    ]);
+    const definitive = new Set(['NotAllowedError', 'PermissionDeniedError', 'NotFoundError', 'DevicesNotFoundError', 'SecurityError']);
     for (let i = 0; i < attempts.length; i++) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia(attempts[i]);
@@ -654,9 +476,8 @@ class CameraController {
         return stream;
       } catch (e) {
         lastErr = e;
-        console.warn(`[camera] tentative ${i + 1} échouée : ${e.name} — ${e.message || ''}`);
+        console.warn(`[camera] tentative ${i+1} échouée : ${e.name} — ${e.message || ''}`);
         if (definitive.has(e.name)) throw e;
-        // OverconstrainedError / NotReadableError → essayer suivant
       }
     }
     throw lastErr || new Error('Impossible d\'obtenir un flux caméra.');
@@ -668,12 +489,10 @@ class CameraController {
       const start = Date.now();
       const tick = () => {
         if (videoEl.readyState >= 2 && videoEl.videoWidth > 0) return resolve();
-        if (Date.now() - start > timeoutMs) {
-          return reject(new Error(
-            "La caméra ne fournit pas d'image (délai dépassé).\n" +
-            "Vérifiez qu'aucune autre application n'utilise la caméra."
-          ));
-        }
+        if (Date.now() - start > timeoutMs) return reject(new Error(
+          "La caméra ne fournit pas d'image (délai dépassé).\n" +
+          "Vérifiez qu'aucune autre application n'utilise la caméra."
+        ));
         setTimeout(tick, 100);
       };
       videoEl.addEventListener('loadeddata', () => resolve(), { once: true });
@@ -690,197 +509,111 @@ class CameraController {
       if (track) {
         await track.applyConstraints({
           advanced: [
-            { exposureMode: 'manual' },
-            { whiteBalanceMode: 'manual' },
-            { focusMode: 'manual' },
+            { exposureMode: 'manual' }, { whiteBalanceMode: 'manual' }, { focusMode: 'manual' },
           ],
         });
         this.locked = true;
       }
-    } catch (e) {
-      console.warn('[camera] verrouillage partiel :', e.name);
-    } finally {
-      this.locking = false;
-    }
+    } catch (e) { console.warn('[camera] verrouillage partiel :', e.name); }
+    finally { this.locking = false; }
   }
 
   captureFrame(rafTime) {
     if (!this.videoEl) return null;
-    const vw = this.videoEl.videoWidth;
-    const vh = this.videoEl.videoHeight;
+    const vw = this.videoEl.videoWidth, vh = this.videoEl.videoHeight;
     if (!vw || !vh) return null;
-
     const ct = this.videoEl.currentTime;
     if (ct === this.lastCurrentTime) {
       if (this.lastCaptureTime && rafTime - this.lastCaptureTime < 100) return null;
     }
     this.lastCurrentTime = ct;
     this.lastCaptureTime = rafTime;
-
     const side = Math.min(vw, vh);
-    const sx = (vw - side) / 2;
-    const sy = (vh - side) / 2;
+    const sx = (vw - side) / 2, sy = (vh - side) / 2;
     this.ctx.drawImage(this.videoEl, sx, sy, side, side, 0, 0, CONFIG.ROI_SIZE, CONFIG.ROI_SIZE);
     const data = this.ctx.getImageData(0, 0, CONFIG.ROI_SIZE, CONFIG.ROI_SIZE).data;
     const n = data.length / 4;
-    let r = 0;
-    let clipped = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      const rv = data[i];
-      r += rv;
-      if (rv >= 250) clipped++;
-    }
+    let r = 0, clipped = 0;
+    for (let i = 0; i < data.length; i += 4) { const rv = data[i]; r += rv; if (rv >= 250) clipped++; }
     return { t: performance.now(), r: r / n, clipped: clipped / n };
   }
 
   stop() {
-    if (this.stream) {
-      this.stream.getTracks().forEach(t => t.stop());
-      this.stream = null;
-    }
+    if (this.stream) { this.stream.getTracks().forEach(t => t.stop()); this.stream = null; }
     if (this.videoEl) this.videoEl.srcObject = null;
-    this.locked = false;
-    this.locking = false;
-    this.lastCurrentTime = -1;
-    this.lastCaptureTime = 0;
+    this.locked = false; this.locking = false;
+    this.lastCurrentTime = -1; this.lastCaptureTime = 0;
   }
 }
 
 // ============================================================
-// Contrôleur vital
+// Contrôleur vital (pipeline inchangé)
 // ============================================================
 class VitalsController {
-  constructor(onUpdate) {
-    this.onUpdate = onUpdate;
-    this.reset();
-  }
-
+  constructor(onUpdate) { this.onUpdate = onUpdate; this.reset(); }
   reset() {
-    this.state = 'idle';
-    this.rawBuffer = [];
-    this.settlingStart = 0;
-    this.lastAnalysis = 0;
-    this.lastPeaks = [];
-    this.lastFiltered = null;
-    this.lastFilteredFs = 0;
-    this.stats = {
-      state: 'idle',
-      bpm: null,
-      rr: [],
-      quality: null,
-      reason: 'ok',
-      acDc: null,
-      artifacts: null,
-      peakCount: 0,
-      sourceFps: 0,
-      samples: 0,
-    };
+    this.state = 'idle'; this.rawBuffer = []; this.settlingStart = 0; this.lastAnalysis = 0;
+    this.lastPeaks = []; this.lastFiltered = null; this.lastFilteredFs = 0;
+    this.stats = { state: 'idle', bpm: null, rr: [], quality: null, reason: 'ok', acDc: null, artifacts: null, peakCount: 0, sourceFps: 0, samples: 0 };
     this.onUpdate(this.stats);
   }
-
-  startSettling() {
-    this.settlingStart = performance.now();
-    this.setState('settling');
-  }
-
-  setState(s) {
-    this.state = s;
-    this.stats.state = s;
-    this.onUpdate(this.stats);
-  }
-
+  startSettling() { this.settlingStart = performance.now(); this.setState('settling'); }
+  setState(s) { this.state = s; this.stats.state = s; this.onUpdate(this.stats); }
   addSample(sample) {
     if (sample.r < 10) return;
-
     this.rawBuffer.push({ t: sample.t, v: sample.r, clipped: sample.clipped });
     const cutoff = sample.t - CONFIG.BUFFER_SEC * 1000;
     while (this.rawBuffer.length && this.rawBuffer[0].t < cutoff) this.rawBuffer.shift();
-
-    if (this.state === 'settling') {
-      this._checkSettling();
-    } else if (this.state === 'measuring' && sample.t - this.lastAnalysis > CONFIG.ANALYSIS_INTERVAL_MS) {
-      this.lastAnalysis = sample.t;
-      this._analyze();
+    if (this.state === 'settling') this._checkSettling();
+    else if (this.state === 'measuring' && sample.t - this.lastAnalysis > CONFIG.ANALYSIS_INTERVAL_MS) {
+      this.lastAnalysis = sample.t; this._analyze();
     }
   }
-
   _checkSettling() {
     const now = performance.now();
     if (now - this.settlingStart < CONFIG.SETTLING.minMs) return;
     const recent = this.rawBuffer.filter(s => s.t > now - CONFIG.SETTLING.windowMs);
     if (recent.length < 10) return;
-    let mean = 0;
-    for (const s of recent) mean += s.v;
-    mean /= recent.length;
+    let mean = 0; for (const s of recent) mean += s.v; mean /= recent.length;
     if (mean < CONFIG.SETTLING.minMean) return;
-    let v = 0;
-    for (const s of recent) v += (s.v - mean) * (s.v - mean);
+    let v = 0; for (const s of recent) v += (s.v - mean) * (s.v - mean);
     const std = Math.sqrt(v / recent.length);
-    if (std / mean < CONFIG.SETTLING.stdRatio) {
-      this.lastAnalysis = 0;
-      this.setState('measuring');
-    }
+    if (std / mean < CONFIG.SETTLING.stdRatio) { this.lastAnalysis = 0; this.setState('measuring'); }
   }
-
   _analyze() {
     const rs = resampleLinear(this.rawBuffer, CONFIG.RESAMPLE_HZ);
     if (rs.data.length < CONFIG.MIN_BUFFER_SAMPLES) return;
-    const rawGrid = rs.data;
-    const fs = rs.fs;
-
-    let clipSum = 0;
-    for (const s of this.rawBuffer) clipSum += s.clipped;
+    const rawGrid = rs.data, fs = rs.fs;
+    let clipSum = 0; for (const s of this.rawBuffer) clipSum += s.clipped;
     const clipFraction = clipSum / this.rawBuffer.length;
-
     const artifacts = detectArtifacts(rawGrid, CONFIG.ARTIFACT.sigmaThreshold);
-
     const filters = designBandpass(fs, CONFIG.BANDPASS.low, CONFIG.BANDPASS.high);
     const filtered = filtfilt(rawGrid, filters);
-
     let peaks = detectPeaks(filtered, fs, CONFIG.PEAKS);
     peaks = recoverMissedPeaks(filtered, fs, peaks, CONFIG.PEAKS);
     peaks = validateTemplate(filtered, fs, peaks, CONFIG.PEAKS);
-
     const rr = [];
-    for (let i = 1; i < peaks.length; i++) {
-      rr.push(peaks[i].time - peaks[i - 1].time);
-    }
-
+    for (let i = 1; i < peaks.length; i++) rr.push(peaks[i].time - peaks[i-1].time);
     const sqi = computeSQI(rawGrid, clipFraction, artifacts);
     const validRR = filterRR(rr);
-
     let bpm = null;
     if (validRR.length > 0) {
-      let sum = 0;
-      for (const r of validRR) sum += r;
+      let sum = 0; for (const r of validRR) sum += r;
       const avg = sum / validRR.length;
       if (avg > 0) bpm = 60 / avg;
     }
-
     let sourceFps = 0;
     if (this.rawBuffer.length > 1) {
-      const span = this.rawBuffer[this.rawBuffer.length - 1].t - this.rawBuffer[0].t;
+      const span = this.rawBuffer[this.rawBuffer.length-1].t - this.rawBuffer[0].t;
       if (span > 0) sourceFps = 1000 * (this.rawBuffer.length - 1) / span;
     }
-
     let reason = sqi.reason;
     if (peaks.length === 0 && reason === 'ok') reason = 'noisy';
-
-    this.lastPeaks = peaks;
-    this.lastFiltered = filtered;
-    this.lastFilteredFs = fs;
-
+    this.lastPeaks = peaks; this.lastFiltered = filtered; this.lastFilteredFs = fs;
     this.stats = {
-      state: this.state,
-      bpm: bpm ? Math.round(bpm) : null,
-      rr: validRR,
-      quality: sqi.score,
-      reason,
-      acDc: sqi.acDc,
-      artifacts: sqi.artFrac,
-      peakCount: peaks.length,
-      sourceFps: Math.round(sourceFps),
-      samples: this.rawBuffer.length,
+      state: this.state, bpm: bpm ? Math.round(bpm) : null, rr: validRR,
+      quality: sqi.score, reason, acDc: sqi.acDc, artifacts: sqi.artFrac,
+      peakCount: peaks.length, sourceFps: Math.round(sourceFps), samples: this.rawBuffer.length,
     };
     this.onUpdate(this.stats);
   }
@@ -902,62 +635,46 @@ class VitalsApp {
     this.els = els;
     this.camera = new CameraController();
     this.vitals = new VitalsController(stats => this.render(stats));
-    this.rafId = null;
-    this.running = false;
+    this.rafId = null; this.running = false;
     this.signalCtx = els.signalCanvas.getContext('2d');
     this.boundLoop = this.loop.bind(this);
   }
-
   setStatus(type, message) {
     const el = this.els.status;
-    if (!message) {
-      el.style.display = 'none';
-      el.textContent = '';
-      return;
-    }
+    if (!message) { el.style.display = 'none'; el.textContent = ''; return; }
     el.className = 'status-panel ' + type;
     el.textContent = message;
     el.style.display = '';
   }
-
   async start() {
+    console.log('[app] start()');
     if (this.running) return;
     this.els.startBtn.disabled = true;
     this.els.video.classList.remove('hidden');
     this.els.placeholder.style.display = 'none';
     this.setStatus('info', 'Démarrage de la caméra…');
-
     try {
       const roiCanvas = document.createElement('canvas');
-      await this.camera.start(
-        this.els.video,
-        roiCanvas,
-        (type, msg) => this.setStatus(type, msg)
-      );
+      await this.camera.start(this.els.video, roiCanvas, (type, msg) => this.setStatus(type, msg));
     } catch (e) {
       console.error('[app] caméra :', e);
       this.camera.stop();
       this.els.video.classList.add('hidden');
       this.els.placeholder.style.display = '';
-
-      const diag = await getDiagnostics();
+      const diag = getDiagnosticsSync();
       const diagLine =
-        `HTTPS : ${diag.https ? '✓' : '✗'}  ·  ` +
-        `API caméra : ${diag.api ? '✓' : '✗'}  ·  ` +
-        `Autorisation : ${diag.perm}` +
-        (diag.iframe ? '  ·  ⚠ iframe' : '');
-
+        `HTTPS : ${diag.https ? '✓' : '✗'} · protocole : ${diag.protocol} · ` +
+        `API : ${diag.api ? '✓' : '✗'}` + (diag.iframe ? ' · ⚠ iframe' : '');
       this.setStatus('error',
         'Impossible d\'accéder à la caméra.\n' +
-        describeCameraError(e) + '\n' +
-        '— Diagnostic : ' + diagLine
+        describeCameraError(e) + '\n\n' +
+        'Diagnostic : ' + diagLine
       );
       this.els.startBtn.disabled = false;
       this.refreshDiagnostics();
       return;
     }
-
-    // Succès : on cache le panneau de statut et on lance le settling
+    console.log('[app] caméra démarrée, settling…');
     this.setStatus(null);
     this.vitals.reset();
     this.vitals.startSettling();
@@ -968,12 +685,9 @@ class VitalsApp {
     this.rafId = requestAnimationFrame(this.boundLoop);
     this.refreshDiagnostics();
   }
-
   stop() {
-    if (!this.running) {
-      this.camera.stop();
-      return;
-    }
+    console.log('[app] stop()');
+    if (!this.running) { this.camera.stop(); return; }
     this.running = false;
     if (this.rafId) cancelAnimationFrame(this.rafId);
     this.rafId = null;
@@ -988,7 +702,6 @@ class VitalsApp {
     this.clearSignal();
     this.refreshDiagnostics();
   }
-
   loop(rafTime) {
     if (!this.running) return;
     const frame = this.camera.captureFrame(rafTime);
@@ -998,39 +711,22 @@ class VitalsApp {
     }
     this.rafId = requestAnimationFrame(this.boundLoop);
   }
-
   clearSignal() {
     const c = this.els.signalCanvas;
     this.signalCtx.clearRect(0, 0, c.width, c.height);
   }
-
   render(stats) {
     this.els.bpm.textContent = stats.bpm != null ? stats.bpm : '—';
-
-    let qText = '—';
-    let level = 'bad';
-    if (stats.state !== 'measuring') {
-      qText = 'Acquisition…';
-      level = 'mid';
-    } else if (stats.quality == null) {
-      qText = 'Analyse…';
-      level = 'mid';
-    } else if (stats.quality > 0.6) {
-      qText = 'Bonne';
-      level = 'good';
-    } else if (stats.quality > 0.3) {
-      qText = 'Moyenne';
-      level = 'mid';
-    } else {
-      qText = 'Faible';
-      level = 'bad';
-    }
+    let qText = '—', level = 'bad';
+    if (stats.state !== 'measuring') { qText = 'Acquisition…'; level = 'mid'; }
+    else if (stats.quality == null) { qText = 'Analyse…'; level = 'mid'; }
+    else if (stats.quality > 0.6) { qText = 'Bonne'; level = 'good'; }
+    else if (stats.quality > 0.3) { qText = 'Moyenne'; level = 'mid'; }
+    else { qText = 'Faible'; level = 'bad'; }
     this.els.quality.textContent = qText;
     this.els.quality.dataset.level = level;
-
     this.els.reason.textContent = stats.state === 'measuring' ? (REASON_TEXT[stats.reason] || '') : '';
     this.els.reason.dataset.code = stats.reason || 'ok';
-
     this.els.dbgState.textContent = stats.state;
     this.els.dbgFps.textContent = stats.sourceFps ? stats.sourceFps + ' Hz' : '—';
     this.els.dbgPeaks.textContent = stats.peakCount != null ? stats.peakCount : '—';
@@ -1038,67 +734,63 @@ class VitalsApp {
     this.els.dbgAcdc.textContent = stats.acDc != null ? (stats.acDc * 100).toFixed(2) + '%' : '—';
     this.els.dbgArt.textContent = stats.artifacts != null ? (stats.artifacts * 100).toFixed(1) + '%' : '—';
     this.els.dbgSamples.textContent = stats.samples != null ? stats.samples : 0;
-
     this.drawSignal();
   }
-
   drawSignal() {
-    const c = this.els.signalCanvas;
-    const ctx = this.signalCtx;
+    const c = this.els.signalCanvas, ctx = this.signalCtx;
     ctx.clearRect(0, 0, c.width, c.height);
-
     const sig = this.vitals.lastFiltered;
     if (!sig || sig.length < 2) return;
-
     let maxv = 1e-9;
-    for (let i = 0; i < sig.length; i++) {
-      const a = Math.abs(sig[i]);
-      if (a > maxv) maxv = a;
-    }
-
-    const W = c.width;
-    const H = c.height;
-    const midY = H / 2;
-    const scaleY = (H / 2 - 6) / maxv;
-
-    ctx.strokeStyle = '#4ade80';
-    ctx.lineWidth = 1.5;
+    for (let i = 0; i < sig.length; i++) { const a = Math.abs(sig[i]); if (a > maxv) maxv = a; }
+    const W = c.width, H = c.height, midY = H / 2, scaleY = (H / 2 - 6) / maxv;
+    ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let i = 0; i < sig.length; i++) {
       const x = (i / (sig.length - 1)) * W;
       const y = midY - sig[i] * scaleY;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
     ctx.stroke();
-
     ctx.fillStyle = '#fbbf24';
     const peaks = this.vitals.lastPeaks || [];
     for (const p of peaks) {
       const idx = Math.round(p.pos);
       if (idx < 0 || idx >= sig.length) continue;
-      const x = (idx / (sig.length - 1)) * W;
-      const y = midY - sig[idx] * scaleY;
-      ctx.beginPath();
-      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
-      ctx.fill();
+      const x = (idx / (sig.length - 1)) * W, y = midY - sig[idx] * scaleY;
+      ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill();
     }
   }
-
-  async refreshDiagnostics() {
-    const diag = await getDiagnostics();
-    const html =
-      `<div>HTTPS : <b class="${diag.https ? 'ok' : 'ko'}">${diag.https ? '✓' : '✗ requis'}</b></div>` +
-      `<div>API caméra : <b class="${diag.api ? 'ok' : 'ko'}">${diag.api ? '✓' : '✗ indisponible'}</b></div>` +
-      `<div>Autorisation caméra : <b class="${
-        diag.perm === 'granted' ? 'ok'
-        : diag.perm === 'denied' ? 'ko'
-        : diag.perm === 'prompt' ? 'warn'
-        : ''
-      }">${diag.perm}</b></div>` +
-      (diag.iframe ? `<div class="warn">⚠ Page dans une iframe — attribut allow="camera" requis sur &lt;iframe&gt;</div>` : '');
+  refreshDiagnostics() {
+    const d = getDiagnosticsSync();
+    const row = (label, value, cls) =>
+      `<div class="row"><span>${label}</span><b class="${cls}">${value}</b></div>`;
+    let html = '';
+    html += row('Protocole', d.protocol, d.https ? 'ok' : 'ko');
+    html += row('Contexte sécurisé', d.https ? '✓' : '✗', d.https ? 'ok' : 'ko');
+    html += row('API caméra', d.api ? '✓' : '✗', d.api ? 'ok' : 'ko');
+    if (d.file) html += row('file://', '⚠ interdit', 'ko');
+    if (d.iframe) html += row('iframe', '⚠ allow="camera" requis', 'warn');
+    html += row('Version', window.__VFC_VERSION__, 'ok');
     this.els.diagContent.innerHTML = html;
   }
+}
+
+function describeCameraError(err) {
+  const name = err && err.name;
+  const map = {
+    NotAllowedError: "Accès refusé par le navigateur.\n→ Icône 🔒 dans la barre d'adresse → Autorisations → Caméra → Autoriser.\n→ Sur Android : Paramètres Chrome → Paramètres des sites → Caméra.",
+    PermissionDeniedError: "Accès refusé. Autorisez la caméra dans les paramètres du navigateur.",
+    NotFoundError: "Aucune caméra détectée sur cet appareil.",
+    DevicesNotFoundError: "Aucune caméra détectée.",
+    NotReadableError: "Caméra occupée par une autre application.",
+    TrackStartError: "Caméra occupée.",
+    OverconstrainedError: "Paramètres caméra incompatibles avec cet appareil.",
+    SecurityError: "Accès bloqué par la politique de sécurité (HTTPS requis).",
+    AbortError: "Erreur système au démarrage caméra.",
+    TypeError: "Configuration caméra invalide.",
+  };
+  return map[name] || (err && err.message) || String(err);
 }
 
 // ============================================================
@@ -1113,6 +805,7 @@ const els = {
   quality: document.getElementById('quality'),
   reason: document.getElementById('reason'),
   startBtn: document.getElementById('start-btn'),
+  testPermBtn: document.getElementById('test-perm-btn'),
   diagContent: document.getElementById('diag-content'),
   dbgState: document.getElementById('dbg-state'),
   dbgFps: document.getElementById('dbg-fps'),
@@ -1127,9 +820,26 @@ const app = new VitalsApp(els);
 app.refreshDiagnostics();
 
 els.startBtn.addEventListener('click', () => {
+  console.log('[VFC] clic bouton, running =', app.running);
   if (app.running) app.stop();
   else app.start();
 });
+
+els.testPermBtn.addEventListener('click', async () => {
+  els.testPermBtn.disabled = true;
+  els.testPermBtn.textContent = 'Test en cours…';
+  const r = await queryPermissionWithTimeout(CONFIG.PERMISSION_TIMEOUT_MS);
+  console.log('[VFC] résultat test permission :', r);
+  const prev = els.diagContent.innerHTML;
+  els.diagContent.innerHTML = prev +
+    `<div class="row"><span>Test permission</span><b class="${r.state === 'granted' ? 'ok' : r.state === 'denied' ? 'ko' : 'warn'}">${r.state}${r.state !== 'ok' && r.reason ? ' (' + r.reason + ')' : ''}</b></div>`;
+  els.testPermBtn.disabled = false;
+  els.testPermBtn.textContent = 'Tester la permission caméra';
+});
+
+// Marqueur final : le module a bien fini de charger
+window.__VFC_LOADED__ = true;
+console.log('[VFC] initialisation terminée');
 </script>
 </body>
 </html>
