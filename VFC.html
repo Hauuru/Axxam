@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VFC v3.1.0 — Observation cardiaque</title>
+<title>VFC v3.2.0 — Observation cardiaque</title>
 <style>
   :root {
     --bg: #0f1115; --panel: #181b22; --border: #2a2f3a;
@@ -132,7 +132,7 @@
 <!-- Filet de sécurité -->
 <script>
   window.__VFC_LOADED__ = false;
-  window.__VFC_VERSION__ = '3.1.0';
+  window.__VFC_VERSION__ = '3.2.0';
   
   setTimeout(function() {
     if (!window.__VFC_LOADED__) {
@@ -141,7 +141,7 @@
         el.className = 'status-panel error';
         el.textContent =
           '⚠ Le script JavaScript principal ne s\'est pas exécuté.\n' +
-          'Vérifiez que le fichier déployé est complet, ou renommez-le en .html (et non .htm) sur votre serveur.';
+          'Vérifiez que le fichier déployé est complet.';
         el.style.display = '';
       }
     }
@@ -158,23 +158,18 @@
   });
 </script>
 
-<!-- Script principal (sans type="module") -->
+<!-- Script principal -->
 <script>
 (function() {
   'use strict';
   
   try {
     console.log('[VFC] script classique chargé, version', window.__VFC_VERSION__);
-    console.log('[VFC] context :', {
-      protocol: location.protocol,
-      secure: window.isSecureContext,
-      hasMediaDevices: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
-    });
 
     // ============================================================
     // Configuration
     // ============================================================
-    const CONFIG = {
+    var CONFIG = {
       VIDEO: { facingMode: 'environment', idealWidth: 320, idealHeight: 240, idealFrameRate: 30 },
       ROI_SIZE: 128,
       RESAMPLE_HZ: 60,
@@ -188,7 +183,7 @@
       ANALYSIS_INTERVAL_MS: 250,
       MIN_BUFFER_SAMPLES: 180,
       VIDEO_READY_TIMEOUT_MS: 10000,
-      PERMISSION_TIMEOUT_MS: 3000,
+      PERMISSION_TIMEOUT_MS: 3000
     };
 
     // ============================================================
@@ -226,16 +221,31 @@
       if (N === 0) return new Float32Array(0);
       var pad = 20, M = N + 2 * pad;
       var padded = new Float64Array(M);
-      for (var i = 0; i < pad; i++) { padded[i] = signal[0]; padded[N + pad + i] = signal[N - 1]; }
-      for (var i = 0; i < N; i++) padded[pad + i] = signal[i];
+      var i, x, f;
+      
+      for (i = 0; i < pad; i++) { padded[i] = signal[0]; padded[N + pad + i] = signal[N - 1]; }
+      for (i = 0; i < N; i++) padded[pad + i] = signal[i];
+      
       var fwd = new Float64Array(M);
-      for (var f of filters) f.reset();
-      for (var i = 0; i < M; i++) { var x = padded[i]; for (var f of filters) x = f.process(x); fwd[i] = x; }
+      for (i = 0; i < filters.length; i++) filters[i].reset();
+      
+      for (i = 0; i < M; i++) { 
+        x = padded[i]; 
+        for (f = 0; f < filters.length; f++) x = filters[f].process(x); 
+        fwd[i] = x; 
+      }
+      
       var rev = new Float64Array(M);
-      for (var f of filters) f.reset();
-      for (var i = M - 1; i >= 0; i--) { var x = fwd[i]; for (var f of filters) x = f.process(x); rev[i] = x; }
+      for (i = 0; i < filters.length; i++) filters[i].reset();
+      
+      for (i = M - 1; i >= 0; i--) { 
+        x = fwd[i]; 
+        for (f = 0; f < filters.length; f++) x = filters[f].process(x); 
+        rev[i] = x; 
+      }
+      
       var out = new Float32Array(N);
-      for (var i = 0; i < N; i++) out[i] = rev[pad + i];
+      for (i = 0; i < N; i++) out[i] = rev[pad + i];
       return out;
     }
 
@@ -265,7 +275,10 @@
       var margin = Math.floor((opts.marginSec || 0) * fs);
       var startI = Math.max(1, margin), endI = Math.min(N - 1, N - margin);
       if (startI >= endI) return [];
-      var sorted = Float32Array.from(signal).sort();
+      
+      // Copie sécurisée pour le tri
+      var sorted = Array.prototype.slice.call(signal).sort(function(a, b) { return a - b; });
+      
       var median = sorted[Math.floor(N / 2)], max = sorted[N - 1];
       var threshold = median + 0.4 * (max - median);
       var minDist = Math.max(1, Math.floor(opts.minRR * fs));
@@ -382,12 +395,14 @@
     // Diagnostic SYNCHRONE
     // ============================================================
     function getDiagnosticsSync() {
+      var iframe = false;
+      try { iframe = window.self !== window.top; } catch(e) { iframe = true; }
       return {
         https: window.isSecureContext,
         protocol: location.protocol,
         file: location.protocol === 'file:',
         api: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
-        iframe: (function() { try { return window.self !== window.top; } catch(e) { return true; } })(),
+        iframe: iframe
       };
     }
 
@@ -427,10 +442,10 @@
       this.ctx = canvasEl.getContext('2d', { willReadFrequently: true });
 
       if (location.protocol === 'file:') {
-        throw Object.assign(new Error("Le fichier est ouvert en file://. Chrome interdit l'accès caméra."), { name: 'SecurityError' });
+        throw new Error("Le fichier est ouvert en file://. Chrome interdit l'accès caméra.");
       }
       if (!window.isSecureContext) {
-        throw Object.assign(new Error("La page n'est pas en contexte sécurisé (HTTPS)."), { name: 'SecurityError' });
+        throw new Error("La page n'est pas en contexte sécurisé (HTTPS).");
       }
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error("L'API caméra n'est pas disponible dans ce navigateur.");
@@ -463,7 +478,7 @@
       var attempts = [
         { video: CONFIG.VIDEO },
         { video: { facingMode: 'user', idealWidth: 320, idealHeight: 240, idealFrameRate: 30 } },
-        { video: true },
+        { video: true }
       ];
       var lastErr = null;
       var definitive = ['NotAllowedError', 'PermissionDeniedError', 'NotFoundError', 'DevicesNotFoundError', 'SecurityError'];
@@ -510,13 +525,13 @@
       if (track) {
         track.applyConstraints({
           advanced: [
-            { exposureMode: 'manual' }, { whiteBalanceMode: 'manual' }, { focusMode: 'manual' },
-          ],
+            { exposureMode: 'manual' }, { whiteBalanceMode: 'manual' }, { focusMode: 'manual' }
+          ]
         }).then(function() {
           self.locked = true;
+          self.locking = false;
         }).catch(function(e) {
           console.warn('[camera] verrouillage partiel :', e.name);
-        }).finally(function() {
           self.locking = false;
         });
       } else {
@@ -556,14 +571,24 @@
     // ============================================================
     function VitalsController(onUpdate) {
       this.onUpdate = onUpdate;
-      this.reset();
+      this.state = 'idle'; 
+      this.rawBuffer = []; 
+      this.settlingStart = 0; 
+      this.lastAnalysis = 0;
+      this.lastPeaks = []; 
+      this.lastFiltered = null; 
+      this.lastFilteredFs = 0;
+      this.stats = { state: 'idle', bpm: null, rr: [], quality: null, reason: 'ok', acDc: null, artifacts: null, peakCount: 0, sourceFps: 0, samples: 0 };
+      // On NE déclenche PAS onUpdate ici. On le fera manuellement à la fin de l'initialisation de l'app.
     }
+    
     VitalsController.prototype.reset = function() {
       this.state = 'idle'; this.rawBuffer = []; this.settlingStart = 0; this.lastAnalysis = 0;
       this.lastPeaks = []; this.lastFiltered = null; this.lastFilteredFs = 0;
       this.stats = { state: 'idle', bpm: null, rr: [], quality: null, reason: 'ok', acDc: null, artifacts: null, peakCount: 0, sourceFps: 0, samples: 0 };
-      this.onUpdate(this.stats);
+      if (this.onUpdate) this.onUpdate(this.stats);
     };
+    
     VitalsController.prototype.startSettling = function() {
       this.settlingStart = performance.now(); this.setState('settling');
     };
@@ -624,7 +649,7 @@
       this.stats = {
         state: this.state, bpm: bpm ? Math.round(bpm) : null, rr: validRR,
         quality: sqi.score, reason: reason, acDc: sqi.acDc, artifacts: sqi.artFrac,
-        peakCount: peaks.length, sourceFps: Math.round(sourceFps), samples: this.rawBuffer.length,
+        peakCount: peaks.length, sourceFps: Math.round(sourceFps), samples: this.rawBuffer.length
       };
       this.onUpdate(this.stats);
     };
@@ -637,17 +662,22 @@
       clip: 'Trop de lumière — réduisez l’exposition',
       motion: 'Mouvement détecté — restez immobile',
       weak: 'Signal trop faible — couvrez mieux l’objectif',
-      noisy: 'Signal bruité — pression plus douce',
+      noisy: 'Signal bruité — pression plus douce'
     };
 
     function VitalsApp(els) {
       var self = this;
       this.els = els;
-      this.camera = new CameraController();
-      this.vitals = new VitalsController(function(stats) { self.render(stats); });
-      this.rafId = null; this.running = false;
+      // IMPORTANT : Initialiser signalCtx et camera AVANT vitals
       this.signalCtx = els.signalCanvas.getContext('2d');
+      this.camera = new CameraController();
+      this.rafId = null; 
+      this.running = false;
       this.boundLoop = function(t) { self.loop(t); };
+      
+      // Initialiser vitals en dernier
+      this.vitals = new VitalsController(function(stats) { self.render(stats); });
+      this.render(this.vitals.stats); // Premier rendu manuel sécurisé
     }
 
     VitalsApp.prototype.setStatus = function(type, message) {
@@ -726,11 +756,13 @@
     };
 
     VitalsApp.prototype.clearSignal = function() {
+      if (!this.signalCtx) return;
       var c = this.els.signalCanvas;
       this.signalCtx.clearRect(0, 0, c.width, c.height);
     };
 
     VitalsApp.prototype.render = function(stats) {
+      if (!this.els || !this.els.bpm) return;
       this.els.bpm.textContent = stats.bpm != null ? stats.bpm : '—';
       var qText = '—', level = 'bad';
       if (stats.state !== 'measuring') { qText = 'Acquisition…'; level = 'mid'; }
@@ -754,9 +786,13 @@
 
     VitalsApp.prototype.drawSignal = function() {
       var c = this.els.signalCanvas, ctx = this.signalCtx;
+      if (!ctx || !c) return; // GUARD
+      
       ctx.clearRect(0, 0, c.width, c.height);
-      var sig = this.vitals.lastFiltered;
+      
+      var sig = this.vitals && this.vitals.lastFiltered; // GUARD
       if (!sig || sig.length < 2) return;
+      
       var maxv = 1e-9;
       for (var i = 0; i < sig.length; i++) { var a = Math.abs(sig[i]); if (a > maxv) maxv = a; }
       var W = c.width, H = c.height, midY = H / 2, scaleY = (H / 2 - 6) / maxv;
@@ -768,8 +804,9 @@
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
       ctx.stroke();
+      
       ctx.fillStyle = '#fbbf24';
-      var peaks = this.vitals.lastPeaks || [];
+      var peaks = (this.vitals && this.vitals.lastPeaks) || [];
       for (var i = 0; i < peaks.length; i++) {
         var p = peaks[i];
         var idx = Math.round(p.pos);
@@ -806,7 +843,7 @@
         OverconstrainedError: "Paramètres caméra incompatibles avec cet appareil.",
         SecurityError: "Accès bloqué par la politique de sécurité (HTTPS requis).",
         AbortError: "Erreur système au démarrage caméra.",
-        TypeError: "Configuration caméra invalide.",
+        TypeError: "Configuration caméra invalide."
       };
       return map[name] || (err && err.message) || String(err);
     }
@@ -831,7 +868,7 @@
       dbgScore: document.getElementById('dbg-score'),
       dbgAcdc: document.getElementById('dbg-acdc'),
       dbgArt: document.getElementById('dbg-art'),
-      dbgSamples: document.getElementById('dbg-samples'),
+      dbgSamples: document.getElementById('dbg-samples')
     };
 
     var app = new VitalsApp(els);
@@ -859,7 +896,7 @@
 
     // Marqueur final
     window.__VFC_LOADED__ = true;
-    console.log('[VFC] initialisation terminée');
+    console.log('[VFC] initialisation terminée avec succès');
 
   } catch (e) {
     console.error('[VFC] ERREUR CRITIQUE :', e);
