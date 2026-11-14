@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VFC v3.0.0 — Observation cardiaque</title>
+<title>VFC v3.1.0 — Observation cardiaque</title>
 <style>
   :root {
     --bg: #0f1115; --panel: #181b22; --border: #2a2f3a;
@@ -12,8 +12,7 @@
   }
   * { box-sizing: border-box; }
   body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background: var(--bg); color: var(--text); min-height: 100vh;
     display: flex; justify-content: center; padding: 24px;
   }
@@ -130,716 +129,748 @@
   </div>
 </div>
 
-<!-- Filet de sécurité : si le module ES ne charge pas, on prévient l'utilisateur -->
+<!-- Filet de sécurité -->
 <script>
   window.__VFC_LOADED__ = false;
-  window.__VFC_VERSION__ = '3.0.0';
+  window.__VFC_VERSION__ = '3.1.0';
+  
   setTimeout(function() {
     if (!window.__VFC_LOADED__) {
       var el = document.getElementById('status-panel');
       if (el) {
         el.className = 'status-panel error';
         el.textContent =
-          '⚠ Le script JavaScript ne s\'est pas chargé.\n' +
-          'Vérifiez que le fichier déployé est complet, ou regardez la console.';
+          '⚠ Le script JavaScript principal ne s\'est pas exécuté.\n' +
+          'Vérifiez que le fichier déployé est complet, ou renommez-le en .html (et non .htm) sur votre serveur.';
         el.style.display = '';
       }
     }
   }, 2000);
 
-  // Filet de sécurité global pour les erreurs runtime
   window.addEventListener('error', function(e) {
     console.error('[VFC] erreur globale :', e.error || e.message);
     var el = document.getElementById('status-panel');
-    if (el && window.__VFC_LOADED__) {
+    if (el) {
       el.className = 'status-panel error';
-      el.textContent = 'Erreur JavaScript : ' + (e.error && e.error.message || e.message);
+      el.textContent = 'Erreur JavaScript : ' + (e.error && e.error.message || e.message) + '\nConsultez la console.';
       el.style.display = '';
     }
   });
-  window.addEventListener('unhandledrejection', function(e) {
-    console.error('[VFC] promesse rejetée :', e.reason);
-  });
 </script>
 
-<script type="module">
-console.log('[VFC] module chargé, version', window.__VFC_VERSION__);
-console.log('[VFC] context :', {
-  protocol: location.protocol,
-  secure: window.isSecureContext,
-  hasMediaDevices: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
-});
-
-// ============================================================
-// Configuration
-// ============================================================
-const CONFIG = {
-  VIDEO: { facingMode: 'environment', idealWidth: 320, idealHeight: 240, idealFrameRate: 30 },
-  ROI_SIZE: 128,
-  RESAMPLE_HZ: 60,
-  BANDPASS: { low: 0.8, high: 3.0 },
-  PEAKS: { minRR: 0.33, maxRR: 2.0, templateLen: 5, templateCorr: 0.6, marginSec: 0.3 },
-  ARTIFACT: { sigmaThreshold: 5 },
-  SQI: { clipMax: 0.05, motionMax: 0.15, acDcMin: 0.005, acDcRef: 0.02 },
-  SETTLING: { minMs: 1500, stdRatio: 0.02, windowMs: 1000, minMean: 15 },
-  RR: { window: 10, madFactor: 3 },
-  BUFFER_SEC: 30,
-  ANALYSIS_INTERVAL_MS: 250,
-  MIN_BUFFER_SAMPLES: 180,
-  VIDEO_READY_TIMEOUT_MS: 10000,
-  PERMISSION_TIMEOUT_MS: 3000,
-};
-
-// ============================================================
-// DSP
-// ============================================================
-class Biquad {
-  constructor(b0, b1, b2, a1, a2) {
-    this.b0 = b0; this.b1 = b1; this.b2 = b2; this.a1 = a1; this.a2 = a2;
-    this.z1 = 0; this.z2 = 0;
-  }
-  reset() { this.z1 = 0; this.z2 = 0; }
-  process(x) {
-    const y = this.b0 * x + this.z1;
-    this.z1 = this.b1 * x - this.a1 * y + this.z2;
-    this.z2 = this.b2 * x - this.a2 * y;
-    return y;
-  }
-}
-function designBiquad(fs, fc, type) {
-  const w0 = 2 * Math.PI * fc / fs;
-  const cosw0 = Math.cos(w0), sinw0 = Math.sin(w0);
-  const alpha = sinw0 / Math.SQRT2;
-  let b0, b1, b2;
-  if (type === 'low') { b0 = (1 - cosw0) / 2; b1 = 1 - cosw0; b2 = (1 - cosw0) / 2; }
-  else                { b0 = (1 + cosw0) / 2; b1 = -(1 + cosw0); b2 = (1 + cosw0) / 2; }
-  const a0 = 1 + alpha, a1 = -2 * cosw0, a2 = 1 - alpha;
-  return new Biquad(b0/a0, b1/a0, b2/a0, a1/a0, a2/a0);
-}
-function designBandpass(fs, lowHz, highHz) {
-  return [designBiquad(fs, lowHz, 'high'), designBiquad(fs, highHz, 'low')];
-}
-function filtfilt(signal, filters) {
-  const N = signal.length;
-  if (N === 0) return new Float32Array(0);
-  const pad = 20, M = N + 2 * pad;
-  const padded = new Float64Array(M);
-  for (let i = 0; i < pad; i++) { padded[i] = signal[0]; padded[N + pad + i] = signal[N - 1]; }
-  for (let i = 0; i < N; i++) padded[pad + i] = signal[i];
-  const fwd = new Float64Array(M);
-  for (const f of filters) f.reset();
-  for (let i = 0; i < M; i++) { let x = padded[i]; for (const f of filters) x = f.process(x); fwd[i] = x; }
-  const rev = new Float64Array(M);
-  for (const f of filters) f.reset();
-  for (let i = M - 1; i >= 0; i--) { let x = fwd[i]; for (const f of filters) x = f.process(x); rev[i] = x; }
-  const out = new Float32Array(N);
-  for (let i = 0; i < N; i++) out[i] = rev[pad + i];
-  return out;
-}
-function resampleLinear(samples, targetHz) {
-  if (samples.length < 2) return { fs: targetHz, t0: 0, data: new Float32Array(0) };
-  const t0 = samples[0].t, tEnd = samples[samples.length - 1].t;
-  const n = Math.max(0, Math.floor(((tEnd - t0) / 1000) * targetHz) + 1);
-  if (n < 2) return { fs: targetHz, t0, data: new Float32Array(0) };
-  const data = new Float32Array(n);
-  let j = 0;
-  for (let i = 0; i < n; i++) {
-    const t = t0 + (i * 1000) / targetHz;
-    while (j < samples.length - 2 && samples[j + 1].t < t) j++;
-    const a = samples[j], b = samples[j + 1];
-    const span = b.t - a.t;
-    let frac = span > 0 ? (t - a.t) / span : 0;
-    if (frac < 0) frac = 0;
-    if (frac > 1) frac = 1;
-    data[i] = a.v + (b.v - a.v) * frac;
-  }
-  return { fs: targetHz, t0, data };
-}
-function detectPeaks(signal, fs, opts) {
-  const N = signal.length;
-  if (N < 4) return [];
-  const margin = Math.floor((opts.marginSec || 0) * fs);
-  const startI = Math.max(1, margin), endI = Math.min(N - 1, N - margin);
-  if (startI >= endI) return [];
-  const sorted = Float32Array.from(signal).sort();
-  const median = sorted[Math.floor(N / 2)], max = sorted[N - 1];
-  const threshold = median + 0.4 * (max - median);
-  const minDist = Math.max(1, Math.floor(opts.minRR * fs));
-  const peaks = []; let lastPos = -minDist * 2;
-  for (let i = startI; i < endI; i++) {
-    if (signal[i] > threshold && signal[i] > signal[i-1] && signal[i] >= signal[i+1]) {
-      const y0 = signal[i-1], y1 = signal[i], y2 = signal[i+1];
-      const denom = y0 - 2*y1 + y2;
-      const delta = Math.abs(denom) > 1e-12 ? 0.5 * (y0 - y2) / denom : 0;
-      const pos = i + delta;
-      if (pos - lastPos >= minDist) { peaks.push({ pos, time: pos / fs }); lastPos = pos; }
-    }
-  }
-  return peaks;
-}
-function recoverMissedPeaks(signal, fs, peaks, opts) {
-  if (peaks.length < 2) return peaks;
-  const out = [peaks[0]];
-  for (let i = 1; i < peaks.length; i++) {
-    const prev = peaks[i-1], cur = peaks[i];
-    const rr = cur.time - prev.time;
-    if (rr > opts.maxRR) {
-      const mid = Math.floor((prev.pos + cur.pos) / 2);
-      const radius = Math.max(2, Math.floor((cur.pos - prev.pos) / 4));
-      let bestPos = -1, bestVal = -Infinity;
-      const s = Math.max(1, mid - radius), e = Math.min(signal.length - 1, mid + radius);
-      for (let k = s; k < e; k++) {
-        if (signal[k] > bestVal && signal[k] > signal[k-1] && signal[k] >= signal[k+1]) { bestVal = signal[k]; bestPos = k; }
-      }
-      if (bestPos > 0) out.push({ pos: bestPos, time: bestPos / fs });
-    }
-    out.push(cur);
-  }
-  return out;
-}
-function validateTemplate(signal, fs, peaks, opts) {
-  if (peaks.length < opts.templateLen) return peaks;
-  const half = Math.max(2, Math.floor(0.15 * fs));
-  const tpl = new Float32Array(2 * half); let count = 0;
-  for (let k = 0; k < opts.templateLen; k++) {
-    const p = Math.round(peaks[k].pos);
-    if (p - half < 0 || p + half >= signal.length) continue;
-    for (let i = 0; i < 2 * half; i++) tpl[i] += signal[p - half + i];
-    count++;
-  }
-  if (!count) return peaks;
-  for (let i = 0; i < tpl.length; i++) tpl[i] /= count;
-  const out = [];
-  for (const p of peaks) {
-    const pi = Math.round(p.pos);
-    if (pi - half < 0 || pi + half >= signal.length) { out.push(p); continue; }
-    let dot = 0, na = 0, nb = 0;
-    for (let i = 0; i < tpl.length; i++) {
-      const a = signal[pi - half + i], b = tpl[i];
-      dot += a * b; na += a * a; nb += b * b;
-    }
-    const denom = Math.sqrt(na * nb);
-    if ((denom > 1e-9 ? dot / denom : 0) >= opts.templateCorr) out.push(p);
-  }
-  return out;
-}
-function detectArtifacts(signal, sigmaThreshold) {
-  const N = signal.length, flags = new Uint8Array(N);
-  if (N < 4) return flags;
-  const deriv = new Float32Array(N);
-  for (let i = 1; i < N; i++) deriv[i] = signal[i] - signal[i - 1];
-  let mean = 0;
-  for (let i = 1; i < N; i++) mean += deriv[i];
-  mean /= (N - 1);
-  let v = 0;
-  for (let i = 1; i < N; i++) v += (deriv[i] - mean) * (deriv[i] - mean);
-  const std = Math.sqrt(v / (N - 1));
-  if (std === 0) return flags;
-  for (let i = 1; i < N; i++) if (Math.abs(deriv[i] - mean) > sigmaThreshold * std) flags[i] = 1;
-  return flags;
-}
-function computeSQI(rawGrid, clipFraction, artifacts) {
-  let mean = 0, maxv = -Infinity, minv = Infinity;
-  for (let i = 0; i < rawGrid.length; i++) {
-    const v = rawGrid[i]; mean += v;
-    if (v > maxv) maxv = v; if (v < minv) minv = v;
-  }
-  mean /= rawGrid.length;
-  const acDc = mean > 0 ? (maxv - minv) / 2 / mean : 0;
-  const strengthScore = Math.min(1, acDc / CONFIG.SQI.acDcRef);
-  const clipScore = Math.max(0, 1 - clipFraction / CONFIG.SQI.clipMax);
-  let artFrac = 0;
-  if (artifacts.length > 0) { let s = 0; for (let i = 0; i < artifacts.length; i++) s += artifacts[i]; artFrac = s / artifacts.length; }
-  const motionScore = Math.max(0, 1 - artFrac / CONFIG.SQI.motionMax);
-  const score = strengthScore * clipScore * motionScore;
-  let reason = 'ok';
-  if (clipFraction > CONFIG.SQI.clipMax) reason = 'clip';
-  else if (artFrac > CONFIG.SQI.motionMax) reason = 'motion';
-  else if (acDc < CONFIG.SQI.acDcMin) reason = 'weak';
-  return { score, clipFraction, artFrac, acDc, reason };
-}
-function filterRR(rrList) {
-  if (rrList.length === 0) return [];
-  const recent = rrList.slice(-CONFIG.RR.window);
-  const sorted = recent.slice().sort((a, b) => a - b);
-  const median = sorted[Math.floor(sorted.length / 2)];
-  const devs = recent.map(x => Math.abs(x - median)).sort((a, b) => a - b);
-  const mad = devs[Math.floor(devs.length / 2)] || 0.02;
-  return recent.filter(r => Math.abs(r - median) <= CONFIG.RR.madFactor * mad);
-}
-
-// ============================================================
-// Diagnostic SYNCHRONE (aucune promesse, ne peut pas bloquer)
-// ============================================================
-function getDiagnosticsSync() {
-  return {
-    https: window.isSecureContext,
-    protocol: location.protocol,
-    file: location.protocol === 'file:',
-    api: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
-    iframe: (() => { try { return window.self !== window.top; } catch { return true; } })(),
-  };
-}
-
-// Query async, utilisé UNIQUEMENT par le bouton "Tester la permission", avec timeout
-function queryPermissionWithTimeout(ms) {
-  return new Promise(resolve => {
-    if (!navigator.permissions || !navigator.permissions.query) {
-      return resolve({ state: 'non supporté', reason: 'permissions API absente' });
-    }
-    let done = false;
-    const timer = setTimeout(() => {
-      if (done) return;
-      done = true;
-      resolve({ state: 'timeout', reason: `pas de réponse après ${ms} ms` });
-    }, ms);
-    navigator.permissions.query({ name: 'camera' })
-      .then(p => { if (!done) { done = true; clearTimeout(timer); resolve({ state: p.state, reason: 'ok' }); } })
-      .catch(err => { if (!done) { done = true; clearTimeout(timer); resolve({ state: 'erreur', reason: err.message }); } });
-  });
-}
-
-// ============================================================
-// Caméra
-// ============================================================
-class CameraController {
-  constructor() {
-    this.stream = null; this.ctx = null; this.videoEl = null;
-    this.locked = false; this.locking = false;
-    this.lastCurrentTime = -1; this.lastCaptureTime = 0;
-  }
-
-  async start(videoEl, canvasEl, onProgress) {
-    console.log('[camera] start()');
-    this.onProgress = onProgress || (() => {});
-    this.videoEl = videoEl;
-    canvasEl.width = CONFIG.ROI_SIZE;
-    canvasEl.height = CONFIG.ROI_SIZE;
-    this.ctx = canvasEl.getContext('2d', { willReadFrequently: true });
-
-    if (location.protocol === 'file:') {
-      console.error('[camera] protocole file:// interdit');
-      throw Object.assign(new Error(
-        "Le fichier est ouvert en file://. Chrome interdit l'accès caméra.\n" +
-        "Hébergez le fichier sur GitHub Pages (HTTPS) ou servez-le via http://localhost."
-      ), { name: 'SecurityError' });
-    }
-    if (!window.isSecureContext) {
-      console.error('[camera] contexte non sécurisé');
-      throw Object.assign(new Error(
-        "La page n'est pas en contexte sécurisé (HTTPS).\n" +
-        "L'accès caméra est interdit hors HTTPS/localhost."
-      ), { name: 'SecurityError' });
-    }
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      console.error('[camera] API getUserMedia absente');
-      throw new Error(
-        "L'API caméra n'est pas disponible dans ce navigateur.\n" +
-        "Vérifiez que vous utilisez Chrome, Firefox, Safari ou Edge à jour."
-      );
-    }
-
-    this.onProgress('info', 'Demande d\'accès à la caméra…');
-    console.log('[camera] appel getUserMedia');
-    this.stream = await this._requestStream();
-    console.log('[camera] flux obtenu, pistes vidéo :', this.stream.getVideoTracks().length);
-
-    this.onProgress('info', 'Caméra obtenue, démarrage du flux…');
-    videoEl.srcObject = this.stream;
-    try { await videoEl.play(); }
-    catch (e) { console.warn('[camera] play() :', e); videoEl.play().catch(() => {}); }
-
-    this.onProgress('info', 'Attente de la première image…');
-    await this._waitForVideoReady(videoEl, CONFIG.VIDEO_READY_TIMEOUT_MS);
-    console.log('[camera] première image OK, dimensions :', videoEl.videoWidth, '×', videoEl.videoHeight);
-
-    this.lastCurrentTime = -1;
-    this.lastCaptureTime = 0;
-  }
-
-  async _requestStream() {
-    const attempts = [
-      { video: CONFIG.VIDEO },
-      { video: { facingMode: 'user', idealWidth: 320, idealHeight: 240, idealFrameRate: 30 } },
-      { video: true },
-    ];
-    let lastErr = null;
-    const definitive = new Set(['NotAllowedError', 'PermissionDeniedError', 'NotFoundError', 'DevicesNotFoundError', 'SecurityError']);
-    for (let i = 0; i < attempts.length; i++) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia(attempts[i]);
-        if (!stream.getVideoTracks().length) {
-          stream.getTracks().forEach(t => t.stop());
-          lastErr = new Error('Flux obtenu sans piste vidéo.');
-          continue;
-        }
-        return stream;
-      } catch (e) {
-        lastErr = e;
-        console.warn(`[camera] tentative ${i+1} échouée : ${e.name} — ${e.message || ''}`);
-        if (definitive.has(e.name)) throw e;
-      }
-    }
-    throw lastErr || new Error('Impossible d\'obtenir un flux caméra.');
-  }
-
-  _waitForVideoReady(videoEl, timeoutMs) {
-    return new Promise((resolve, reject) => {
-      if (videoEl.readyState >= 2) return resolve();
-      const start = Date.now();
-      const tick = () => {
-        if (videoEl.readyState >= 2 && videoEl.videoWidth > 0) return resolve();
-        if (Date.now() - start > timeoutMs) return reject(new Error(
-          "La caméra ne fournit pas d'image (délai dépassé).\n" +
-          "Vérifiez qu'aucune autre application n'utilise la caméra."
-        ));
-        setTimeout(tick, 100);
-      };
-      videoEl.addEventListener('loadeddata', () => resolve(), { once: true });
-      videoEl.addEventListener('canplay', () => resolve(), { once: true });
-      tick();
+<!-- Script principal (sans type="module") -->
+<script>
+(function() {
+  'use strict';
+  
+  try {
+    console.log('[VFC] script classique chargé, version', window.__VFC_VERSION__);
+    console.log('[VFC] context :', {
+      protocol: location.protocol,
+      secure: window.isSecureContext,
+      hasMediaDevices: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
     });
-  }
 
-  async lockSettings() {
-    if (this.locked || this.locking || !this.stream) return;
-    this.locking = true;
-    try {
-      const track = this.stream.getVideoTracks()[0];
+    // ============================================================
+    // Configuration
+    // ============================================================
+    const CONFIG = {
+      VIDEO: { facingMode: 'environment', idealWidth: 320, idealHeight: 240, idealFrameRate: 30 },
+      ROI_SIZE: 128,
+      RESAMPLE_HZ: 60,
+      BANDPASS: { low: 0.8, high: 3.0 },
+      PEAKS: { minRR: 0.33, maxRR: 2.0, templateLen: 5, templateCorr: 0.6, marginSec: 0.3 },
+      ARTIFACT: { sigmaThreshold: 5 },
+      SQI: { clipMax: 0.05, motionMax: 0.15, acDcMin: 0.005, acDcRef: 0.02 },
+      SETTLING: { minMs: 1500, stdRatio: 0.02, windowMs: 1000, minMean: 15 },
+      RR: { window: 10, madFactor: 3 },
+      BUFFER_SEC: 30,
+      ANALYSIS_INTERVAL_MS: 250,
+      MIN_BUFFER_SAMPLES: 180,
+      VIDEO_READY_TIMEOUT_MS: 10000,
+      PERMISSION_TIMEOUT_MS: 3000,
+    };
+
+    // ============================================================
+    // DSP
+    // ============================================================
+    function Biquad(b0, b1, b2, a1, a2) {
+      this.b0 = b0; this.b1 = b1; this.b2 = b2; this.a1 = a1; this.a2 = a2;
+      this.z1 = 0; this.z2 = 0;
+    }
+    Biquad.prototype.reset = function() { this.z1 = 0; this.z2 = 0; };
+    Biquad.prototype.process = function(x) {
+      var y = this.b0 * x + this.z1;
+      this.z1 = this.b1 * x - this.a1 * y + this.z2;
+      this.z2 = this.b2 * x - this.a2 * y;
+      return y;
+    };
+
+    function designBiquad(fs, fc, type) {
+      var w0 = 2 * Math.PI * fc / fs;
+      var cosw0 = Math.cos(w0), sinw0 = Math.sin(w0);
+      var alpha = sinw0 / Math.SQRT2;
+      var b0, b1, b2;
+      if (type === 'low') { b0 = (1 - cosw0) / 2; b1 = 1 - cosw0; b2 = (1 - cosw0) / 2; }
+      else { b0 = (1 + cosw0) / 2; b1 = -(1 + cosw0); b2 = (1 + cosw0) / 2; }
+      var a0 = 1 + alpha, a1 = -2 * cosw0, a2 = 1 - alpha;
+      return new Biquad(b0/a0, b1/a0, b2/a0, a1/a0, a2/a0);
+    }
+
+    function designBandpass(fs, lowHz, highHz) {
+      return [designBiquad(fs, lowHz, 'high'), designBiquad(fs, highHz, 'low')];
+    }
+
+    function filtfilt(signal, filters) {
+      var N = signal.length;
+      if (N === 0) return new Float32Array(0);
+      var pad = 20, M = N + 2 * pad;
+      var padded = new Float64Array(M);
+      for (var i = 0; i < pad; i++) { padded[i] = signal[0]; padded[N + pad + i] = signal[N - 1]; }
+      for (var i = 0; i < N; i++) padded[pad + i] = signal[i];
+      var fwd = new Float64Array(M);
+      for (var f of filters) f.reset();
+      for (var i = 0; i < M; i++) { var x = padded[i]; for (var f of filters) x = f.process(x); fwd[i] = x; }
+      var rev = new Float64Array(M);
+      for (var f of filters) f.reset();
+      for (var i = M - 1; i >= 0; i--) { var x = fwd[i]; for (var f of filters) x = f.process(x); rev[i] = x; }
+      var out = new Float32Array(N);
+      for (var i = 0; i < N; i++) out[i] = rev[pad + i];
+      return out;
+    }
+
+    function resampleLinear(samples, targetHz) {
+      if (samples.length < 2) return { fs: targetHz, t0: 0, data: new Float32Array(0) };
+      var t0 = samples[0].t, tEnd = samples[samples.length - 1].t;
+      var n = Math.max(0, Math.floor(((tEnd - t0) / 1000) * targetHz) + 1);
+      if (n < 2) return { fs: targetHz, t0: t0, data: new Float32Array(0) };
+      var data = new Float32Array(n);
+      var j = 0;
+      for (var i = 0; i < n; i++) {
+        var t = t0 + (i * 1000) / targetHz;
+        while (j < samples.length - 2 && samples[j + 1].t < t) j++;
+        var a = samples[j], b = samples[j + 1];
+        var span = b.t - a.t;
+        var frac = span > 0 ? (t - a.t) / span : 0;
+        if (frac < 0) frac = 0;
+        if (frac > 1) frac = 1;
+        data[i] = a.v + (b.v - a.v) * frac;
+      }
+      return { fs: targetHz, t0: t0, data: data };
+    }
+
+    function detectPeaks(signal, fs, opts) {
+      var N = signal.length;
+      if (N < 4) return [];
+      var margin = Math.floor((opts.marginSec || 0) * fs);
+      var startI = Math.max(1, margin), endI = Math.min(N - 1, N - margin);
+      if (startI >= endI) return [];
+      var sorted = Float32Array.from(signal).sort();
+      var median = sorted[Math.floor(N / 2)], max = sorted[N - 1];
+      var threshold = median + 0.4 * (max - median);
+      var minDist = Math.max(1, Math.floor(opts.minRR * fs));
+      var peaks = []; var lastPos = -minDist * 2;
+      for (var i = startI; i < endI; i++) {
+        if (signal[i] > threshold && signal[i] > signal[i-1] && signal[i] >= signal[i+1]) {
+          var y0 = signal[i-1], y1 = signal[i], y2 = signal[i+1];
+          var denom = y0 - 2*y1 + y2;
+          var delta = Math.abs(denom) > 1e-12 ? 0.5 * (y0 - y2) / denom : 0;
+          var pos = i + delta;
+          if (pos - lastPos >= minDist) { peaks.push({ pos: pos, time: pos / fs }); lastPos = pos; }
+        }
+      }
+      return peaks;
+    }
+
+    function recoverMissedPeaks(signal, fs, peaks, opts) {
+      if (peaks.length < 2) return peaks;
+      var out = [peaks[0]];
+      for (var i = 1; i < peaks.length; i++) {
+        var prev = peaks[i-1], cur = peaks[i];
+        var rr = cur.time - prev.time;
+        if (rr > opts.maxRR) {
+          var mid = Math.floor((prev.pos + cur.pos) / 2);
+          var radius = Math.max(2, Math.floor((cur.pos - prev.pos) / 4));
+          var bestPos = -1, bestVal = -Infinity;
+          var s = Math.max(1, mid - radius), e = Math.min(signal.length - 1, mid + radius);
+          for (var k = s; k < e; k++) {
+            if (signal[k] > bestVal && signal[k] > signal[k-1] && signal[k] >= signal[k+1]) { bestVal = signal[k]; bestPos = k; }
+          }
+          if (bestPos > 0) out.push({ pos: bestPos, time: bestPos / fs });
+        }
+        out.push(cur);
+      }
+      return out;
+    }
+
+    function validateTemplate(signal, fs, peaks, opts) {
+      if (peaks.length < opts.templateLen) return peaks;
+      var half = Math.max(2, Math.floor(0.15 * fs));
+      var tpl = new Float32Array(2 * half); var count = 0;
+      for (var k = 0; k < opts.templateLen; k++) {
+        var p = Math.round(peaks[k].pos);
+        if (p - half < 0 || p + half >= signal.length) continue;
+        for (var i = 0; i < 2 * half; i++) tpl[i] += signal[p - half + i];
+        count++;
+      }
+      if (!count) return peaks;
+      for (var i = 0; i < tpl.length; i++) tpl[i] /= count;
+      var out = [];
+      for (var j = 0; j < peaks.length; j++) {
+        var pk = peaks[j];
+        var pi = Math.round(pk.pos);
+        if (pi - half < 0 || pi + half >= signal.length) { out.push(pk); continue; }
+        var dot = 0, na = 0, nb = 0;
+        for (var i = 0; i < tpl.length; i++) {
+          var a = signal[pi - half + i], b = tpl[i];
+          dot += a * b; na += a * a; nb += b * b;
+        }
+        var denom = Math.sqrt(na * nb);
+        if ((denom > 1e-9 ? dot / denom : 0) >= opts.templateCorr) out.push(pk);
+      }
+      return out;
+    }
+
+    function detectArtifacts(signal, sigmaThreshold) {
+      var N = signal.length, flags = new Uint8Array(N);
+      if (N < 4) return flags;
+      var deriv = new Float32Array(N);
+      for (var i = 1; i < N; i++) deriv[i] = signal[i] - signal[i - 1];
+      var mean = 0;
+      for (var i = 1; i < N; i++) mean += deriv[i];
+      mean /= (N - 1);
+      var v = 0;
+      for (var i = 1; i < N; i++) v += (deriv[i] - mean) * (deriv[i] - mean);
+      var std = Math.sqrt(v / (N - 1));
+      if (std === 0) return flags;
+      for (var i = 1; i < N; i++) if (Math.abs(deriv[i] - mean) > sigmaThreshold * std) flags[i] = 1;
+      return flags;
+    }
+
+    function computeSQI(rawGrid, clipFraction, artifacts) {
+      var mean = 0, maxv = -Infinity, minv = Infinity;
+      for (var i = 0; i < rawGrid.length; i++) {
+        var v = rawGrid[i]; mean += v;
+        if (v > maxv) maxv = v; if (v < minv) minv = v;
+      }
+      mean /= rawGrid.length;
+      var acDc = mean > 0 ? (maxv - minv) / 2 / mean : 0;
+      var strengthScore = Math.min(1, acDc / CONFIG.SQI.acDcRef);
+      var clipScore = Math.max(0, 1 - clipFraction / CONFIG.SQI.clipMax);
+      var artFrac = 0;
+      if (artifacts.length > 0) { var s = 0; for (var i = 0; i < artifacts.length; i++) s += artifacts[i]; artFrac = s / artifacts.length; }
+      var motionScore = Math.max(0, 1 - artFrac / CONFIG.SQI.motionMax);
+      var score = strengthScore * clipScore * motionScore;
+      var reason = 'ok';
+      if (clipFraction > CONFIG.SQI.clipMax) reason = 'clip';
+      else if (artFrac > CONFIG.SQI.motionMax) reason = 'motion';
+      else if (acDc < CONFIG.SQI.acDcMin) reason = 'weak';
+      return { score: score, clipFraction: clipFraction, artFrac: artFrac, acDc: acDc, reason: reason };
+    }
+
+    function filterRR(rrList) {
+      if (rrList.length === 0) return [];
+      var recent = rrList.slice(-CONFIG.RR.window);
+      var sorted = recent.slice().sort(function(a, b) { return a - b; });
+      var median = sorted[Math.floor(sorted.length / 2)];
+      var devs = recent.map(function(x) { return Math.abs(x - median); }).sort(function(a, b) { return a - b; });
+      var mad = devs[Math.floor(devs.length / 2)] || 0.02;
+      return recent.filter(function(r) { return Math.abs(r - median) <= CONFIG.RR.madFactor * mad; });
+    }
+
+    // ============================================================
+    // Diagnostic SYNCHRONE
+    // ============================================================
+    function getDiagnosticsSync() {
+      return {
+        https: window.isSecureContext,
+        protocol: location.protocol,
+        file: location.protocol === 'file:',
+        api: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+        iframe: (function() { try { return window.self !== window.top; } catch(e) { return true; } })(),
+      };
+    }
+
+    function queryPermissionWithTimeout(ms) {
+      return new Promise(function(resolve) {
+        if (!navigator.permissions || !navigator.permissions.query) {
+          return resolve({ state: 'non supporté', reason: 'permissions API absente' });
+        }
+        var done = false;
+        var timer = setTimeout(function() {
+          if (done) return;
+          done = true;
+          resolve({ state: 'timeout', reason: 'pas de réponse après ' + ms + ' ms' });
+        }, ms);
+        navigator.permissions.query({ name: 'camera' })
+          .then(function(p) { if (!done) { done = true; clearTimeout(timer); resolve({ state: p.state, reason: 'ok' }); } })
+          .catch(function(err) { if (!done) { done = true; clearTimeout(timer); resolve({ state: 'erreur', reason: err.message }); } });
+      });
+    }
+
+    // ============================================================
+    // Caméra
+    // ============================================================
+    function CameraController() {
+      this.stream = null; this.ctx = null; this.videoEl = null;
+      this.locked = false; this.locking = false;
+      this.lastCurrentTime = -1; this.lastCaptureTime = 0;
+    }
+
+    CameraController.prototype.start = function(videoEl, canvasEl, onProgress) {
+      var self = this;
+      console.log('[camera] start()');
+      this.onProgress = onProgress || function() {};
+      this.videoEl = videoEl;
+      canvasEl.width = CONFIG.ROI_SIZE;
+      canvasEl.height = CONFIG.ROI_SIZE;
+      this.ctx = canvasEl.getContext('2d', { willReadFrequently: true });
+
+      if (location.protocol === 'file:') {
+        throw Object.assign(new Error("Le fichier est ouvert en file://. Chrome interdit l'accès caméra."), { name: 'SecurityError' });
+      }
+      if (!window.isSecureContext) {
+        throw Object.assign(new Error("La page n'est pas en contexte sécurisé (HTTPS)."), { name: 'SecurityError' });
+      }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("L'API caméra n'est pas disponible dans ce navigateur.");
+      }
+
+      this.onProgress('info', 'Demande d\'accès à la caméra…');
+      console.log('[camera] appel getUserMedia');
+      
+      return this._requestStream().then(function(stream) {
+        console.log('[camera] flux obtenu');
+        self.stream = stream;
+        self.onProgress('info', 'Caméra obtenue, démarrage du flux…');
+        videoEl.srcObject = self.stream;
+        
+        return videoEl.play().catch(function(e) {
+          console.warn('[camera] play() :', e);
+          return videoEl.play().catch(function() {});
+        }).then(function() {
+          self.onProgress('info', 'Attente de la première image…');
+          return self._waitForVideoReady(videoEl, CONFIG.VIDEO_READY_TIMEOUT_MS);
+        }).then(function() {
+          console.log('[camera] première image OK');
+          self.lastCurrentTime = -1;
+          self.lastCaptureTime = 0;
+        });
+      });
+    };
+
+    CameraController.prototype._requestStream = function() {
+      var attempts = [
+        { video: CONFIG.VIDEO },
+        { video: { facingMode: 'user', idealWidth: 320, idealHeight: 240, idealFrameRate: 30 } },
+        { video: true },
+      ];
+      var lastErr = null;
+      var definitive = ['NotAllowedError', 'PermissionDeniedError', 'NotFoundError', 'DevicesNotFoundError', 'SecurityError'];
+      
+      var tryAttempt = function(i) {
+        if (i >= attempts.length) return Promise.reject(lastErr || new Error('Impossible d\'obtenir un flux.'));
+        return navigator.mediaDevices.getUserMedia(attempts[i]).then(function(stream) {
+          if (!stream.getVideoTracks().length) {
+            stream.getTracks().forEach(function(t) { t.stop(); });
+            lastErr = new Error('Flux sans piste vidéo.');
+            return tryAttempt(i + 1);
+          }
+          return stream;
+        }).catch(function(e) {
+          lastErr = e;
+          console.warn('[camera] tentative ' + (i+1) + ' échouée : ' + e.name);
+          if (definitive.indexOf(e.name) !== -1) throw e;
+          return tryAttempt(i + 1);
+        });
+      };
+      return tryAttempt(0);
+    };
+
+    CameraController.prototype._waitForVideoReady = function(videoEl, timeoutMs) {
+      return new Promise(function(resolve, reject) {
+        if (videoEl.readyState >= 2) return resolve();
+        var start = Date.now();
+        var tick = function() {
+          if (videoEl.readyState >= 2 && videoEl.videoWidth > 0) return resolve();
+          if (Date.now() - start > timeoutMs) return reject(new Error("La caméra ne fournit pas d'image (délai dépassé)."));
+          setTimeout(tick, 100);
+        };
+        videoEl.addEventListener('loadeddata', function() { resolve(); }, { once: true });
+        videoEl.addEventListener('canplay', function() { resolve(); }, { once: true });
+        tick();
+      });
+    };
+
+    CameraController.prototype.lockSettings = function() {
+      if (this.locked || this.locking || !this.stream) return;
+      var self = this;
+      this.locking = true;
+      var track = this.stream.getVideoTracks()[0];
       if (track) {
-        await track.applyConstraints({
+        track.applyConstraints({
           advanced: [
             { exposureMode: 'manual' }, { whiteBalanceMode: 'manual' }, { focusMode: 'manual' },
           ],
+        }).then(function() {
+          self.locked = true;
+        }).catch(function(e) {
+          console.warn('[camera] verrouillage partiel :', e.name);
+        }).finally(function() {
+          self.locking = false;
         });
-        this.locked = true;
+      } else {
+        this.locking = false;
       }
-    } catch (e) { console.warn('[camera] verrouillage partiel :', e.name); }
-    finally { this.locking = false; }
-  }
-
-  captureFrame(rafTime) {
-    if (!this.videoEl) return null;
-    const vw = this.videoEl.videoWidth, vh = this.videoEl.videoHeight;
-    if (!vw || !vh) return null;
-    const ct = this.videoEl.currentTime;
-    if (ct === this.lastCurrentTime) {
-      if (this.lastCaptureTime && rafTime - this.lastCaptureTime < 100) return null;
-    }
-    this.lastCurrentTime = ct;
-    this.lastCaptureTime = rafTime;
-    const side = Math.min(vw, vh);
-    const sx = (vw - side) / 2, sy = (vh - side) / 2;
-    this.ctx.drawImage(this.videoEl, sx, sy, side, side, 0, 0, CONFIG.ROI_SIZE, CONFIG.ROI_SIZE);
-    const data = this.ctx.getImageData(0, 0, CONFIG.ROI_SIZE, CONFIG.ROI_SIZE).data;
-    const n = data.length / 4;
-    let r = 0, clipped = 0;
-    for (let i = 0; i < data.length; i += 4) { const rv = data[i]; r += rv; if (rv >= 250) clipped++; }
-    return { t: performance.now(), r: r / n, clipped: clipped / n };
-  }
-
-  stop() {
-    if (this.stream) { this.stream.getTracks().forEach(t => t.stop()); this.stream = null; }
-    if (this.videoEl) this.videoEl.srcObject = null;
-    this.locked = false; this.locking = false;
-    this.lastCurrentTime = -1; this.lastCaptureTime = 0;
-  }
-}
-
-// ============================================================
-// Contrôleur vital (pipeline inchangé)
-// ============================================================
-class VitalsController {
-  constructor(onUpdate) { this.onUpdate = onUpdate; this.reset(); }
-  reset() {
-    this.state = 'idle'; this.rawBuffer = []; this.settlingStart = 0; this.lastAnalysis = 0;
-    this.lastPeaks = []; this.lastFiltered = null; this.lastFilteredFs = 0;
-    this.stats = { state: 'idle', bpm: null, rr: [], quality: null, reason: 'ok', acDc: null, artifacts: null, peakCount: 0, sourceFps: 0, samples: 0 };
-    this.onUpdate(this.stats);
-  }
-  startSettling() { this.settlingStart = performance.now(); this.setState('settling'); }
-  setState(s) { this.state = s; this.stats.state = s; this.onUpdate(this.stats); }
-  addSample(sample) {
-    if (sample.r < 10) return;
-    this.rawBuffer.push({ t: sample.t, v: sample.r, clipped: sample.clipped });
-    const cutoff = sample.t - CONFIG.BUFFER_SEC * 1000;
-    while (this.rawBuffer.length && this.rawBuffer[0].t < cutoff) this.rawBuffer.shift();
-    if (this.state === 'settling') this._checkSettling();
-    else if (this.state === 'measuring' && sample.t - this.lastAnalysis > CONFIG.ANALYSIS_INTERVAL_MS) {
-      this.lastAnalysis = sample.t; this._analyze();
-    }
-  }
-  _checkSettling() {
-    const now = performance.now();
-    if (now - this.settlingStart < CONFIG.SETTLING.minMs) return;
-    const recent = this.rawBuffer.filter(s => s.t > now - CONFIG.SETTLING.windowMs);
-    if (recent.length < 10) return;
-    let mean = 0; for (const s of recent) mean += s.v; mean /= recent.length;
-    if (mean < CONFIG.SETTLING.minMean) return;
-    let v = 0; for (const s of recent) v += (s.v - mean) * (s.v - mean);
-    const std = Math.sqrt(v / recent.length);
-    if (std / mean < CONFIG.SETTLING.stdRatio) { this.lastAnalysis = 0; this.setState('measuring'); }
-  }
-  _analyze() {
-    const rs = resampleLinear(this.rawBuffer, CONFIG.RESAMPLE_HZ);
-    if (rs.data.length < CONFIG.MIN_BUFFER_SAMPLES) return;
-    const rawGrid = rs.data, fs = rs.fs;
-    let clipSum = 0; for (const s of this.rawBuffer) clipSum += s.clipped;
-    const clipFraction = clipSum / this.rawBuffer.length;
-    const artifacts = detectArtifacts(rawGrid, CONFIG.ARTIFACT.sigmaThreshold);
-    const filters = designBandpass(fs, CONFIG.BANDPASS.low, CONFIG.BANDPASS.high);
-    const filtered = filtfilt(rawGrid, filters);
-    let peaks = detectPeaks(filtered, fs, CONFIG.PEAKS);
-    peaks = recoverMissedPeaks(filtered, fs, peaks, CONFIG.PEAKS);
-    peaks = validateTemplate(filtered, fs, peaks, CONFIG.PEAKS);
-    const rr = [];
-    for (let i = 1; i < peaks.length; i++) rr.push(peaks[i].time - peaks[i-1].time);
-    const sqi = computeSQI(rawGrid, clipFraction, artifacts);
-    const validRR = filterRR(rr);
-    let bpm = null;
-    if (validRR.length > 0) {
-      let sum = 0; for (const r of validRR) sum += r;
-      const avg = sum / validRR.length;
-      if (avg > 0) bpm = 60 / avg;
-    }
-    let sourceFps = 0;
-    if (this.rawBuffer.length > 1) {
-      const span = this.rawBuffer[this.rawBuffer.length-1].t - this.rawBuffer[0].t;
-      if (span > 0) sourceFps = 1000 * (this.rawBuffer.length - 1) / span;
-    }
-    let reason = sqi.reason;
-    if (peaks.length === 0 && reason === 'ok') reason = 'noisy';
-    this.lastPeaks = peaks; this.lastFiltered = filtered; this.lastFilteredFs = fs;
-    this.stats = {
-      state: this.state, bpm: bpm ? Math.round(bpm) : null, rr: validRR,
-      quality: sqi.score, reason, acDc: sqi.acDc, artifacts: sqi.artFrac,
-      peakCount: peaks.length, sourceFps: Math.round(sourceFps), samples: this.rawBuffer.length,
     };
-    this.onUpdate(this.stats);
-  }
-}
 
-// ============================================================
-// Application
-// ============================================================
-const REASON_TEXT = {
-  ok: 'Signal stable',
-  clip: 'Trop de lumière — réduisez l’exposition',
-  motion: 'Mouvement détecté — restez immobile',
-  weak: 'Signal trop faible — couvrez mieux l’objectif',
-  noisy: 'Signal bruité — pression plus douce',
-};
+    CameraController.prototype.captureFrame = function(rafTime) {
+      if (!this.videoEl) return null;
+      var vw = this.videoEl.videoWidth, vh = this.videoEl.videoHeight;
+      if (!vw || !vh) return null;
+      var ct = this.videoEl.currentTime;
+      if (ct === this.lastCurrentTime) {
+        if (this.lastCaptureTime && rafTime - this.lastCaptureTime < 100) return null;
+      }
+      this.lastCurrentTime = ct;
+      this.lastCaptureTime = rafTime;
+      var side = Math.min(vw, vh);
+      var sx = (vw - side) / 2, sy = (vh - side) / 2;
+      this.ctx.drawImage(this.videoEl, sx, sy, side, side, 0, 0, CONFIG.ROI_SIZE, CONFIG.ROI_SIZE);
+      var data = this.ctx.getImageData(0, 0, CONFIG.ROI_SIZE, CONFIG.ROI_SIZE).data;
+      var n = data.length / 4;
+      var r = 0, clipped = 0;
+      for (var i = 0; i < data.length; i += 4) { var rv = data[i]; r += rv; if (rv >= 250) clipped++; }
+      return { t: performance.now(), r: r / n, clipped: clipped / n };
+    };
 
-class VitalsApp {
-  constructor(els) {
-    this.els = els;
-    this.camera = new CameraController();
-    this.vitals = new VitalsController(stats => this.render(stats));
-    this.rafId = null; this.running = false;
-    this.signalCtx = els.signalCanvas.getContext('2d');
-    this.boundLoop = this.loop.bind(this);
-  }
-  setStatus(type, message) {
-    const el = this.els.status;
-    if (!message) { el.style.display = 'none'; el.textContent = ''; return; }
-    el.className = 'status-panel ' + type;
-    el.textContent = message;
-    el.style.display = '';
-  }
-  async start() {
-    console.log('[app] start()');
-    if (this.running) return;
-    this.els.startBtn.disabled = true;
-    this.els.video.classList.remove('hidden');
-    this.els.placeholder.style.display = 'none';
-    this.setStatus('info', 'Démarrage de la caméra…');
-    try {
-      const roiCanvas = document.createElement('canvas');
-      await this.camera.start(this.els.video, roiCanvas, (type, msg) => this.setStatus(type, msg));
-    } catch (e) {
-      console.error('[app] caméra :', e);
+    CameraController.prototype.stop = function() {
+      if (this.stream) { this.stream.getTracks().forEach(function(t) { t.stop(); }); this.stream = null; }
+      if (this.videoEl) this.videoEl.srcObject = null;
+      this.locked = false; this.locking = false;
+      this.lastCurrentTime = -1; this.lastCaptureTime = 0;
+    };
+
+    // ============================================================
+    // Contrôleur vital
+    // ============================================================
+    function VitalsController(onUpdate) {
+      this.onUpdate = onUpdate;
+      this.reset();
+    }
+    VitalsController.prototype.reset = function() {
+      this.state = 'idle'; this.rawBuffer = []; this.settlingStart = 0; this.lastAnalysis = 0;
+      this.lastPeaks = []; this.lastFiltered = null; this.lastFilteredFs = 0;
+      this.stats = { state: 'idle', bpm: null, rr: [], quality: null, reason: 'ok', acDc: null, artifacts: null, peakCount: 0, sourceFps: 0, samples: 0 };
+      this.onUpdate(this.stats);
+    };
+    VitalsController.prototype.startSettling = function() {
+      this.settlingStart = performance.now(); this.setState('settling');
+    };
+    VitalsController.prototype.setState = function(s) {
+      this.state = s; this.stats.state = s; this.onUpdate(this.stats);
+    };
+    VitalsController.prototype.addSample = function(sample) {
+      if (sample.r < 10) return;
+      this.rawBuffer.push({ t: sample.t, v: sample.r, clipped: sample.clipped });
+      var cutoff = sample.t - CONFIG.BUFFER_SEC * 1000;
+      while (this.rawBuffer.length && this.rawBuffer[0].t < cutoff) this.rawBuffer.shift();
+      if (this.state === 'settling') this._checkSettling();
+      else if (this.state === 'measuring' && sample.t - this.lastAnalysis > CONFIG.ANALYSIS_INTERVAL_MS) {
+        this.lastAnalysis = sample.t; this._analyze();
+      }
+    };
+    VitalsController.prototype._checkSettling = function() {
+      var now = performance.now();
+      if (now - this.settlingStart < CONFIG.SETTLING.minMs) return;
+      var recent = this.rawBuffer.filter(function(s) { return s.t > now - CONFIG.SETTLING.windowMs; });
+      if (recent.length < 10) return;
+      var mean = 0; for (var i = 0; i < recent.length; i++) mean += recent[i].v; mean /= recent.length;
+      if (mean < CONFIG.SETTLING.minMean) return;
+      var v = 0; for (var i = 0; i < recent.length; i++) v += (recent[i].v - mean) * (recent[i].v - mean);
+      var std = Math.sqrt(v / recent.length);
+      if (std / mean < CONFIG.SETTLING.stdRatio) { this.lastAnalysis = 0; this.setState('measuring'); }
+    };
+    VitalsController.prototype._analyze = function() {
+      var rs = resampleLinear(this.rawBuffer, CONFIG.RESAMPLE_HZ);
+      if (rs.data.length < CONFIG.MIN_BUFFER_SAMPLES) return;
+      var rawGrid = rs.data, fs = rs.fs;
+      var clipSum = 0; for (var i = 0; i < this.rawBuffer.length; i++) clipSum += this.rawBuffer[i].clipped;
+      var clipFraction = clipSum / this.rawBuffer.length;
+      var artifacts = detectArtifacts(rawGrid, CONFIG.ARTIFACT.sigmaThreshold);
+      var filters = designBandpass(fs, CONFIG.BANDPASS.low, CONFIG.BANDPASS.high);
+      var filtered = filtfilt(rawGrid, filters);
+      var peaks = detectPeaks(filtered, fs, CONFIG.PEAKS);
+      peaks = recoverMissedPeaks(filtered, fs, peaks, CONFIG.PEAKS);
+      peaks = validateTemplate(filtered, fs, peaks, CONFIG.PEAKS);
+      var rr = [];
+      for (var i = 1; i < peaks.length; i++) rr.push(peaks[i].time - peaks[i-1].time);
+      var sqi = computeSQI(rawGrid, clipFraction, artifacts);
+      var validRR = filterRR(rr);
+      var bpm = null;
+      if (validRR.length > 0) {
+        var sum = 0; for (var i = 0; i < validRR.length; i++) sum += validRR[i];
+        var avg = sum / validRR.length;
+        if (avg > 0) bpm = 60 / avg;
+      }
+      var sourceFps = 0;
+      if (this.rawBuffer.length > 1) {
+        var span = this.rawBuffer[this.rawBuffer.length-1].t - this.rawBuffer[0].t;
+        if (span > 0) sourceFps = 1000 * (this.rawBuffer.length - 1) / span;
+      }
+      var reason = sqi.reason;
+      if (peaks.length === 0 && reason === 'ok') reason = 'noisy';
+      this.lastPeaks = peaks; this.lastFiltered = filtered; this.lastFilteredFs = fs;
+      this.stats = {
+        state: this.state, bpm: bpm ? Math.round(bpm) : null, rr: validRR,
+        quality: sqi.score, reason: reason, acDc: sqi.acDc, artifacts: sqi.artFrac,
+        peakCount: peaks.length, sourceFps: Math.round(sourceFps), samples: this.rawBuffer.length,
+      };
+      this.onUpdate(this.stats);
+    };
+
+    // ============================================================
+    // Application
+    // ============================================================
+    var REASON_TEXT = {
+      ok: 'Signal stable',
+      clip: 'Trop de lumière — réduisez l’exposition',
+      motion: 'Mouvement détecté — restez immobile',
+      weak: 'Signal trop faible — couvrez mieux l’objectif',
+      noisy: 'Signal bruité — pression plus douce',
+    };
+
+    function VitalsApp(els) {
+      var self = this;
+      this.els = els;
+      this.camera = new CameraController();
+      this.vitals = new VitalsController(function(stats) { self.render(stats); });
+      this.rafId = null; this.running = false;
+      this.signalCtx = els.signalCanvas.getContext('2d');
+      this.boundLoop = function(t) { self.loop(t); };
+    }
+
+    VitalsApp.prototype.setStatus = function(type, message) {
+      var el = this.els.status;
+      if (!message) { el.style.display = 'none'; el.textContent = ''; return; }
+      el.className = 'status-panel ' + type;
+      el.textContent = message;
+      el.style.display = '';
+    };
+
+    VitalsApp.prototype.start = function() {
+      var self = this;
+      console.log('[app] start()');
+      if (this.running) return;
+      this.els.startBtn.disabled = true;
+      this.els.video.classList.remove('hidden');
+      this.els.placeholder.style.display = 'none';
+      this.setStatus('info', 'Démarrage de la caméra…');
+      
+      var roiCanvas = document.createElement('canvas');
+      
+      this.camera.start(this.els.video, roiCanvas, function(type, msg) { self.setStatus(type, msg); })
+        .then(function() {
+          console.log('[app] caméra démarrée, settling…');
+          self.setStatus(null);
+          self.vitals.reset();
+          self.vitals.startSettling();
+          self.running = true;
+          self.els.startBtn.textContent = 'Arrêter';
+          self.els.startBtn.classList.add('stop');
+          self.els.startBtn.disabled = false;
+          self.rafId = requestAnimationFrame(self.boundLoop);
+          self.refreshDiagnostics();
+        })
+        .catch(function(e) {
+          console.error('[app] caméra :', e);
+          self.camera.stop();
+          self.els.video.classList.add('hidden');
+          self.els.placeholder.style.display = '';
+          
+          var diag = getDiagnosticsSync();
+          var diagLine = 'HTTPS : ' + (diag.https ? '✓' : '✗') + ' · protocole : ' + diag.protocol + ' · API : ' + (diag.api ? '✓' : '✗') + (diag.iframe ? ' · ⚠ iframe' : '');
+          
+          self.setStatus('error', 'Impossible d\'accéder à la caméra.\n' + describeCameraError(e) + '\n\nDiagnostic : ' + diagLine);
+          self.els.startBtn.disabled = false;
+          self.refreshDiagnostics();
+        });
+    };
+
+    VitalsApp.prototype.stop = function() {
+      console.log('[app] stop()');
+      if (!this.running) { this.camera.stop(); return; }
+      this.running = false;
+      if (this.rafId) cancelAnimationFrame(this.rafId);
+      this.rafId = null;
       this.camera.stop();
+      this.vitals.reset();
+      this.setStatus(null);
       this.els.video.classList.add('hidden');
       this.els.placeholder.style.display = '';
-      const diag = getDiagnosticsSync();
-      const diagLine =
-        `HTTPS : ${diag.https ? '✓' : '✗'} · protocole : ${diag.protocol} · ` +
-        `API : ${diag.api ? '✓' : '✗'}` + (diag.iframe ? ' · ⚠ iframe' : '');
-      this.setStatus('error',
-        'Impossible d\'accéder à la caméra.\n' +
-        describeCameraError(e) + '\n\n' +
-        'Diagnostic : ' + diagLine
-      );
-      this.els.startBtn.disabled = false;
+      this.els.startBtn.textContent = 'Démarrer';
+      this.els.startBtn.classList.remove('stop');
+      this.render(this.vitals.stats);
+      this.clearSignal();
       this.refreshDiagnostics();
-      return;
+    };
+
+    VitalsApp.prototype.loop = function(rafTime) {
+      if (!this.running) return;
+      var frame = this.camera.captureFrame(rafTime);
+      if (frame) this.vitals.addSample(frame);
+      if (this.vitals.state === 'measuring' && !this.camera.locked && !this.camera.locking) {
+        this.camera.lockSettings();
+      }
+      this.rafId = requestAnimationFrame(this.boundLoop);
+    };
+
+    VitalsApp.prototype.clearSignal = function() {
+      var c = this.els.signalCanvas;
+      this.signalCtx.clearRect(0, 0, c.width, c.height);
+    };
+
+    VitalsApp.prototype.render = function(stats) {
+      this.els.bpm.textContent = stats.bpm != null ? stats.bpm : '—';
+      var qText = '—', level = 'bad';
+      if (stats.state !== 'measuring') { qText = 'Acquisition…'; level = 'mid'; }
+      else if (stats.quality == null) { qText = 'Analyse…'; level = 'mid'; }
+      else if (stats.quality > 0.6) { qText = 'Bonne'; level = 'good'; }
+      else if (stats.quality > 0.3) { qText = 'Moyenne'; level = 'mid'; }
+      else { qText = 'Faible'; level = 'bad'; }
+      this.els.quality.textContent = qText;
+      this.els.quality.dataset.level = level;
+      this.els.reason.textContent = stats.state === 'measuring' ? (REASON_TEXT[stats.reason] || '') : '';
+      this.els.reason.dataset.code = stats.reason || 'ok';
+      this.els.dbgState.textContent = stats.state;
+      this.els.dbgFps.textContent = stats.sourceFps ? stats.sourceFps + ' Hz' : '—';
+      this.els.dbgPeaks.textContent = stats.peakCount != null ? stats.peakCount : '—';
+      this.els.dbgScore.textContent = stats.quality != null ? (stats.quality * 100).toFixed(0) + '%' : '—';
+      this.els.dbgAcdc.textContent = stats.acDc != null ? (stats.acDc * 100).toFixed(2) + '%' : '—';
+      this.els.dbgArt.textContent = stats.artifacts != null ? (stats.artifacts * 100).toFixed(1) + '%' : '—';
+      this.els.dbgSamples.textContent = stats.samples != null ? stats.samples : 0;
+      this.drawSignal();
+    };
+
+    VitalsApp.prototype.drawSignal = function() {
+      var c = this.els.signalCanvas, ctx = this.signalCtx;
+      ctx.clearRect(0, 0, c.width, c.height);
+      var sig = this.vitals.lastFiltered;
+      if (!sig || sig.length < 2) return;
+      var maxv = 1e-9;
+      for (var i = 0; i < sig.length; i++) { var a = Math.abs(sig[i]); if (a > maxv) maxv = a; }
+      var W = c.width, H = c.height, midY = H / 2, scaleY = (H / 2 - 6) / maxv;
+      ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (var i = 0; i < sig.length; i++) {
+        var x = (i / (sig.length - 1)) * W;
+        var y = midY - sig[i] * scaleY;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.fillStyle = '#fbbf24';
+      var peaks = this.vitals.lastPeaks || [];
+      for (var i = 0; i < peaks.length; i++) {
+        var p = peaks[i];
+        var idx = Math.round(p.pos);
+        if (idx < 0 || idx >= sig.length) continue;
+        var x = (idx / (sig.length - 1)) * W, y = midY - sig[idx] * scaleY;
+        ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill();
+      }
+    };
+
+    VitalsApp.prototype.refreshDiagnostics = function() {
+      var d = getDiagnosticsSync();
+      var row = function(label, value, cls) {
+        return '<div class="row"><span>' + label + '</span><b class="' + cls + '">' + value + '</b></div>';
+      };
+      var html = '';
+      html += row('Protocole', d.protocol, d.https ? 'ok' : 'ko');
+      html += row('Contexte sécurisé', d.https ? '✓' : '✗', d.https ? 'ok' : 'ko');
+      html += row('API caméra', d.api ? '✓' : '✗', d.api ? 'ok' : 'ko');
+      if (d.file) html += row('file://', '⚠ interdit', 'ko');
+      if (d.iframe) html += row('iframe', '⚠ allow="camera"', 'warn');
+      html += row('Version', window.__VFC_VERSION__, 'ok');
+      this.els.diagContent.innerHTML = html;
+    };
+
+    function describeCameraError(err) {
+      var name = err && err.name;
+      var map = {
+        NotAllowedError: "Accès refusé par le navigateur.\n→ Icône 🔒 dans la barre d'adresse → Autorisations → Caméra → Autoriser.",
+        PermissionDeniedError: "Accès refusé. Autorisez la caméra dans les paramètres du navigateur.",
+        NotFoundError: "Aucune caméra détectée sur cet appareil.",
+        DevicesNotFoundError: "Aucune caméra détectée.",
+        NotReadableError: "Caméra occupée par une autre application.",
+        TrackStartError: "Caméra occupée.",
+        OverconstrainedError: "Paramètres caméra incompatibles avec cet appareil.",
+        SecurityError: "Accès bloqué par la politique de sécurité (HTTPS requis).",
+        AbortError: "Erreur système au démarrage caméra.",
+        TypeError: "Configuration caméra invalide.",
+      };
+      return map[name] || (err && err.message) || String(err);
     }
-    console.log('[app] caméra démarrée, settling…');
-    this.setStatus(null);
-    this.vitals.reset();
-    this.vitals.startSettling();
-    this.running = true;
-    this.els.startBtn.textContent = 'Arrêter';
-    this.els.startBtn.classList.add('stop');
-    this.els.startBtn.disabled = false;
-    this.rafId = requestAnimationFrame(this.boundLoop);
-    this.refreshDiagnostics();
-  }
-  stop() {
-    console.log('[app] stop()');
-    if (!this.running) { this.camera.stop(); return; }
-    this.running = false;
-    if (this.rafId) cancelAnimationFrame(this.rafId);
-    this.rafId = null;
-    this.camera.stop();
-    this.vitals.reset();
-    this.setStatus(null);
-    this.els.video.classList.add('hidden');
-    this.els.placeholder.style.display = '';
-    this.els.startBtn.textContent = 'Démarrer';
-    this.els.startBtn.classList.remove('stop');
-    this.render(this.vitals.stats);
-    this.clearSignal();
-    this.refreshDiagnostics();
-  }
-  loop(rafTime) {
-    if (!this.running) return;
-    const frame = this.camera.captureFrame(rafTime);
-    if (frame) this.vitals.addSample(frame);
-    if (this.vitals.state === 'measuring' && !this.camera.locked && !this.camera.locking) {
-      this.camera.lockSettings();
-    }
-    this.rafId = requestAnimationFrame(this.boundLoop);
-  }
-  clearSignal() {
-    const c = this.els.signalCanvas;
-    this.signalCtx.clearRect(0, 0, c.width, c.height);
-  }
-  render(stats) {
-    this.els.bpm.textContent = stats.bpm != null ? stats.bpm : '—';
-    let qText = '—', level = 'bad';
-    if (stats.state !== 'measuring') { qText = 'Acquisition…'; level = 'mid'; }
-    else if (stats.quality == null) { qText = 'Analyse…'; level = 'mid'; }
-    else if (stats.quality > 0.6) { qText = 'Bonne'; level = 'good'; }
-    else if (stats.quality > 0.3) { qText = 'Moyenne'; level = 'mid'; }
-    else { qText = 'Faible'; level = 'bad'; }
-    this.els.quality.textContent = qText;
-    this.els.quality.dataset.level = level;
-    this.els.reason.textContent = stats.state === 'measuring' ? (REASON_TEXT[stats.reason] || '') : '';
-    this.els.reason.dataset.code = stats.reason || 'ok';
-    this.els.dbgState.textContent = stats.state;
-    this.els.dbgFps.textContent = stats.sourceFps ? stats.sourceFps + ' Hz' : '—';
-    this.els.dbgPeaks.textContent = stats.peakCount != null ? stats.peakCount : '—';
-    this.els.dbgScore.textContent = stats.quality != null ? (stats.quality * 100).toFixed(0) + '%' : '—';
-    this.els.dbgAcdc.textContent = stats.acDc != null ? (stats.acDc * 100).toFixed(2) + '%' : '—';
-    this.els.dbgArt.textContent = stats.artifacts != null ? (stats.artifacts * 100).toFixed(1) + '%' : '—';
-    this.els.dbgSamples.textContent = stats.samples != null ? stats.samples : 0;
-    this.drawSignal();
-  }
-  drawSignal() {
-    const c = this.els.signalCanvas, ctx = this.signalCtx;
-    ctx.clearRect(0, 0, c.width, c.height);
-    const sig = this.vitals.lastFiltered;
-    if (!sig || sig.length < 2) return;
-    let maxv = 1e-9;
-    for (let i = 0; i < sig.length; i++) { const a = Math.abs(sig[i]); if (a > maxv) maxv = a; }
-    const W = c.width, H = c.height, midY = H / 2, scaleY = (H / 2 - 6) / maxv;
-    ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    for (let i = 0; i < sig.length; i++) {
-      const x = (i / (sig.length - 1)) * W;
-      const y = midY - sig[i] * scaleY;
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-    ctx.fillStyle = '#fbbf24';
-    const peaks = this.vitals.lastPeaks || [];
-    for (const p of peaks) {
-      const idx = Math.round(p.pos);
-      if (idx < 0 || idx >= sig.length) continue;
-      const x = (idx / (sig.length - 1)) * W, y = midY - sig[idx] * scaleY;
-      ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill();
+
+    // ============================================================
+    // Bootstrap
+    // ============================================================
+    var els = {
+      video: document.getElementById('video'),
+      placeholder: document.getElementById('placeholder'),
+      signalCanvas: document.getElementById('signal-canvas'),
+      status: document.getElementById('status-panel'),
+      bpm: document.getElementById('bpm'),
+      quality: document.getElementById('quality'),
+      reason: document.getElementById('reason'),
+      startBtn: document.getElementById('start-btn'),
+      testPermBtn: document.getElementById('test-perm-btn'),
+      diagContent: document.getElementById('diag-content'),
+      dbgState: document.getElementById('dbg-state'),
+      dbgFps: document.getElementById('dbg-fps'),
+      dbgPeaks: document.getElementById('dbg-peaks'),
+      dbgScore: document.getElementById('dbg-score'),
+      dbgAcdc: document.getElementById('dbg-acdc'),
+      dbgArt: document.getElementById('dbg-art'),
+      dbgSamples: document.getElementById('dbg-samples'),
+    };
+
+    var app = new VitalsApp(els);
+    app.refreshDiagnostics();
+
+    els.startBtn.addEventListener('click', function() {
+      console.log('[VFC] clic bouton, running =', app.running);
+      if (app.running) app.stop();
+      else app.start();
+    });
+
+    els.testPermBtn.addEventListener('click', function() {
+      els.testPermBtn.disabled = true;
+      els.testPermBtn.textContent = 'Test en cours…';
+      queryPermissionWithTimeout(CONFIG.PERMISSION_TIMEOUT_MS).then(function(r) {
+        console.log('[VFC] résultat test permission :', r);
+        var prev = els.diagContent.innerHTML;
+        var cls = r.state === 'granted' ? 'ok' : r.state === 'denied' ? 'ko' : 'warn';
+        var txt = r.state + (r.reason && r.state !== 'ok' ? ' (' + r.reason + ')' : '');
+        els.diagContent.innerHTML = prev + '<div class="row"><span>Test permission</span><b class="' + cls + '">' + txt + '</b></div>';
+        els.testPermBtn.disabled = false;
+        els.testPermBtn.textContent = 'Tester la permission caméra';
+      });
+    });
+
+    // Marqueur final
+    window.__VFC_LOADED__ = true;
+    console.log('[VFC] initialisation terminée');
+
+  } catch (e) {
+    console.error('[VFC] ERREUR CRITIQUE :', e);
+    var el = document.getElementById('status-panel');
+    if (el) {
+      el.className = 'status-panel error';
+      el.textContent = 'Erreur critique au chargement du script :\n' + e.message + '\n' + (e.stack || '');
+      el.style.display = '';
     }
   }
-  refreshDiagnostics() {
-    const d = getDiagnosticsSync();
-    const row = (label, value, cls) =>
-      `<div class="row"><span>${label}</span><b class="${cls}">${value}</b></div>`;
-    let html = '';
-    html += row('Protocole', d.protocol, d.https ? 'ok' : 'ko');
-    html += row('Contexte sécurisé', d.https ? '✓' : '✗', d.https ? 'ok' : 'ko');
-    html += row('API caméra', d.api ? '✓' : '✗', d.api ? 'ok' : 'ko');
-    if (d.file) html += row('file://', '⚠ interdit', 'ko');
-    if (d.iframe) html += row('iframe', '⚠ allow="camera" requis', 'warn');
-    html += row('Version', window.__VFC_VERSION__, 'ok');
-    this.els.diagContent.innerHTML = html;
-  }
-}
-
-function describeCameraError(err) {
-  const name = err && err.name;
-  const map = {
-    NotAllowedError: "Accès refusé par le navigateur.\n→ Icône 🔒 dans la barre d'adresse → Autorisations → Caméra → Autoriser.\n→ Sur Android : Paramètres Chrome → Paramètres des sites → Caméra.",
-    PermissionDeniedError: "Accès refusé. Autorisez la caméra dans les paramètres du navigateur.",
-    NotFoundError: "Aucune caméra détectée sur cet appareil.",
-    DevicesNotFoundError: "Aucune caméra détectée.",
-    NotReadableError: "Caméra occupée par une autre application.",
-    TrackStartError: "Caméra occupée.",
-    OverconstrainedError: "Paramètres caméra incompatibles avec cet appareil.",
-    SecurityError: "Accès bloqué par la politique de sécurité (HTTPS requis).",
-    AbortError: "Erreur système au démarrage caméra.",
-    TypeError: "Configuration caméra invalide.",
-  };
-  return map[name] || (err && err.message) || String(err);
-}
-
-// ============================================================
-// Bootstrap
-// ============================================================
-const els = {
-  video: document.getElementById('video'),
-  placeholder: document.getElementById('placeholder'),
-  signalCanvas: document.getElementById('signal-canvas'),
-  status: document.getElementById('status-panel'),
-  bpm: document.getElementById('bpm'),
-  quality: document.getElementById('quality'),
-  reason: document.getElementById('reason'),
-  startBtn: document.getElementById('start-btn'),
-  testPermBtn: document.getElementById('test-perm-btn'),
-  diagContent: document.getElementById('diag-content'),
-  dbgState: document.getElementById('dbg-state'),
-  dbgFps: document.getElementById('dbg-fps'),
-  dbgPeaks: document.getElementById('dbg-peaks'),
-  dbgScore: document.getElementById('dbg-score'),
-  dbgAcdc: document.getElementById('dbg-acdc'),
-  dbgArt: document.getElementById('dbg-art'),
-  dbgSamples: document.getElementById('dbg-samples'),
-};
-
-const app = new VitalsApp(els);
-app.refreshDiagnostics();
-
-els.startBtn.addEventListener('click', () => {
-  console.log('[VFC] clic bouton, running =', app.running);
-  if (app.running) app.stop();
-  else app.start();
-});
-
-els.testPermBtn.addEventListener('click', async () => {
-  els.testPermBtn.disabled = true;
-  els.testPermBtn.textContent = 'Test en cours…';
-  const r = await queryPermissionWithTimeout(CONFIG.PERMISSION_TIMEOUT_MS);
-  console.log('[VFC] résultat test permission :', r);
-  const prev = els.diagContent.innerHTML;
-  els.diagContent.innerHTML = prev +
-    `<div class="row"><span>Test permission</span><b class="${r.state === 'granted' ? 'ok' : r.state === 'denied' ? 'ko' : 'warn'}">${r.state}${r.state !== 'ok' && r.reason ? ' (' + r.reason + ')' : ''}</b></div>`;
-  els.testPermBtn.disabled = false;
-  els.testPermBtn.textContent = 'Tester la permission caméra';
-});
-
-// Marqueur final : le module a bien fini de charger
-window.__VFC_LOADED__ = true;
-console.log('[VFC] initialisation terminée');
+})();
 </script>
 </body>
 </html>
