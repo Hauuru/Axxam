@@ -1,64 +1,1283 @@
-1252
-
-1253
-    els.testPermBtn.addEventListener('click', function() {
-1254
-      els.testPermBtn.disabled = true;
-1255
-      els.testPermBtn.textContent = 'Test en cours…';
-1256
-      queryPermissionWithTimeout(CONFIG.PERMISSION_TIMEOUT_MS).then(function(r) {
-1257
-        console.log('[VFC] résultat test permission :', r);
-1258
-        var prev = els.diagContent.innerHTML;
-1259
-        var cls = r.state === 'granted' ? 'ok' : r.state === 'denied' ? 'ko' : 'warn';
-1260
-        var txt = r.state + (r.reason && r.state !== 'ok' ? ' (' + r.reason + ')' : '');
-1261
-        els.diagContent.innerHTML = prev + '<div class="row"><span>Test permission</span><b class="' + cls + '">' + txt + '</b></div>';
-1262
-        els.testPermBtn.disabled = false;
-1263
-        els.testPermBtn.textContent = 'Tester la permission caméra';
-1264
-      });
-1265
-    });
-1266
-
-1267
-    // Marqueur final
-1268
-    window.__VFC_LOADED__ = true;
-1269
-    console.log('[VFC] initialisation terminée avec succès');
-1270
-
-1271
-  } catch (e) {
-1272
-    console.error('[VFC] ERREUR CRITIQUE :', e);
-1273
-    var el = document.getElementById('status-panel');
-1274
-    if (el) {
-1275
-      el.className = 'status-panel error';
-1276
-      el.textContent = 'Erreur critique au chargement du script :\n' + e.message + '\n' + (e.stack || '');
-1277
-      el.style.display = '';
-1278
-    }
-1279
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VFC v3.3.0 — Observation cardiaque</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #181b22; --border: #2a2f3a;
+    --text: #e6e9ef; --muted: #8a92a6;
+    --accent: #4ade80; --warn: #fbbf24; --bad: #f87171; --info: #60a5fa;
   }
-1280
-})();
-1281
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+    display: flex; justify-content: center; padding: 24px;
+  }
+  .app { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 16px; }
+  h1 { font-size: 1.25rem; margin: 0; font-weight: 600; }
+  .subtitle { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+  .status-panel {
+    padding: 12px 16px; border-radius: 8px; font-size: 0.9rem;
+    line-height: 1.5; border: 1px solid; white-space: pre-wrap;
+  }
+  .status-panel.info    { background: #0f2136; color: var(--info);   border-color: #1e40af; }
+  .status-panel.warn    { background: #2a1f07; color: var(--warn);   border-color: #a16207; }
+  .status-panel.error   { background: #2a0e0e; color: var(--bad);    border-color: #b91c1c; }
+  .status-panel.success { background: #0d2416; color: var(--accent); border-color: #15803d; }
+  .preview-wrap {
+    position: relative; background: #000; border-radius: 12px; overflow: hidden;
+    aspect-ratio: 1; max-height: 220px; display: flex;
+    align-items: center; justify-content: center;
+  }
+  #video { width: 100%; height: 100%; object-fit: cover; background: #000; }
+  #video.hidden { display: none; }
+  #roi-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+  .guide {
+    font-size: 0.8rem; line-height: 1.4; min-height: 1.4em; text-align: center;
+    color: var(--muted); margin-top: -8px;
+  }
+  .guide[data-level="good"] { color: var(--accent); }
+  .guide[data-level="mid"]  { color: var(--warn); }
+  .guide[data-level="bad"]  { color: var(--bad); }
+  .placeholder { color: var(--muted); font-size: 0.9rem; padding: 16px; text-align: center; }
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .card-label { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .bpm-value { font-size: 3rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+  .bpm-unit { color: var(--muted); font-size: 0.85rem; margin-left: 4px; }
+  .quality-value { font-size: 1.25rem; font-weight: 600; }
+  .quality-value[data-level="good"] { color: var(--accent); }
+  .quality-value[data-level="mid"]  { color: var(--warn); }
+  .quality-value[data-level="bad"]  { color: var(--bad); }
+  .reason { color: var(--muted); font-size: 0.85rem; min-height: 1.2em; margin-top: 4px; }
+  .reason[data-code="clip"], .reason[data-code="motion"] { color: var(--warn); }
+  .reason[data-code="weak"], .reason[data-code="noisy"]  { color: var(--bad); }
+  .reason[data-code="position"], .reason[data-code="dark"], .reason[data-code="bright"] { color: var(--warn); }
+  #signal-canvas { width: 100%; height: 80px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  #start-btn { flex: 1 1 100%; }
+  #torch-btn { flex: 1 1 auto; }
+  button {
+    flex: 1; padding: 14px; font-size: 1rem; font-weight: 600;
+    border: none; border-radius: 12px; cursor: pointer;
+    background: var(--accent); color: #0a0f0a; transition: opacity 0.15s;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.stop { background: var(--bad); color: #1a0505; }
+  button.secondary { background: var(--panel); color: var(--text); border: 1px solid var(--border); font-size: 0.85rem; padding: 8px 12px; }
+  details.diag {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; font-size: 0.8rem; color: var(--muted);
+  }
+  details.diag summary { cursor: pointer; }
+  details.diag summary:hover { color: var(--text); }
+  #diag-content { padding-top: 8px; line-height: 1.8; }
+  #diag-content b { color: var(--text); }
+  #diag-content .ok    { color: var(--accent); }
+  #diag-content .ko    { color: var(--bad); }
+  #diag-content .warn  { color: var(--warn); }
+  #diag-content .row   { display: flex; justify-content: space-between; gap: 8px; }
+  #diag-content .row + .row { margin-top: 4px; }
+  .debug {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 0.75rem;
+    color: var(--muted); background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px; display: grid;
+    grid-template-columns: repeat(2, 1fr); gap: 4px 16px;
+  }
+  .debug span:nth-child(odd)  { color: #6b7280; }
+  .debug span:nth-child(even) { color: var(--text); text-align: right; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div>
+    <h1>Observation cardiaque</h1>
+    <div class="subtitle">Placez votre doigt sur l'objectif arrière, sans appuyer trop fort. Si le signal reste faible, activez la lampe torche.</div>
+  </div>
+
+  <div id="status-panel" class="status-panel info" style="display:none"></div>
+
+  <div class="preview-wrap">
+    <video id="video" class="hidden" autoplay playsinline muted></video>
+    <canvas id="roi-overlay"></canvas>
+    <div id="placeholder" class="placeholder">Caméra inactive</div>
+  </div>
+  <div id="guide" class="guide" data-level="mid">Cadre de visée en attente…</div>
+
+  <div class="metrics">
+    <div class="card">
+      <div class="card-label">Fréquence</div>
+      <div><span id="bpm" class="bpm-value">—</span><span class="bpm-unit">bpm</span></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Qualité du signal</div>
+      <div id="quality" class="quality-value" data-level="bad">—</div>
+      <div id="reason" class="reason"></div>
+    </div>
+  </div>
+
+  <canvas id="signal-canvas" width="600" height="120"></canvas>
+
+  <div class="controls">
+    <button id="start-btn">Démarrer</button>
+    <button id="torch-btn" class="secondary" disabled>Lampe torche : off</button>
+  </div>
+
+  <details class="diag">
+    <summary>Diagnostic environnement</summary>
+    <div id="diag-content">…</div>
+    <button id="test-perm-btn" class="secondary" style="margin-top:8px">Tester la permission caméra</button>
+  </details>
+
+  <div class="debug">
+    <span>État</span><span id="dbg-state">—</span>
+    <span>Source FPS</span><span id="dbg-fps">—</span>
+    <span>Pics détectés</span><span id="dbg-peaks">—</span>
+    <span>Score qualité</span><span id="dbg-score">—</span>
+    <span>AC/DC</span><span id="dbg-acdc">—</span>
+    <span>Artefacts</span><span id="dbg-art">—</span>
+    <span>Échantillons</span><span id="dbg-samples">—</span>
+    <span>Canal</span><span id="dbg-channel">—</span>
+    <span>Couverture</span><span id="dbg-coverage">—</span>
+    <span>Uniformité</span><span id="dbg-uniformity">—</span>
+    <span>BPM autocorr.</span><span id="dbg-auto">—</span>
+  </div>
+</div>
+
+<!-- Filet de sécurité -->
+<script>
+  window.__VFC_LOADED__ = false;
+  window.__VFC_VERSION__ = '3.3.0';
+  
+  setTimeout(function() {
+    if (!window.__VFC_LOADED__) {
+      var el = document.getElementById('status-panel');
+      if (el) {
+        el.className = 'status-panel error';
+        el.textContent =
+          '⚠ Le script JavaScript principal ne s\'est pas exécuté.\n' +
+          'Vérifiez que le fichier déployé est complet.';
+        el.style.display = '';
+      }
+    }
+  }, 2000);
+
+  window.addEventListener('error', function(e) {
+    console.error('[VFC] erreur globale :', e.error || e.message);
+    var el = document.getElementById('status-panel');
+    if (el) {
+      el.className = 'status-panel error';
+      el.textContent = 'Erreur JavaScript : ' + (e.error && e.error.message || e.message) + '\nConsultez la console.';
+      el.style.display = '';
+    }
+  });
 </script>
-1282
+
+<!-- Script principal -->
+<script>
+(function() {
+  'use strict';
+  
+  try {
+    console.log('[VFC] script classique chargé, version', window.__VFC_VERSION__);
+
+    // ============================================================
+    // Configuration
+    // ============================================================
+    var CONFIG = {
+      VIDEO: { facingMode: 'environment', idealWidth: 640, idealHeight: 480, idealFrameRate: 30 },
+      ROI_SIZE: 128,
+      ROI_FRACTION: 0.5,          // on ne lit que le centre du carré : moins de lumière parasite
+      CHANNEL: 'auto',            // 'auto' | 'r' | 'g' | 'ratio'
+      RESAMPLE_HZ: 60,
+      BANDPASS: { low: 0.8, high: 3.0 },
+      PEAKS: { minRR: 0.33, maxRR: 2.0, templateLen: 5, templateCorr: 0.5, marginSec: 0.3, thresholdFrac: 0.35 },
+      ARTIFACT: { sigmaThreshold: 5 },
+      SQI: { clipMax: 0.05, motionMax: 0.15, acDcMin: 0.003, acDcRef: 0.015, coverageMin: 0.4, uniformityMax: 0.4 },
+      SETTLING: { minMs: 1200, windowMs: 1200, minMean: 20, maxMean: 245, cvMax: 0.06, timeoutMs: 10000 },
+      RR: { window: 10, madFactor: 3 },
+      BUFFER_SEC: 30,
+      ANALYSIS_INTERVAL_MS: 250,
+      MIN_BUFFER_SAMPLES: 180,
+      VIDEO_READY_TIMEOUT_MS: 10000,
+      PERMISSION_TIMEOUT_MS: 3000
+    };
+
+    // ============================================================
+    // DSP
+    // ============================================================
+    function Biquad(b0, b1, b2, a1, a2) {
+      this.b0 = b0; this.b1 = b1; this.b2 = b2; this.a1 = a1; this.a2 = a2;
+      this.z1 = 0; this.z2 = 0;
+    }
+    Biquad.prototype.reset = function() { this.z1 = 0; this.z2 = 0; };
+    Biquad.prototype.process = function(x) {
+      var y = this.b0 * x + this.z1;
+      this.z1 = this.b1 * x - this.a1 * y + this.z2;
+      this.z2 = this.b2 * x - this.a2 * y;
+      return y;
+    };
+
+    function designBiquad(fs, fc, type) {
+      var w0 = 2 * Math.PI * fc / fs;
+      var cosw0 = Math.cos(w0), sinw0 = Math.sin(w0);
+      var alpha = sinw0 / Math.SQRT2;
+      var b0, b1, b2;
+      if (type === 'low') { b0 = (1 - cosw0) / 2; b1 = 1 - cosw0; b2 = (1 - cosw0) / 2; }
+      else { b0 = (1 + cosw0) / 2; b1 = -(1 + cosw0); b2 = (1 + cosw0) / 2; }
+      var a0 = 1 + alpha, a1 = -2 * cosw0, a2 = 1 - alpha;
+      return new Biquad(b0/a0, b1/a0, b2/a0, a1/a0, a2/a0);
+    }
+
+    function designBandpass(fs, lowHz, highHz) {
+      return [designBiquad(fs, lowHz, 'high'), designBiquad(fs, highHz, 'low')];
+    }
+
+    function filtfilt(signal, filters) {
+      var N = signal.length;
+      if (N === 0) return new Float32Array(0);
+      var pad = 20, M = N + 2 * pad;
+      var padded = new Float64Array(M);
+      var i, x, f;
+      
+      for (i = 0; i < pad; i++) { padded[i] = signal[0]; padded[N + pad + i] = signal[N - 1]; }
+      for (i = 0; i < N; i++) padded[pad + i] = signal[i];
+      
+      var fwd = new Float64Array(M);
+      for (i = 0; i < filters.length; i++) filters[i].reset();
+      
+      for (i = 0; i < M; i++) { 
+        x = padded[i]; 
+        for (f = 0; f < filters.length; f++) x = filters[f].process(x); 
+        fwd[i] = x; 
+      }
+      
+      var rev = new Float64Array(M);
+      for (i = 0; i < filters.length; i++) filters[i].reset();
+      
+      for (i = M - 1; i >= 0; i--) { 
+        x = fwd[i]; 
+        for (f = 0; f < filters.length; f++) x = filters[f].process(x); 
+        rev[i] = x; 
+      }
+      
+      var out = new Float32Array(N);
+      for (i = 0; i < N; i++) out[i] = rev[pad + i];
+      return out;
+    }
+
+    function resampleLinear(samples, targetHz, key) {
+      var field = key || 'v';
+      if (samples.length < 2) return { fs: targetHz, t0: 0, data: new Float32Array(0) };
+      var t0 = samples[0].t, tEnd = samples[samples.length - 1].t;
+      var n = Math.max(0, Math.floor(((tEnd - t0) / 1000) * targetHz) + 1);
+      if (n < 2) return { fs: targetHz, t0: t0, data: new Float32Array(0) };
+      var data = new Float32Array(n);
+      var j = 0;
+      for (var i = 0; i < n; i++) {
+        var t = t0 + (i * 1000) / targetHz;
+        while (j < samples.length - 2 && samples[j + 1].t < t) j++;
+        var a = samples[j], b = samples[j + 1];
+        var span = b.t - a.t;
+        var frac = span > 0 ? (t - a.t) / span : 0;
+        if (frac < 0) frac = 0;
+        if (frac > 1) frac = 1;
+        data[i] = a[field] + (b[field] - a[field]) * frac;
+      }
+      return { fs: targetHz, t0: t0, data: data };
+    }
+
+    function detectPeaks(signal, fs, opts) {
+      var N = signal.length;
+      if (N < 4) return [];
+      var margin = Math.floor((opts.marginSec || 0) * fs);
+      var startI = Math.max(1, margin), endI = Math.min(N - 1, N - margin);
+      if (startI >= endI) return [];
+      
+      // Copie sécurisée pour le tri
+      var sorted = Array.prototype.slice.call(signal).sort(function(a, b) { return a - b; });
+      
+      var median = sorted[Math.floor(N / 2)];
+      var p90 = sorted[Math.min(N - 1, Math.floor(0.90 * N))];
+      var threshold = median + (opts.thresholdFrac || 0.4) * (p90 - median);
+      var minDist = Math.max(1, Math.floor(opts.minRR * fs));
+      var peaks = []; var lastPos = -minDist * 2;
+      for (var i = startI; i < endI; i++) {
+        if (signal[i] > threshold && signal[i] > signal[i-1] && signal[i] >= signal[i+1]) {
+          var y0 = signal[i-1], y1 = signal[i], y2 = signal[i+1];
+          var denom = y0 - 2*y1 + y2;
+          var delta = Math.abs(denom) > 1e-12 ? 0.5 * (y0 - y2) / denom : 0;
+          var pos = i + delta;
+          if (pos - lastPos >= minDist) { peaks.push({ pos: pos, time: pos / fs }); lastPos = pos; }
+        }
+      }
+      return peaks;
+    }
+
+    function recoverMissedPeaks(signal, fs, peaks, opts) {
+      if (peaks.length < 2) return peaks;
+      var out = [peaks[0]];
+      for (var i = 1; i < peaks.length; i++) {
+        var prev = peaks[i-1], cur = peaks[i];
+        var rr = cur.time - prev.time;
+        if (rr > opts.maxRR) {
+          var mid = Math.floor((prev.pos + cur.pos) / 2);
+          var radius = Math.max(2, Math.floor((cur.pos - prev.pos) / 4));
+          var bestPos = -1, bestVal = -Infinity;
+          var s = Math.max(1, mid - radius), e = Math.min(signal.length - 1, mid + radius);
+          for (var k = s; k < e; k++) {
+            if (signal[k] > bestVal && signal[k] > signal[k-1] && signal[k] >= signal[k+1]) { bestVal = signal[k]; bestPos = k; }
+          }
+          if (bestPos > 0) out.push({ pos: bestPos, time: bestPos / fs });
+        }
+        out.push(cur);
+      }
+      return out;
+    }
+
+    function validateTemplate(signal, fs, peaks, opts) {
+      if (peaks.length < opts.templateLen) return peaks;
+      var half = Math.max(2, Math.floor(0.15 * fs));
+      var tpl = new Float32Array(2 * half); var count = 0;
+      for (var k = 0; k < opts.templateLen; k++) {
+        var p = Math.round(peaks[k].pos);
+        if (p - half < 0 || p + half >= signal.length) continue;
+        for (var i = 0; i < 2 * half; i++) tpl[i] += signal[p - half + i];
+        count++;
+      }
+      if (!count) return peaks;
+      for (var i = 0; i < tpl.length; i++) tpl[i] /= count;
+      var out = [];
+      for (var j = 0; j < peaks.length; j++) {
+        var pk = peaks[j];
+        var pi = Math.round(pk.pos);
+        if (pi - half < 0 || pi + half >= signal.length) { out.push(pk); continue; }
+        var dot = 0, na = 0, nb = 0;
+        for (var i = 0; i < tpl.length; i++) {
+          var a = signal[pi - half + i], b = tpl[i];
+          dot += a * b; na += a * a; nb += b * b;
+        }
+        var denom = Math.sqrt(na * nb);
+        if ((denom > 1e-9 ? dot / denom : 0) >= opts.templateCorr) out.push(pk);
+      }
+      return out;
+    }
+
+    function detectArtifacts(signal, sigmaThreshold) {
+      var N = signal.length, flags = new Uint8Array(N);
+      if (N < 4) return flags;
+      var deriv = new Float32Array(N);
+      for (var i = 1; i < N; i++) deriv[i] = signal[i] - signal[i - 1];
+      var mean = 0;
+      for (var i = 1; i < N; i++) mean += deriv[i];
+      mean /= (N - 1);
+      var v = 0;
+      for (var i = 1; i < N; i++) v += (deriv[i] - mean) * (deriv[i] - mean);
+      var std = Math.sqrt(v / (N - 1));
+      if (std === 0) return flags;
+      for (var i = 1; i < N; i++) if (Math.abs(deriv[i] - mean) > sigmaThreshold * std) flags[i] = 1;
+      return flags;
+    }
+
+    function stdOf(signal) {
+      var N = signal.length;
+      if (N < 2) return 0;
+      var mean = 0;
+      for (var i = 0; i < N; i++) mean += signal[i];
+      mean /= N;
+      var v = 0;
+      for (var i = 0; i < N; i++) v += (signal[i] - mean) * (signal[i] - mean);
+      return Math.sqrt(v / N);
+    }
+
+    function computeSQI(filtered, meanDc, clipFraction, artifacts, coverage, uniformity) {
+      var N = filtered.length;
+      if (N < 4) return { score: 0, acDc: 0, reason: 'weak', artFrac: 0 };
+      // AC/DC robuste : percentiles du signal filtré, pas (max-min) sur 30 s de brut
+      var sorted = Array.prototype.slice.call(filtered).sort(function(a, b) { return a - b; });
+      var p5 = sorted[Math.floor(0.05 * N)], p95 = sorted[Math.floor(0.95 * N)];
+      var acDc = meanDc > 0 ? (p95 - p5) / 2 / meanDc : 0;
+      var strengthScore = Math.min(1, acDc / CONFIG.SQI.acDcRef);
+      var clipScore = Math.max(0, 1 - clipFraction / CONFIG.SQI.clipMax);
+      var artFrac = 0;
+      if (artifacts.length > 0) { var s = 0; for (var i = 0; i < artifacts.length; i++) s += artifacts[i]; artFrac = s / artifacts.length; }
+      var motionScore = Math.max(0, 1 - artFrac / CONFIG.SQI.motionMax);
+      var coverageScore = Math.min(1, coverage / CONFIG.SQI.coverageMin);
+      var uniformScore = Math.min(1, CONFIG.SQI.uniformityMax / Math.max(uniformity, 1e-6));
+      var score = strengthScore * clipScore * motionScore * coverageScore * uniformScore;
+      var reason = 'ok';
+      if (clipFraction > CONFIG.SQI.clipMax) reason = 'clip';
+      else if (artFrac > CONFIG.SQI.motionMax) reason = 'motion';
+      else if (coverage < CONFIG.SQI.coverageMin || uniformity > CONFIG.SQI.uniformityMax) reason = 'position';
+      else if (acDc < CONFIG.SQI.acDcMin) reason = 'weak';
+      return { score: score, clipFraction: clipFraction, artFrac: artFrac, acDc: acDc, reason: reason };
+    }
+
+    function estimateBpmAutocorr(signal, fs) {
+      var N = signal.length;
+      if (N < 64) return null;
+      var minLag = Math.max(2, Math.floor(fs / CONFIG.BANDPASS.high));
+      var maxLag = Math.min(N - 8, Math.ceil(fs / CONFIG.BANDPASS.low));
+      // Corrélation normalisée sur la zone qui se chevauche : évite de favoriser
+      // les grands décalages (harmoniques) artificiellement.
+      function corrAt(lag) {
+        var i, n = N - lag;
+        var mx = 0, my = 0;
+        for (i = 0; i < n; i++) { mx += signal[i + lag]; my += signal[i]; }
+        mx /= n; my /= n;
+        var dot = 0, vx = 0, vy = 0;
+        for (i = 0; i < n; i++) {
+          var a = signal[i + lag] - mx, b = signal[i] - my;
+          dot += a * b; vx += a * a; vy += b * b;
+        }
+        var den = Math.sqrt(vx * vy);
+        return den > 1e-12 ? dot / den : 0;
+      }
+      var values = [];
+      var bestVal = -Infinity;
+      for (var lag = minLag; lag <= maxLag; lag++) {
+        var v = corrAt(lag);
+        values[lag] = v;
+        if (v > bestVal) bestVal = v;
+      }
+      if (bestVal < 0.2) return null;
+      // Plusieurs pics quasi équivalents (2T, 3T…) : on garde le plus court.
+      var bestLag = -1;
+      for (lag = minLag; lag <= maxLag; lag++) {
+        if (values[lag] >= 0.95 * bestVal) { bestLag = lag; break; }
+      }
+      if (bestLag < 0) return null;
+      var y1 = bestLag > minLag ? values[bestLag - 1] : -Infinity;
+      var y2 = values[bestLag];
+      var y3 = bestLag < maxLag ? values[bestLag + 1] : -Infinity;
+      var denom = y1 - 2 * y2 + y3;
+      var delta = isFinite(denom) && Math.abs(denom) > 1e-12 ? 0.5 * (y1 - y3) / denom : 0;
+      if (delta > 1) delta = 1; if (delta < -1) delta = -1;
+      var bpm = 60 * fs / (bestLag + delta);
+      return bpm >= 40 && bpm <= 190 ? bpm : null;
+    }
+
+    function filterRR(rrList) {
+      if (rrList.length === 0) return [];
+      var recent = rrList.slice(-CONFIG.RR.window);
+      var sorted = recent.slice().sort(function(a, b) { return a - b; });
+      var median = sorted[Math.floor(sorted.length / 2)];
+      var devs = recent.map(function(x) { return Math.abs(x - median); }).sort(function(a, b) { return a - b; });
+      var mad = devs[Math.floor(devs.length / 2)] || 0.02;
+      return recent.filter(function(r) { return Math.abs(r - median) <= CONFIG.RR.madFactor * mad; });
+    }
+
+    // ============================================================
+    // Diagnostic SYNCHRONE
+    // ============================================================
+    function getDiagnosticsSync() {
+      var iframe = false;
+      try { iframe = window.self !== window.top; } catch(e) { iframe = true; }
+      return {
+        https: window.isSecureContext,
+        protocol: location.protocol,
+        file: location.protocol === 'file:',
+        api: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+        iframe: iframe
+      };
+    }
+
+    function queryPermissionWithTimeout(ms) {
+      return new Promise(function(resolve) {
+        if (!navigator.permissions || !navigator.permissions.query) {
+          return resolve({ state: 'non supporté', reason: 'permissions API absente' });
+        }
+        var done = false;
+        var timer = setTimeout(function() {
+          if (done) return;
+          done = true;
+          resolve({ state: 'timeout', reason: 'pas de réponse après ' + ms + ' ms' });
+        }, ms);
+        navigator.permissions.query({ name: 'camera' })
+          .then(function(p) { if (!done) { done = true; clearTimeout(timer); resolve({ state: p.state, reason: 'ok' }); } })
+          .catch(function(err) { if (!done) { done = true; clearTimeout(timer); resolve({ state: 'erreur', reason: err.message }); } });
+      });
+    }
+
+    // ============================================================
+    // Caméra
+    // ============================================================
+    function CameraController() {
+      this.stream = null; this.ctx = null; this.videoEl = null;
+      this.locked = false; this.locking = false;
+      this.lastCurrentTime = -1; this.lastCaptureTime = 0;
+      this.useRvfc = false; this.torchOn = false; this.torchSupported = false;
+      this.lastRoiStats = null;
+    }
+
+    CameraController.prototype.start = function(videoEl, canvasEl, onProgress) {
+      var self = this;
+      console.log('[camera] start()');
+      this.onProgress = onProgress || function() {};
+      this.videoEl = videoEl;
+      canvasEl.width = CONFIG.ROI_SIZE;
+      canvasEl.height = CONFIG.ROI_SIZE;
+      this.ctx = canvasEl.getContext('2d', { willReadFrequently: true });
+
+      if (location.protocol === 'file:') {
+        throw new Error("Le fichier est ouvert en file://. Chrome interdit l'accès caméra.");
+      }
+      if (!window.isSecureContext) {
+        throw new Error("La page n'est pas en contexte sécurisé (HTTPS).");
+      }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("L'API caméra n'est pas disponible dans ce navigateur.");
+      }
+
+      this.onProgress('info', 'Demande d\'accès à la caméra…');
+      console.log('[camera] appel getUserMedia');
+      
+      return this._requestStream().then(function(stream) {
+        console.log('[camera] flux obtenu');
+        self.stream = stream;
+        self.onProgress('info', 'Caméra obtenue, démarrage du flux…');
+        videoEl.srcObject = self.stream;
+        
+        return videoEl.play().catch(function(e) {
+          console.warn('[camera] play() :', e);
+          return videoEl.play().catch(function() {});
+        }).then(function() {
+          self.onProgress('info', 'Attente de la première image…');
+          return self._waitForVideoReady(videoEl, CONFIG.VIDEO_READY_TIMEOUT_MS);
+        }).then(function() {
+          console.log('[camera] première image OK');
+          self.lastCurrentTime = -1;
+          self.lastCaptureTime = 0;
+          self.useRvfc = typeof videoEl.requestVideoFrameCallback === 'function';
+          var track = self.stream.getVideoTracks()[0];
+          self.torchSupported = !!(track && track.getCapabilities && track.getCapabilities().torch);
+          console.log('[camera] rVFC:', self.useRvfc, '· torche:', self.torchSupported);
+        });
+      });
+    };
+
+    CameraController.prototype._requestStream = function() {
+      var attempts = [
+        { video: CONFIG.VIDEO },
+        { video: { facingMode: 'user', idealWidth: 320, idealHeight: 240, idealFrameRate: 30 } },
+        { video: true }
+      ];
+      var lastErr = null;
+      var definitive = ['NotAllowedError', 'PermissionDeniedError', 'NotFoundError', 'DevicesNotFoundError', 'SecurityError'];
+      
+      var tryAttempt = function(i) {
+        if (i >= attempts.length) return Promise.reject(lastErr || new Error('Impossible d\'obtenir un flux.'));
+        return navigator.mediaDevices.getUserMedia(attempts[i]).then(function(stream) {
+          if (!stream.getVideoTracks().length) {
+            stream.getTracks().forEach(function(t) { t.stop(); });
+            lastErr = new Error('Flux sans piste vidéo.');
+            return tryAttempt(i + 1);
+          }
+          return stream;
+        }).catch(function(e) {
+          lastErr = e;
+          console.warn('[camera] tentative ' + (i+1) + ' échouée : ' + e.name);
+          if (definitive.indexOf(e.name) !== -1) throw e;
+          return tryAttempt(i + 1);
+        });
+      };
+      return tryAttempt(0);
+    };
+
+    CameraController.prototype._waitForVideoReady = function(videoEl, timeoutMs) {
+      return new Promise(function(resolve, reject) {
+        if (videoEl.readyState >= 2) return resolve();
+        var start = Date.now();
+        var tick = function() {
+          if (videoEl.readyState >= 2 && videoEl.videoWidth > 0) return resolve();
+          if (Date.now() - start > timeoutMs) return reject(new Error("La caméra ne fournit pas d'image (délai dépassé)."));
+          setTimeout(tick, 100);
+        };
+        videoEl.addEventListener('loadeddata', function() { resolve(); }, { once: true });
+        videoEl.addEventListener('canplay', function() { resolve(); }, { once: true });
+        tick();
+      });
+    };
+
+    CameraController.prototype.lockSettings = function() {
+      if (this.locked || this.locking || !this.stream) return Promise.resolve(false);
+      var self = this;
+      this.locking = true;
+      var track = this.stream.getVideoTracks()[0];
+      if (!track) { this.locking = false; return Promise.resolve(false); }
+
+      var caps = track.getCapabilities ? track.getCapabilities() : {};
+      var advanced = [];
+      function have(name, value) {
+        return caps[name] && caps[name].indexOf && caps[name].indexOf(value) !== -1;
+      }
+      if (have('exposureMode', 'manual')) advanced.push({ exposureMode: 'manual' });
+      if (have('whiteBalanceMode', 'manual')) advanced.push({ whiteBalanceMode: 'manual' });
+      if (have('focusMode', 'manual')) advanced.push({ focusMode: 'manual' });
+      if (caps.exposureCompensation) {
+        // Avec la torche, on part sur une exposition basse pour éviter la saturation.
+        var target = this.torchOn ? -2 : 0;
+        target = Math.max(caps.exposureCompensation.min, Math.min(target, caps.exposureCompensation.max));
+        advanced.push({ exposureCompensation: target });
+      }
+      if (!advanced.length) { this.locking = false; return Promise.resolve(false); }
+      console.log('[camera] verrouillage', advanced.map(function(a) { return Object.keys(a)[0]; }).join(', '));
+
+      return track.applyConstraints({ advanced: advanced }).then(function() {
+        self.locked = true;
+        self.locking = false;
+        return true;
+      }).catch(function(e) {
+        console.warn('[camera] verrouillage partiel :', e.name);
+        self.locking = false;
+        return false;
+      });
+    };
+
+    CameraController.prototype.setTorch = function(on) {
+      var self = this;
+      var track = this.stream && this.stream.getVideoTracks()[0];
+      if (!track || !this.torchSupported) return Promise.resolve(false);
+      return track.applyConstraints({ advanced: [{ torch: !!on }] }).then(function() {
+        self.torchOn = !!on;
+        // La torche change l'exposition : on re-verrouille après stabilisation.
+        self.locked = false;
+        setTimeout(function() { self.lockSettings(); }, 300);
+        return true;
+      }).catch(function(e) {
+        console.warn('[camera] torche :', e.name);
+        return false;
+      });
+    };
+
+    CameraController.prototype.captureFrame = function(rafTime) {
+      if (!this.videoEl) return null;
+      var vw = this.videoEl.videoWidth, vh = this.videoEl.videoHeight;
+      if (!vw || !vh) return null;
+      if (!this.useRvfc) {
+        // requestVideoFrameCallback fournit déjà une image neuve : pas de déduplication ici.
+        var ct = this.videoEl.currentTime;
+        if (ct === this.lastCurrentTime) {
+          if (this.lastCaptureTime && rafTime - this.lastCaptureTime < 100) return null;
+        }
+        this.lastCurrentTime = ct;
+        this.lastCaptureTime = rafTime;
+      }
+
+      var side = Math.min(vw, vh);
+      var inner = Math.max(16, Math.floor(side * CONFIG.ROI_FRACTION));
+      var sx = (vw - inner) / 2, sy = (vh - inner) / 2;
+      this.ctx.drawImage(this.videoEl, sx, sy, inner, inner, 0, 0, CONFIG.ROI_SIZE, CONFIG.ROI_SIZE);
+      var data = this.ctx.getImageData(0, 0, CONFIG.ROI_SIZE, CONFIG.ROI_SIZE).data;
+      var n = data.length / 4;
+      var r = 0, g = 0, b = 0, lumSum = 0, lumSq = 0, lit = 0, clipped = 0;
+      for (var i = 0; i < data.length; i += 4) {
+        var R = data[i], G = data[i + 1], B = data[i + 2];
+        r += R; g += G; b += B;
+        var lum = (R + G + B) / 3;
+        lumSum += lum; lumSq += lum * lum;
+        if (R >= 250 || G >= 250 || B >= 250) clipped++;
+        // Un doigt est rouge et relativement uniforme : on mesure la couverture du ROI.
+        if (R > (G + B) / 2 + 8 && lum > 20) lit++;
+      }
+      var mr = r / n, mg = g / n, mb = b / n;
+      var lumMean = lumSum / n;
+      var lumStd = Math.sqrt(Math.max(0, lumSq / n - lumMean * lumMean));
+      var stats = {
+        t: performance.now(),
+        r: mr, g: mg, b: mb,
+        lum: lumMean,
+        ratio: mg / (mr + mg + mb + 1e-6),
+        coverage: lit / n,
+        uniformity: lumMean > 0 ? lumStd / lumMean : 1,
+        clipped: clipped / n
+      };
+      this.lastRoiStats = stats;
+      return stats;
+    };
+
+    CameraController.prototype.stop = function() {
+      if (this.stream) { this.stream.getTracks().forEach(function(t) { t.stop(); }); this.stream = null; }
+      if (this.videoEl) this.videoEl.srcObject = null;
+      this.locked = false; this.locking = false;
+      this.lastCurrentTime = -1; this.lastCaptureTime = 0;
+      this.torchOn = false; this.torchSupported = false;
+      this.lastRoiStats = null;
+    };
+
+    // ============================================================
+    // Contrôleur vital
+    // ============================================================
+    function VitalsController(onUpdate) {
+      this.onUpdate = onUpdate;
+      this.state = 'idle';
+      this.rawBuffer = [];
+      this.settlingStart = 0;
+      this.lastAnalysis = 0;
+      this.lastPeaks = [];
+      this.lastFiltered = null;
+      this.lastFilteredFs = 0;
+      this.channel = CONFIG.CHANNEL;
+      this.bpmHistory = [];
+      this.autoBpm = null;
+      this.lastRoiStats = null;
+      this.hint = '';
+      this.lastHintUpdate = 0;
+      this.forceReason = null;
+      this.stats = { state: 'idle', bpm: null, rr: [], quality: null, reason: 'ok', acDc: null, artifacts: null, peakCount: 0, sourceFps: 0, samples: 0, channel: this.channel, coverage: 0, uniformity: 0, autoBpm: null, hint: '' };
+      // On NE déclenche PAS onUpdate ici. On le fera manuellement à la fin de l'initialisation de l'app.
+    }
+
+    VitalsController.prototype.reset = function() {
+      this.state = 'idle'; this.rawBuffer = []; this.settlingStart = 0; this.lastAnalysis = 0;
+      this.lastPeaks = []; this.lastFiltered = null; this.lastFilteredFs = 0;
+      this.channel = CONFIG.CHANNEL; this.bpmHistory = []; this.autoBpm = null;
+      this.lastRoiStats = null; this.hint = ''; this.lastHintUpdate = 0;
+      this.stats = { state: 'idle', bpm: null, rr: [], quality: null, reason: 'ok', acDc: null, artifacts: null, peakCount: 0, sourceFps: 0, samples: 0, channel: this.channel, coverage: 0, uniformity: 0, autoBpm: null, hint: '' };
+      if (this.onUpdate) this.onUpdate(this.stats);
+    };
+    
+    VitalsController.prototype.startSettling = function() {
+      this.settlingStart = performance.now(); this.setState('settling');
+    };
+    VitalsController.prototype.setState = function(s) {
+      this.state = s; this.stats.state = s; this.onUpdate(this.stats);
+    };
+    VitalsController.prototype.addSample = function(sample) {
+      // On ne jette plus les images sombres : elles servent à guider l'utilisateur.
+      this.lastRoiStats = sample;
+      this.rawBuffer.push({
+        t: sample.t, v: sample.r,
+        r: sample.r, g: sample.g, b: sample.b,
+        ratio: sample.ratio, lum: sample.lum,
+        coverage: sample.coverage, uniformity: sample.uniformity,
+        clipped: sample.clipped
+      });
+      var cutoff = sample.t - CONFIG.BUFFER_SEC * 1000;
+      while (this.rawBuffer.length && this.rawBuffer[0].t < cutoff) this.rawBuffer.shift();
+      if (this.state === 'settling') this._checkSettling();
+      else if (this.state === 'measuring' && sample.t - this.lastAnalysis > CONFIG.ANALYSIS_INTERVAL_MS) {
+        this.lastAnalysis = sample.t; this._analyze();
+      }
+    };
+
+    VitalsController.prototype._setHint = function(text) {
+      var now = performance.now();
+      if (text === this.hint && now - this.lastHintUpdate < 500) return;
+      this.hint = text;
+      this.lastHintUpdate = now;
+      this.stats.hint = text;
+      if (this.onUpdate) this.onUpdate(this.stats);
+    };
+
+    VitalsController.prototype._checkSettling = function() {
+      var now = performance.now();
+      var elapsed = now - this.settlingStart;
+      var cfg = CONFIG.SETTLING;
+      var recent = this.rawBuffer.filter(function(s) { return s.t > now - cfg.windowMs; });
+      if (recent.length < 6) {
+        if (elapsed > cfg.timeoutMs) this._setHint('Aucune image exploitable — vérifiez la caméra.');
+        return;
+      }
+      var meanLum = 0, meanCov = 0, meanUni = 0, meanRatio = 0;
+      for (var i = 0; i < recent.length; i++) {
+        meanLum += recent[i].lum; meanCov += recent[i].coverage;
+        meanUni += recent[i].uniformity; meanRatio += recent[i].ratio;
+      }
+      meanLum /= recent.length; meanCov /= recent.length;
+      meanUni /= recent.length; meanRatio /= recent.length;
+      var ratios = recent.map(function(s) { return s.ratio; });
+      var cvRatio = meanRatio > 0 ? stdOf(ratios) / meanRatio : 1;
+
+      if (elapsed >= cfg.minMs) {
+        if (meanLum < cfg.minMean) { this._setHint('Trop sombre — activez la lampe torche ou ajoutez de la lumière.'); }
+        else if (meanLum > cfg.maxMean) { this._setHint('Trop lumineux — désactivez la torche ou éloignez la source de lumière.'); }
+        else if (meanCov < CONFIG.SQI.coverageMin) { this._setHint('Couvrez entièrement le carré central avec le bout du doigt.'); }
+        else if (meanUni > CONFIG.SQI.uniformityMax) { this._setHint('Pression irrégulière — appuyez plus doucement et sans bouger.'); }
+        else if (elapsed > cfg.timeoutMs) {
+          // On finit par mesurer pour fournir un retour d'info plutôt que d'attendre indéfiniment.
+          this.forceReason = 'noisy';
+          this.lastAnalysis = 0;
+          this.setState('measuring');
+          this._setHint('Signal instable — voir la raison ci-dessous.');
+        } else if (cvRatio > cfg.cvMax) { this._setHint('Stabilisation… restez immobile.'); }
+        else {
+          this.forceReason = null;
+          this.lastAnalysis = 0;
+          this.setState('measuring');
+          this._setHint('');
+        }
+      } else {
+        this._setHint('Stabilisation…');
+      }
+    };
+    VitalsController.prototype._analyze = function() {
+      var probe = resampleLinear(this.rawBuffer, CONFIG.RESAMPLE_HZ, 'r');
+      if (probe.data.length < CONFIG.MIN_BUFFER_SAMPLES) return;
+      var fs = probe.fs, i;
+      var defs = CONFIG.CHANNEL === 'auto'
+        ? [['g', 'Vert'], ['r', 'Rouge'], ['ratio', 'Ratio']]
+        : [[CONFIG.CHANNEL, CONFIG.CHANNEL]];
+      var candidates = [];
+      for (i = 0; i < defs.length; i++) {
+        var rs = resampleLinear(this.rawBuffer, fs, defs[i][0]);
+        if (rs.data.length < CONFIG.MIN_BUFFER_SAMPLES) continue;
+        var filtered = filtfilt(rs.data, designBandpass(fs, CONFIG.BANDPASS.low, CONFIG.BANDPASS.high));
+        var rawMean = 0;
+        for (var k = 0; k < rs.data.length; k++) rawMean += rs.data[k];
+        rawMean = Math.max(rawMean / rs.data.length, 1e-6);
+        // Amplitude relative (AC/DC) pour comparer des canaux d'échelles différentes.
+        candidates.push({ name: defs[i][1], key: defs[i][0], raw: rs.data, data: filtered, amp: stdOf(filtered) / rawMean });
+      }
+      if (!candidates.length) return;
+
+      var chosen = null;
+      if (CONFIG.CHANNEL === 'auto') {
+        var current = null, strongest = candidates[0];
+        for (i = 0; i < candidates.length; i++) {
+          if (candidates[i].amp > strongest.amp) strongest = candidates[i];
+          if (candidates[i].name === this.channel) current = candidates[i];
+        }
+        chosen = strongest;
+        if (current && current.amp > 0 && strongest.amp < current.amp * 1.25) chosen = current;
+      } else {
+        chosen = candidates[0];
+      }
+      this.channel = chosen.name;
+
+      var filteredSignal = chosen.data, rawGrid = chosen.raw, N = filteredSignal.length;
+      var meanDc = 0;
+      for (i = 0; i < N; i++) meanDc += rawGrid[i];
+      meanDc /= N;
+
+      var clipSum = 0, covSum = 0, uniSum = 0;
+      for (i = 0; i < this.rawBuffer.length; i++) {
+        clipSum += this.rawBuffer[i].clipped;
+        covSum += this.rawBuffer[i].coverage;
+        uniSum += this.rawBuffer[i].uniformity;
+      }
+      var clipFraction = clipSum / this.rawBuffer.length;
+      var coverage = covSum / this.rawBuffer.length;
+      var uniformity = uniSum / this.rawBuffer.length;
+      var artifacts = detectArtifacts(rawGrid, CONFIG.ARTIFACT.sigmaThreshold);
+
+      var peaks = detectPeaks(filteredSignal, fs, CONFIG.PEAKS);
+      peaks = recoverMissedPeaks(filteredSignal, fs, peaks, CONFIG.PEAKS);
+      peaks = validateTemplate(filteredSignal, fs, peaks, CONFIG.PEAKS);
+      var rr = [];
+      for (i = 1; i < peaks.length; i++) rr.push(peaks[i].time - peaks[i-1].time);
+      var validRR = filterRR(rr);
+      var bpmPeaks = null;
+      if (validRR.length > 0) {
+        var sum = 0; for (i = 0; i < validRR.length; i++) sum += validRR[i];
+        if (sum > 0) bpmPeaks = 60 / (sum / validRR.length);
+      }
+      var auto = estimateBpmAutocorr(filteredSignal, fs);
+      var bpm = bpmPeaks && auto
+        ? (Math.abs(bpmPeaks - auto) / auto < 0.15 ? (bpmPeaks + auto) / 2 : auto)
+        : (bpmPeaks || auto);
+      if (bpm) {
+        this.bpmHistory.push(bpm);
+        if (this.bpmHistory.length > 5) this.bpmHistory.shift();
+        var sortedBpm = this.bpmHistory.slice().sort(function(a, b) { return a - b; });
+        bpm = sortedBpm[Math.floor(sortedBpm.length / 2)];
+      }
+
+      var sqi = computeSQI(filteredSignal, meanDc, clipFraction, artifacts, coverage, uniformity);
+      var reason = this.forceReason || sqi.reason;
+      if (peaks.length === 0 && reason === 'ok' && !auto) reason = 'noisy';
+      var sourceFps = 0;
+      if (this.rawBuffer.length > 1) {
+        var span = this.rawBuffer[this.rawBuffer.length-1].t - this.rawBuffer[0].t;
+        if (span > 0) sourceFps = 1000 * (this.rawBuffer.length - 1) / span;
+      }
+      this.lastPeaks = peaks; this.lastFiltered = filteredSignal; this.lastFilteredFs = fs;
+      this.autoBpm = auto;
+      this.stats = {
+        state: this.state, bpm: bpm ? Math.round(bpm) : null, rr: validRR,
+        quality: sqi.score, reason: reason, acDc: sqi.acDc, artifacts: sqi.artFrac,
+        peakCount: peaks.length, sourceFps: Math.round(sourceFps), samples: this.rawBuffer.length,
+        channel: chosen.name, coverage: coverage, uniformity: uniformity,
+        autoBpm: auto ? Math.round(auto) : null, hint: this.hint
+      };
+      this.forceReason = null; // le forçage de timeout ne s'applique qu'à la première analyse
+      this.onUpdate(this.stats);
+    };
+
+    // ============================================================
+    // Application
+    // ============================================================
+    var REASON_TEXT = {
+      ok: 'Signal stable',
+      clip: 'Trop de lumière — désactivez la torche',
+      motion: 'Mouvement détecté — restez immobile',
+      weak: 'Signal trop faible — couvrez mieux l’objectif',
+      noisy: 'Signal bruité — pression plus douce',
+      dark: 'Trop sombre — activez la lampe torche',
+      bright: 'Trop lumineux — désactivez la lampe torche',
+      position: 'Mauvais positionnement — couvrez le carré central'
+    };
+
+    function VitalsApp(els) {
+      var self = this;
+      this.els = els;
+      // IMPORTANT : Initialiser signalCtx et camera AVANT vitals
+      this.signalCtx = els.signalCanvas.getContext('2d');
+      this.overlayCtx = els.roiOverlay.getContext('2d');
+      this.camera = new CameraController();
+      this.rafId = null;
+      this.rvfcHandle = null;
+      this.useRvfc = false;
+      this.running = false;
+      this.boundLoop = function(t) { self.loop(t); };
+      
+      // Initialiser vitals en dernier
+      this.vitals = new VitalsController(function(stats) { self.render(stats); });
+      this.render(this.vitals.stats); // Premier rendu manuel sécurisé
+    }
+
+    VitalsApp.prototype.setStatus = function(type, message) {
+      var el = this.els.status;
+      if (!message) { el.style.display = 'none'; el.textContent = ''; return; }
+      el.className = 'status-panel ' + type;
+      el.textContent = message;
+      el.style.display = '';
+    };
+
+    VitalsApp.prototype.start = function() {
+      var self = this;
+      console.log('[app] start()');
+      if (this.running) return;
+      this.els.startBtn.disabled = true;
+      this.els.video.classList.remove('hidden');
+      this.els.placeholder.style.display = 'none';
+      this.setStatus('info', 'Démarrage de la caméra…');
+      
+      var roiCanvas = document.createElement('canvas');
+      
+      this.camera.start(this.els.video, roiCanvas, function(type, msg) { self.setStatus(type, msg); })
+        .then(function() {
+          console.log('[app] caméra démarrée, settling…');
+          self.setStatus(null);
+          // Verrouiller exposition / balance des blancs / focus AVANT la stabilisation,
+          // sinon l'AGC fait varier la moyenne et le signal reste bruité.
+          self.camera.lockSettings().then(function() { self.refreshDiagnostics(); });
+          self.vitals.reset();
+          self.vitals.startSettling();
+          self.running = true;
+          self.els.startBtn.textContent = 'Arrêter';
+          self.els.startBtn.classList.add('stop');
+          self.els.startBtn.disabled = false;
+          self.els.torchBtn.disabled = !self.camera.torchSupported;
+          self.els.torchBtn.textContent = self.camera.torchSupported ? 'Lampe torche : off' : 'Torche non supportée';
+          self.useRvfc = self.camera.useRvfc;
+          if (self.useRvfc) self.scheduleRvfc();
+          else self.rafId = requestAnimationFrame(self.boundLoop);
+          self.refreshDiagnostics();
+        })
+        .catch(function(e) {
+          console.error('[app] caméra :', e);
+          self.camera.stop();
+          self.els.video.classList.add('hidden');
+          self.els.placeholder.style.display = '';
+          
+          var diag = getDiagnosticsSync();
+          var diagLine = 'HTTPS : ' + (diag.https ? '✓' : '✗') + ' · protocole : ' + diag.protocol + ' · API : ' + (diag.api ? '✓' : '✗') + (diag.iframe ? ' · ⚠ iframe' : '');
+          
+          self.setStatus('error', 'Impossible d\'accéder à la caméra.\n' + describeCameraError(e) + '\n\nDiagnostic : ' + diagLine);
+          self.els.startBtn.disabled = false;
+          self.els.torchBtn.disabled = true;
+          self.refreshDiagnostics();
+        });
+    };
+
+    VitalsApp.prototype.stop = function() {
+      console.log('[app] stop()');
+      if (!this.running) { this.camera.stop(); return; }
+      this.running = false;
+      if (this.rafId) cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+      if (this.rvfcHandle !== null && this.els.video.cancelVideoFrameCallback) {
+        this.els.video.cancelVideoFrameCallback(this.rvfcHandle);
+      }
+      this.rvfcHandle = null;
+      this.camera.stop();
+      this.vitals.reset();
+      this.setStatus(null);
+      this.els.video.classList.add('hidden');
+      this.els.placeholder.style.display = '';
+      this.els.startBtn.textContent = 'Démarrer';
+      this.els.startBtn.classList.remove('stop');
+      this.els.torchBtn.disabled = true;
+      this.els.torchBtn.textContent = 'Lampe torche : off';
+      this.render(this.vitals.stats);
+      this.clearSignal();
+      this.clearOverlay();
+      this.refreshDiagnostics();
+    };
+
+    VitalsApp.prototype.processFrame = function(ts) {
+      if (!this.running) return;
+      var frame = this.camera.captureFrame(ts);
+      if (frame) {
+        this.vitals.addSample(frame);
+        this.drawOverlay(frame);
+      }
+      if (this.vitals.state === 'measuring' && !this.camera.locked && !this.camera.locking) {
+        this.camera.lockSettings();
+      }
+    };
+
+    VitalsApp.prototype.scheduleRvfc = function() {
+      if (!this.running || !this.els.video.requestVideoFrameCallback) return;
+      var self = this;
+      this.rvfcHandle = this.els.video.requestVideoFrameCallback(function(now) {
+        if (!self.running) return;
+        self.processFrame(now);
+        self.scheduleRvfc();
+      });
+    };
+
+    VitalsApp.prototype.loop = function(rafTime) {
+      if (!this.running || this.useRvfc) return;
+      this.processFrame(rafTime);
+      this.rafId = requestAnimationFrame(this.boundLoop);
+    };
+
+    VitalsApp.prototype.clearOverlay = function() {
+      if (!this.overlayCtx) return;
+      var c = this.els.roiOverlay;
+      this.overlayCtx.clearRect(0, 0, c.width, c.height);
+      this.els.guide.textContent = 'Cadre de visée en attente…';
+      this.els.guide.dataset.level = 'mid';
+    };
+
+    VitalsApp.prototype.clearSignal = function() {
+      if (!this.signalCtx) return;
+      var c = this.els.signalCanvas;
+      this.signalCtx.clearRect(0, 0, c.width, c.height);
+    };
+
+    VitalsApp.prototype.drawOverlay = function(frame) {
+      var c = this.els.roiOverlay, ctx = this.overlayCtx;
+      if (!ctx || !c || !frame) return;
+      var dpr = window.devicePixelRatio || 1;
+      var w = c.clientWidth || c.width, h = c.clientHeight || c.height;
+      if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) {
+        c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+
+      var size = Math.min(w, h) * CONFIG.ROI_FRACTION;
+      var x = (w - size) / 2, y = (h - size) / 2;
+      var good = frame.coverage >= CONFIG.SQI.coverageMin &&
+                 frame.uniformity <= CONFIG.SQI.uniformityMax &&
+                 frame.lum >= CONFIG.SETTLING.minMean &&
+                 frame.lum <= CONFIG.SETTLING.maxMean;
+      var mid = frame.coverage >= 0.25 && frame.lum >= 8 && frame.lum <= 250;
+      var color = good ? '#4ade80' : (mid ? '#fbbf24' : '#f87171');
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fillRect(0, 0, w, y);
+      ctx.fillRect(0, y + size, w, h - y - size);
+      ctx.fillRect(0, y, x, size);
+      ctx.fillRect(x + size, y, w - x - size, size);
+      ctx.strokeStyle = color; ctx.lineWidth = 2;
+      ctx.strokeRect(x + 1, y + 1, size - 2, size - 2);
+
+      var text, level;
+      if (frame.lum < CONFIG.SETTLING.minMean) { text = 'Trop sombre — activez la torche'; level = 'bad'; }
+      else if (frame.lum > CONFIG.SETTLING.maxMean) { text = 'Trop lumineux — désactivez la torche'; level = 'bad'; }
+      else if (frame.coverage < CONFIG.SQI.coverageMin) { text = 'Couvrez tout le carré avec le doigt'; level = 'mid'; }
+      else if (frame.uniformity > CONFIG.SQI.uniformityMax) { text = 'Appuyez plus doucement, sans bouger'; level = 'mid'; }
+      else { text = 'Doigt bien positionné'; level = 'good'; }
+      this.els.guide.textContent = text;
+      this.els.guide.dataset.level = level;
+    };
+
+    VitalsApp.prototype.render = function(stats) {
+      if (!this.els || !this.els.bpm) return;
+      this.els.bpm.textContent = stats.bpm != null ? stats.bpm : '—';
+      var qText = '—', level = 'bad';
+      if (stats.state !== 'measuring') { qText = 'Acquisition…'; level = 'mid'; }
+      else if (stats.quality == null) { qText = 'Analyse…'; level = 'mid'; }
+      else if (stats.quality > 0.6) { qText = 'Bonne'; level = 'good'; }
+      else if (stats.quality > 0.3) { qText = 'Moyenne'; level = 'mid'; }
+      else { qText = 'Faible'; level = 'bad'; }
+      this.els.quality.textContent = qText;
+      this.els.quality.dataset.level = level;
+      var reasonText = stats.state === 'measuring' ? (REASON_TEXT[stats.reason] || '') : (stats.hint || '');
+      this.els.reason.textContent = reasonText;
+      this.els.reason.dataset.code = stats.state === 'measuring' ? (stats.reason || 'ok') : 'position';
+      this.els.dbgState.textContent = stats.state;
+      this.els.dbgFps.textContent = stats.sourceFps ? stats.sourceFps + ' Hz' : '—';
+      this.els.dbgPeaks.textContent = stats.peakCount != null ? stats.peakCount : '—';
+      this.els.dbgScore.textContent = stats.quality != null ? (stats.quality * 100).toFixed(0) + '%' : '—';
+      this.els.dbgAcdc.textContent = stats.acDc != null ? (stats.acDc * 100).toFixed(2) + '%' : '—';
+      this.els.dbgArt.textContent = stats.artifacts != null ? (stats.artifacts * 100).toFixed(1) + '%' : '—';
+      this.els.dbgSamples.textContent = stats.samples != null ? stats.samples : 0;
+      this.els.dbgChannel.textContent = stats.channel || '—';
+      this.els.dbgCoverage.textContent = stats.coverage != null ? (stats.coverage * 100).toFixed(0) + '%' : '—';
+      this.els.dbgUniformity.textContent = stats.uniformity != null ? (stats.uniformity * 100).toFixed(0) + '%' : '—';
+      this.els.dbgAuto.textContent = stats.autoBpm != null ? stats.autoBpm : '—';
+      this.drawSignal();
+    };
+
+    VitalsApp.prototype.drawSignal = function() {
+      var c = this.els.signalCanvas, ctx = this.signalCtx;
+      if (!ctx || !c) return; // GUARD
+      
+      ctx.clearRect(0, 0, c.width, c.height);
+      
+      var sig = this.vitals && this.vitals.lastFiltered; // GUARD
+      if (!sig || sig.length < 2) return;
+      
+      var maxv = 1e-9;
+      for (var i = 0; i < sig.length; i++) { var a = Math.abs(sig[i]); if (a > maxv) maxv = a; }
+      var W = c.width, H = c.height, midY = H / 2, scaleY = (H / 2 - 6) / maxv;
+      ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (var i = 0; i < sig.length; i++) {
+        var x = (i / (sig.length - 1)) * W;
+        var y = midY - sig[i] * scaleY;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      
+      ctx.fillStyle = '#fbbf24';
+      var peaks = (this.vitals && this.vitals.lastPeaks) || [];
+      for (var i = 0; i < peaks.length; i++) {
+        var p = peaks[i];
+        var idx = Math.round(p.pos);
+        if (idx < 0 || idx >= sig.length) continue;
+        var x = (idx / (sig.length - 1)) * W, y = midY - sig[idx] * scaleY;
+        ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill();
+      }
+    };
+
+    VitalsApp.prototype.refreshDiagnostics = function() {
+      var d = getDiagnosticsSync();
+      var row = function(label, value, cls) {
+        return '<div class="row"><span>' + label + '</span><b class="' + cls + '">' + value + '</b></div>';
+      };
+      var html = '';
+      html += row('Protocole', d.protocol, d.https ? 'ok' : 'ko');
+      html += row('Contexte sécurisé', d.https ? '✓' : '✗', d.https ? 'ok' : 'ko');
+      html += row('API caméra', d.api ? '✓' : '✗', d.api ? 'ok' : 'ko');
+      if (d.file) html += row('file://', '⚠ interdit', 'ko');
+      if (d.iframe) html += row('iframe', '⚠ allow="camera"', 'warn');
+      if (this.camera && this.camera.stream) {
+        var track = this.camera.stream.getVideoTracks()[0];
+        var caps = track && track.getCapabilities ? track.getCapabilities() : {};
+        var manualExp = caps.exposureMode && caps.exposureMode.indexOf('manual') !== -1;
+        html += row('Acquisition image', this.camera.useRvfc ? 'requestVideoFrameCallback' : 'RAF', 'ok');
+        html += row('Torche', this.camera.torchSupported ? '✓' : '✗', this.camera.torchSupported ? 'ok' : 'warn');
+        html += row('Exposition manuelle', manualExp ? '✓' : '✗', manualExp ? 'ok' : 'warn');
+        html += row('Réglages figés', this.camera.locked ? '✓' : '…', this.camera.locked ? 'ok' : 'warn');
+      }
+      html += row('Version', window.__VFC_VERSION__, 'ok');
+      this.els.diagContent.innerHTML = html;
+    };
+
+    function describeCameraError(err) {
+      var name = err && err.name;
+      var map = {
+        NotAllowedError: "Accès refusé par le navigateur.\n→ Icône 🔒 dans la barre d'adresse → Autorisations → Caméra → Autoriser.",
+        PermissionDeniedError: "Accès refusé. Autorisez la caméra dans les paramètres du navigateur.",
+        NotFoundError: "Aucune caméra détectée sur cet appareil.",
+        DevicesNotFoundError: "Aucune caméra détectée.",
+        NotReadableError: "Caméra occupée par une autre application.",
+        TrackStartError: "Caméra occupée.",
+        OverconstrainedError: "Paramètres caméra incompatibles avec cet appareil.",
+        SecurityError: "Accès bloqué par la politique de sécurité (HTTPS requis).",
+        AbortError: "Erreur système au démarrage caméra.",
+        TypeError: "Configuration caméra invalide."
+      };
+      return map[name] || (err && err.message) || String(err);
+    }
+
+    // ============================================================
+    // Bootstrap
+    // ============================================================
+    var els = {
+      video: document.getElementById('video'),
+      roiOverlay: document.getElementById('roi-overlay'),
+      guide: document.getElementById('guide'),
+      placeholder: document.getElementById('placeholder'),
+      signalCanvas: document.getElementById('signal-canvas'),
+      status: document.getElementById('status-panel'),
+      bpm: document.getElementById('bpm'),
+      quality: document.getElementById('quality'),
+      reason: document.getElementById('reason'),
+      startBtn: document.getElementById('start-btn'),
+      torchBtn: document.getElementById('torch-btn'),
+      testPermBtn: document.getElementById('test-perm-btn'),
+      diagContent: document.getElementById('diag-content'),
+      dbgState: document.getElementById('dbg-state'),
+      dbgFps: document.getElementById('dbg-fps'),
+      dbgPeaks: document.getElementById('dbg-peaks'),
+      dbgScore: document.getElementById('dbg-score'),
+      dbgAcdc: document.getElementById('dbg-acdc'),
+      dbgArt: document.getElementById('dbg-art'),
+      dbgSamples: document.getElementById('dbg-samples'),
+      dbgChannel: document.getElementById('dbg-channel'),
+      dbgCoverage: document.getElementById('dbg-coverage'),
+      dbgUniformity: document.getElementById('dbg-uniformity'),
+      dbgAuto: document.getElementById('dbg-auto')
+    };
+
+    var app = new VitalsApp(els);
+    app.refreshDiagnostics();
+
+    els.startBtn.addEventListener('click', function() {
+      console.log('[VFC] clic bouton, running =', app.running);
+      if (app.running) app.stop();
+      else app.start();
+    });
+
+    els.torchBtn.addEventListener('click', function() {
+      if (!app.running || !app.camera.torchSupported) return;
+      els.torchBtn.disabled = true;
+      var next = !app.camera.torchOn;
+      app.camera.setTorch(next).then(function(ok) {
+        els.torchBtn.textContent = ok ? ('Lampe torche : ' + (next ? 'on' : 'off'))
+                                     : 'Lampe torche : indisponible';
+        els.torchBtn.disabled = !ok;
+      });
+    });
+
+    els.testPermBtn.addEventListener('click', function() {
+      els.testPermBtn.disabled = true;
+      els.testPermBtn.textContent = 'Test en cours…';
+      queryPermissionWithTimeout(CONFIG.PERMISSION_TIMEOUT_MS).then(function(r) {
+        console.log('[VFC] résultat test permission :', r);
+        var prev = els.diagContent.innerHTML;
+        var cls = r.state === 'granted' ? 'ok' : r.state === 'denied' ? 'ko' : 'warn';
+        var txt = r.state + (r.reason && r.state !== 'ok' ? ' (' + r.reason + ')' : '');
+        els.diagContent.innerHTML = prev + '<div class="row"><span>Test permission</span><b class="' + cls + '">' + txt + '</b></div>';
+        els.testPermBtn.disabled = false;
+        els.testPermBtn.textContent = 'Tester la permission caméra';
+      });
+    });
+
+    // Marqueur final
+    window.__VFC_LOADED__ = true;
+    console.log('[VFC] initialisation terminée avec succès');
+
+  } catch (e) {
+    console.error('[VFC] ERREUR CRITIQUE :', e);
+    var el = document.getElementById('status-panel');
+    if (el) {
+      el.className = 'status-panel error';
+      el.textContent = 'Erreur critique au chargement du script :\n' + e.message + '\n' + (e.stack || '');
+      el.style.display = '';
+    }
+  }
+})();
+</script>
 </body>
-1283
 </html>
