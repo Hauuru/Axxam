@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VFC v3.3.0 — Observation cardiaque</title>
+<title>VFC v3.4.0 — Observation cardiaque</title>
 <style>
   :root {
     --bg: #0f1115; --panel: #181b22; --border: #2a2f3a;
@@ -42,6 +42,12 @@
   .guide[data-level="good"] { color: var(--accent); }
   .guide[data-level="mid"]  { color: var(--warn); }
   .guide[data-level="bad"]  { color: var(--bad); }
+  .timer {
+    font-variant-numeric: tabular-nums; text-align: center; font-size: 0.8rem;
+    color: var(--muted); margin-top: -8px;
+  }
+  .timer[data-state="measuring"] { color: var(--info); }
+  .timer[data-state="done"]      { color: var(--accent); }
   .placeholder { color: var(--muted); font-size: 0.9rem; padding: 16px; text-align: center; }
   .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
@@ -89,13 +95,22 @@
   }
   .debug span:nth-child(odd)  { color: #6b7280; }
   .debug span:nth-child(even) { color: var(--text); text-align: right; }
+  .results {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 16px;
+  }
+  .results h2 { font-size: 0.9rem; margin: 0 0 8px; font-weight: 600; color: var(--accent); }
+  .results .row { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; font-size: 0.85rem; }
+  .results .row span { color: var(--muted); }
+  .results .row b { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .results .note { color: var(--muted); font-size: 0.72rem; margin-top: 10px; line-height: 1.4; }
 </style>
 </head>
 <body>
 <div class="app">
   <div>
     <h1>Observation cardiaque</h1>
-    <div class="subtitle">Placez votre doigt sur l'objectif arrière, sans appuyer trop fort. Si le signal reste faible, activez la lampe torche.</div>
+    <div class="subtitle">Placez votre doigt sur l'objectif arrière, sans appuyer trop fort. La mesure s'arrête automatiquement après environ 1 minute de signal exploitable (60 battements).</div>
   </div>
 
   <div id="status-panel" class="status-panel info" style="display:none"></div>
@@ -106,6 +121,7 @@
     <div id="placeholder" class="placeholder">Caméra inactive</div>
   </div>
   <div id="guide" class="guide" data-level="mid">Cadre de visée en attente…</div>
+  <div id="timer" class="timer" data-state="idle">Prêt</div>
 
   <div class="metrics">
     <div class="card">
@@ -120,6 +136,12 @@
   </div>
 
   <canvas id="signal-canvas" width="600" height="120"></canvas>
+
+  <div id="results" class="results" style="display:none">
+    <h2 id="results-title">Résultats de la mesure</h2>
+    <div id="results-body"></div>
+    <div class="note">La VFC est estimée depuis la lumière captée à travers le doigt (PPG). Elle reste indicative : un ECG est nécessaire pour un suivi médical.</div>
+  </div>
 
   <div class="controls">
     <button id="start-btn">Démarrer</button>
@@ -144,13 +166,14 @@
     <span>Couverture</span><span id="dbg-coverage">—</span>
     <span>Uniformité</span><span id="dbg-uniformity">—</span>
     <span>BPM autocorr.</span><span id="dbg-auto">—</span>
+    <span>NN accumulés</span><span id="dbg-nn">—</span>
   </div>
 </div>
 
 <!-- Filet de sécurité -->
 <script>
   window.__VFC_LOADED__ = false;
-  window.__VFC_VERSION__ = '3.3.0';
+  window.__VFC_VERSION__ = '3.4.0';
   
   setTimeout(function() {
     if (!window.__VFC_LOADED__) {
@@ -199,6 +222,8 @@
       SQI: { clipMax: 0.05, motionMax: 0.15, acDcMin: 0.003, acDcRef: 0.015, coverageMin: 0.4, uniformityMax: 0.4 },
       SETTLING: { minMs: 1200, windowMs: 1200, minMean: 20, maxMean: 245, cvMax: 0.06, timeoutMs: 10000 },
       RR: { window: 10, madFactor: 3 },
+      SESSION: { minMs: 60000, minNN: 60, maxMs: 120000 },
+      HRV: { pnn50ThresholdMs: 50 },
       BUFFER_SEC: 30,
       ANALYSIS_INTERVAL_MS: 250,
       MIN_BUFFER_SAMPLES: 180,
@@ -391,6 +416,37 @@
       var v = 0;
       for (var i = 0; i < N; i++) v += (signal[i] - mean) * (signal[i] - mean);
       return Math.sqrt(v / N);
+    }
+
+    // Métriques VFC temporelles sur la série d'intervalles NN accumulée.
+    function computeHRV(records) {
+      var n = records.length;
+      if (n < 2) return null;
+      var i, sum = 0;
+      for (i = 0; i < n; i++) sum += records[i].rr;
+      var mean = sum / n;
+      var v = 0;
+      for (i = 0; i < n; i++) v += (records[i].rr - mean) * (records[i].rr - mean);
+      var sdnn = n > 1 ? Math.sqrt(v / (n - 1)) : 0;
+      var diffSq = 0, nn50 = 0, pairs = 0;
+      for (i = 1; i < n; i++) {
+        var d = records[i].rr - records[i - 1].rr;
+        diffSq += d * d;
+        if (Math.abs(d) > CONFIG.HRV.pnn50ThresholdMs) nn50++;
+        pairs++;
+      }
+      var sorted = records.map(function(r) { return r.rr; }).sort(function(a, b) { return a - b; });
+      return {
+        count: n,
+        bpm: mean > 0 ? 60000 / mean : 0,
+        meanRR: mean,
+        medianRR: sorted[Math.floor(n / 2)],
+        minRR: sorted[0],
+        maxRR: sorted[n - 1],
+        sdnn: sdnn,
+        rmssd: pairs ? Math.sqrt(diffSq / pairs) : 0,
+        pnn50: pairs ? 100 * nn50 / pairs : 0
+      };
     }
 
     function computeSQI(filtered, meanDc, clipFraction, artifacts, coverage, uniformity) {
@@ -711,8 +767,18 @@
     // ============================================================
     // Contrôleur vital
     // ============================================================
-    function VitalsController(onUpdate) {
+    function newIdleStats(channel) {
+      return {
+        state: 'idle', bpm: null, rr: [], quality: null, reason: 'ok', acDc: null, artifacts: null,
+        peakCount: 0, sourceFps: 0, samples: 0, channel: channel, coverage: 0, uniformity: 0,
+        autoBpm: null, hint: '', elapsedMs: 0, nnCount: 0,
+        targetNN: CONFIG.SESSION.minNN, done: false, hrv: null
+      };
+    }
+
+    function VitalsController(onUpdate, onFinish) {
       this.onUpdate = onUpdate;
+      this.onFinish = onFinish || null;
       this.state = 'idle';
       this.rawBuffer = [];
       this.settlingStart = 0;
@@ -727,7 +793,11 @@
       this.hint = '';
       this.lastHintUpdate = 0;
       this.forceReason = null;
-      this.stats = { state: 'idle', bpm: null, rr: [], quality: null, reason: 'ok', acDc: null, artifacts: null, peakCount: 0, sourceFps: 0, samples: 0, channel: this.channel, coverage: 0, uniformity: 0, autoBpm: null, hint: '' };
+      this.rrRecords = [];
+      this.seenPeaks = {};
+      this.sessionStart = 0;
+      this.sessionDone = false;
+      this.stats = newIdleStats(this.channel);
       // On NE déclenche PAS onUpdate ici. On le fera manuellement à la fin de l'initialisation de l'app.
     }
 
@@ -736,7 +806,9 @@
       this.lastPeaks = []; this.lastFiltered = null; this.lastFilteredFs = 0;
       this.channel = CONFIG.CHANNEL; this.bpmHistory = []; this.autoBpm = null;
       this.lastRoiStats = null; this.hint = ''; this.lastHintUpdate = 0;
-      this.stats = { state: 'idle', bpm: null, rr: [], quality: null, reason: 'ok', acDc: null, artifacts: null, peakCount: 0, sourceFps: 0, samples: 0, channel: this.channel, coverage: 0, uniformity: 0, autoBpm: null, hint: '' };
+      this.forceReason = null;
+      this.rrRecords = []; this.seenPeaks = {}; this.sessionStart = 0; this.sessionDone = false;
+      this.stats = newIdleStats(this.channel);
       if (this.onUpdate) this.onUpdate(this.stats);
     };
     
@@ -745,6 +817,15 @@
     };
     VitalsController.prototype.setState = function(s) {
       this.state = s; this.stats.state = s; this.onUpdate(this.stats);
+    };
+    VitalsController.prototype.beginMeasuring = function() {
+      this.sessionStart = performance.now();
+      this.rrRecords = [];
+      this.seenPeaks = {};
+      this.sessionDone = false;
+      this.lastAnalysis = 0;
+      this.stats.elapsedMs = 0; this.stats.nnCount = 0; this.stats.done = false; this.stats.hrv = null;
+      this.setState('measuring');
     };
     VitalsController.prototype.addSample = function(sample) {
       // On ne jette plus les images sombres : elles servent à guider l'utilisateur.
@@ -800,14 +881,12 @@
         else if (elapsed > cfg.timeoutMs) {
           // On finit par mesurer pour fournir un retour d'info plutôt que d'attendre indéfiniment.
           this.forceReason = 'noisy';
-          this.lastAnalysis = 0;
-          this.setState('measuring');
+          this.beginMeasuring();
           this._setHint('Signal instable — voir la raison ci-dessous.');
         } else if (cvRatio > cfg.cvMax) { this._setHint('Stabilisation… restez immobile.'); }
         else {
           this.forceReason = null;
-          this.lastAnalysis = 0;
-          this.setState('measuring');
+          this.beginMeasuring();
           this._setHint('');
         }
       } else {
@@ -889,6 +968,34 @@
       var sqi = computeSQI(filteredSignal, meanDc, clipFraction, artifacts, coverage, uniformity);
       var reason = this.forceReason || sqi.reason;
       if (peaks.length === 0 && reason === 'ok' && !auto) reason = 'noisy';
+
+      // On accumule les intervalles NN des pics déjà analysés, sans doublons :
+      // la fenêtre glissante de 30 s revoit toujours les mêmes battements.
+      var canCount = sqi.score >= 0.3 && reason !== 'motion' && reason !== 'clip' &&
+                     reason !== 'position' && reason !== 'dark' && reason !== 'bright';
+      if (canCount && this.sessionStart) {
+        for (i = 1; i < peaks.length; i++) {
+          var absMs = probe.t0 + peaks[i].time * 1000;
+          if (absMs < this.sessionStart) continue;
+          var key = Math.round(absMs / 10);
+          if (this.seenPeaks[key]) continue;
+          var rrMs = (peaks[i].time - peaks[i - 1].time) * 1000;
+          if (rrMs < CONFIG.PEAKS.minRR * 1000 || rrMs > CONFIG.PEAKS.maxRR * 1000) continue;
+          this.seenPeaks[key] = true;
+          this.rrRecords.push({ t: absMs, rr: rrMs });
+        }
+      }
+
+      var elapsedMs = this.sessionStart ? (performance.now() - this.sessionStart) : 0;
+      var nnCount = this.rrRecords.length;
+      var hrv = nnCount >= 2 ? computeHRV(this.rrRecords) : null;
+      var session = CONFIG.SESSION;
+      var done = this.state === 'measuring' && !this.sessionDone && (
+        (nnCount >= session.minNN && elapsedMs >= session.minMs) ||
+        elapsedMs >= session.maxMs
+      );
+      if (done) this.sessionDone = true;
+
       var sourceFps = 0;
       if (this.rawBuffer.length > 1) {
         var span = this.rawBuffer[this.rawBuffer.length-1].t - this.rawBuffer[0].t;
@@ -901,10 +1008,13 @@
         quality: sqi.score, reason: reason, acDc: sqi.acDc, artifacts: sqi.artFrac,
         peakCount: peaks.length, sourceFps: Math.round(sourceFps), samples: this.rawBuffer.length,
         channel: chosen.name, coverage: coverage, uniformity: uniformity,
-        autoBpm: auto ? Math.round(auto) : null, hint: this.hint
+        autoBpm: auto ? Math.round(auto) : null, hint: this.hint,
+        elapsedMs: Math.round(elapsedMs), nnCount: nnCount, targetNN: session.minNN,
+        done: done, hrv: hrv
       };
       this.forceReason = null; // le forçage de timeout ne s'applique qu'à la première analyse
       this.onUpdate(this.stats);
+      if (done && this.onFinish) this.onFinish(this.stats);
     };
 
     // ============================================================
@@ -932,10 +1042,15 @@
       this.rvfcHandle = null;
       this.useRvfc = false;
       this.running = false;
+      this.timerId = null;
+      this.finishing = false;
       this.boundLoop = function(t) { self.loop(t); };
       
       // Initialiser vitals en dernier
-      this.vitals = new VitalsController(function(stats) { self.render(stats); });
+      this.vitals = new VitalsController(
+        function(stats) { self.render(stats); },
+        function(stats) { self.finish(stats); }
+      );
       this.render(this.vitals.stats); // Premier rendu manuel sécurisé
     }
 
@@ -954,6 +1069,9 @@
       this.els.startBtn.disabled = true;
       this.els.video.classList.remove('hidden');
       this.els.placeholder.style.display = 'none';
+      this.hideResults();
+      this.els.timer.textContent = 'Stabilisation…';
+      this.els.timer.dataset.state = 'mid';
       this.setStatus('info', 'Démarrage de la caméra…');
       
       var roiCanvas = document.createElement('canvas');
@@ -976,6 +1094,9 @@
           self.useRvfc = self.camera.useRvfc;
           if (self.useRvfc) self.scheduleRvfc();
           else self.rafId = requestAnimationFrame(self.boundLoop);
+          if (self.timerId) clearInterval(self.timerId);
+          self.timerId = setInterval(function() { self.updateTimer(); }, 250);
+          self.updateTimer();
           self.refreshDiagnostics();
         })
         .catch(function(e) {
@@ -990,14 +1111,103 @@
           self.setStatus('error', 'Impossible d\'accéder à la caméra.\n' + describeCameraError(e) + '\n\nDiagnostic : ' + diagLine);
           self.els.startBtn.disabled = false;
           self.els.torchBtn.disabled = true;
+          if (self.timerId) clearInterval(self.timerId);
+          self.timerId = null;
+          self.els.timer.textContent = 'Caméra indisponible';
+          self.els.timer.dataset.state = 'idle';
           self.refreshDiagnostics();
         });
+    };
+
+    VitalsApp.prototype.fmtTime = function(ms) {
+      var s = Math.max(0, Math.floor((ms || 0) / 1000));
+      var mm = String(Math.floor(s / 60)).padStart(2, '0');
+      var ss = String(s % 60).padStart(2, '0');
+      return mm + ':' + ss;
+    };
+
+    VitalsApp.prototype.updateTimer = function() {
+      var el = this.els.timer;
+      if (!el || !this.running || this.finishing) return;
+      if (this.vitals.state === 'settling') {
+        var since = performance.now() - (this.vitals.settlingStart || performance.now());
+        el.textContent = 'Stabilisation… ' + this.fmtTime(since);
+        el.dataset.state = 'mid';
+        return;
+      }
+      var st = this.vitals.stats;
+      el.textContent = 'Mesure ' + this.fmtTime(st.elapsedMs) +
+        ' · ' + (st.nnCount || 0) + '/' + (st.targetNN || CONFIG.SESSION.minNN) +
+        ' battements · objectif ' + this.fmtTime(CONFIG.SESSION.minMs);
+      el.dataset.state = 'measuring';
+    };
+
+    VitalsApp.prototype.hideResults = function() {
+      if (this.els.results) this.els.results.style.display = 'none';
+    };
+
+    VitalsApp.prototype.renderResults = function(stats, title) {
+      var box = this.els.results, body = this.els.resultsBody;
+      if (!box || !body || !stats || !stats.hrv) { this.hideResults(); return; }
+      var h = stats.hrv;
+      function row(label, value) {
+        return '<div class="row"><span>' + label + '</span><b>' + value + '</b></div>';
+      }
+      var html = row('Durée', this.fmtTime(stats.elapsedMs));
+      html += row('Battements analysés (NN)', h.count);
+      html += row('Fréquence moyenne', Math.round(h.bpm) + ' bpm');
+      html += row('RR moyen', Math.round(h.meanRR) + ' ms');
+      html += row('Médiane RR', Math.round(h.medianRR) + ' ms');
+      html += row('SDNN', Math.round(h.sdnn) + ' ms');
+      html += row('RMSSD', Math.round(h.rmssd) + ' ms');
+      html += row('pNN50', h.pnn50.toFixed(1) + ' %');
+      html += row('RR min / max', Math.round(h.minRR) + ' / ' + Math.round(h.maxRR) + ' ms');
+      html += row('Qualité', stats.quality != null ? Math.round(stats.quality * 100) + ' %' : '—');
+      html += row('Raison', REASON_TEXT[stats.reason] || '—');
+      body.innerHTML = html;
+      if (this.els.resultsTitle) this.els.resultsTitle.textContent = title;
+      box.style.display = '';
+    };
+
+    VitalsApp.prototype.finish = function(stats) {
+      if (this.finishing || !this.running) return;
+      this.finishing = true;
+      this.running = false;
+      if (this.timerId) clearInterval(this.timerId);
+      this.timerId = null;
+      if (this.rafId) cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+      if (this.rvfcHandle !== null && this.els.video.cancelVideoFrameCallback) {
+        this.els.video.cancelVideoFrameCallback(this.rvfcHandle);
+      }
+      this.rvfcHandle = null;
+      this.camera.stop();
+      this.els.video.classList.add('hidden');
+      this.els.placeholder.style.display = '';
+      this.els.startBtn.textContent = 'Démarrer';
+      this.els.startBtn.classList.remove('stop');
+      this.els.startBtn.disabled = false;
+      this.els.torchBtn.disabled = true;
+      this.els.torchBtn.textContent = 'Lampe torche : off';
+      var few = stats.nnCount < CONFIG.SESSION.minNN;
+      this.setStatus(few ? 'warn' : 'success',
+        (few ? 'Mesure terminée avec peu de battements (' : 'Mesure terminée — ') +
+        (stats.nnCount || 0) + (few ? ') — résultat indicatif.' : ' battements analysés.'));
+      this.els.timer.textContent = 'Terminé · ' + this.fmtTime(stats.elapsedMs) +
+        ' · ' + (stats.nnCount || 0) + ' battements';
+      this.els.timer.dataset.state = 'done';
+      this.renderResults(stats, few ? 'Résultats partiels — peu de battements' : 'Résultats de la mesure');
+      this.refreshDiagnostics();
+      this.finishing = false;
     };
 
     VitalsApp.prototype.stop = function() {
       console.log('[app] stop()');
       if (!this.running) { this.camera.stop(); return; }
+      var summary = this.vitals.rrRecords.length >= 2 ? this.vitals.stats : null;
       this.running = false;
+      if (this.timerId) clearInterval(this.timerId);
+      this.timerId = null;
       if (this.rafId) cancelAnimationFrame(this.rafId);
       this.rafId = null;
       if (this.rvfcHandle !== null && this.els.video.cancelVideoFrameCallback) {
@@ -1013,9 +1223,17 @@
       this.els.startBtn.classList.remove('stop');
       this.els.torchBtn.disabled = true;
       this.els.torchBtn.textContent = 'Lampe torche : off';
+      this.els.timer.textContent = 'Arrêté';
+      this.els.timer.dataset.state = 'idle';
       this.render(this.vitals.stats);
       this.clearSignal();
       this.clearOverlay();
+      if (summary) {
+        this.renderResults(summary, 'Arrêt manuel — résultats partiels');
+        this.setStatus('info', 'Mesure arrêtée avant la fin.');
+      } else {
+        this.hideResults();
+      }
       this.refreshDiagnostics();
     };
 
@@ -1124,6 +1342,7 @@
       this.els.dbgCoverage.textContent = stats.coverage != null ? (stats.coverage * 100).toFixed(0) + '%' : '—';
       this.els.dbgUniformity.textContent = stats.uniformity != null ? (stats.uniformity * 100).toFixed(0) + '%' : '—';
       this.els.dbgAuto.textContent = stats.autoBpm != null ? stats.autoBpm : '—';
+      this.els.dbgNn.textContent = stats.nnCount != null ? stats.nnCount : 0;
       this.drawSignal();
     };
 
@@ -1207,6 +1426,10 @@
       video: document.getElementById('video'),
       roiOverlay: document.getElementById('roi-overlay'),
       guide: document.getElementById('guide'),
+      timer: document.getElementById('timer'),
+      results: document.getElementById('results'),
+      resultsTitle: document.getElementById('results-title'),
+      resultsBody: document.getElementById('results-body'),
       placeholder: document.getElementById('placeholder'),
       signalCanvas: document.getElementById('signal-canvas'),
       status: document.getElementById('status-panel'),
@@ -1227,7 +1450,8 @@
       dbgChannel: document.getElementById('dbg-channel'),
       dbgCoverage: document.getElementById('dbg-coverage'),
       dbgUniformity: document.getElementById('dbg-uniformity'),
-      dbgAuto: document.getElementById('dbg-auto')
+      dbgAuto: document.getElementById('dbg-auto'),
+      dbgNn: document.getElementById('dbg-nn')
     };
 
     var app = new VitalsApp(els);
