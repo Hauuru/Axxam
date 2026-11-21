@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VFC v3.5.0 — Observation cardiaque</title>
+<title>VFC v3.6.0 — Observation cardiaque</title>
 <style>
   :root {
     --bg: #0f1115; --panel: #181b22; --border: #2a2f3a;
@@ -174,7 +174,7 @@
 <!-- Filet de sécurité -->
 <script>
   window.__VFC_LOADED__ = false;
-  window.__VFC_VERSION__ = '3.5.0';
+  window.__VFC_VERSION__ = '3.6.0';
   
   setTimeout(function() {
     if (!window.__VFC_LOADED__) {
@@ -212,8 +212,8 @@
     // Configuration
     // ============================================================
     var CONFIG = {
-      VIDEO: { facingMode: 'environment', idealWidth: 640, idealHeight: 480, idealFrameRate: 30 },
-      ROI_SIZE: 128,
+      VIDEO: { facingMode: 'environment', idealWidth: 480, idealHeight: 360, idealFrameRate: 30 },
+      ROI_SIZE: 96,
       ROI_FRACTION: 0.5,          // on ne lit que le centre du carré : moins de lumière parasite
       CHANNEL: 'auto',            // 'auto' | 'r' | 'g' | 'ratio'
       RESAMPLE_HZ: 60,
@@ -417,6 +417,17 @@
       var v = 0;
       for (var i = 0; i < N; i++) v += (signal[i] - mean) * (signal[i] - mean);
       return Math.sqrt(v / N);
+    }
+
+    // Insertion ordonnée avec tolérance : la fenêtre glissante re-détecte
+    // plusieurs fois le même battement, à quelques millisecondes près.
+    function insertRR(records, rec, tolMs) {
+      for (var k = 0; k < records.length; k++) {
+        if (Math.abs(records[k].t - rec.t) <= tolMs) return false;
+        if (records[k].t > rec.t) { records.splice(k, 0, rec); return true; }
+      }
+      records.push(rec);
+      return true;
     }
 
     // Métriques VFC temporelles sur la série d'intervalles NN accumulée.
@@ -773,7 +784,8 @@
         state: 'idle', bpm: null, rr: [], quality: null, reason: 'ok', acDc: null, artifacts: null,
         peakCount: 0, sourceFps: 0, samples: 0, channel: channel, coverage: 0, uniformity: 0,
         autoBpm: null, hint: '', elapsedMs: 0, nnCount: 0,
-        targetNN: CONFIG.SESSION.minNN, done: false, hrv: null, stopReason: null
+        targetNN: CONFIG.SESSION.minNN, done: false, hrv: null, stopReason: null,
+        harmonicBlocked: false
       };
     }
 
@@ -795,13 +807,15 @@
       this.lastHintUpdate = 0;
       this.forceReason = null;
       this.rrRecords = [];
-      this.seenPeaks = {};
       this.series = [];
       this.lastSeriesTime = 0;
       this.sessionStart = 0;
       this.sessionStartedAt = 0;
       this.sessionDone = false;
       this.stopReason = null;
+      this.lockedBpm = null;
+      this.expectedRR = null;
+      this.harmonicSince = 0;
       this.stats = newIdleStats(this.channel);
       // On NE déclenche PAS onUpdate ici. On le fera manuellement à la fin de l'initialisation de l'app.
     }
@@ -812,8 +826,9 @@
       this.channel = CONFIG.CHANNEL; this.bpmHistory = []; this.autoBpm = null;
       this.lastRoiStats = null; this.hint = ''; this.lastHintUpdate = 0;
       this.forceReason = null;
-      this.rrRecords = []; this.seenPeaks = {}; this.series = []; this.lastSeriesTime = 0;
+      this.rrRecords = []; this.series = []; this.lastSeriesTime = 0;
       this.sessionStart = 0; this.sessionStartedAt = 0; this.sessionDone = false; this.stopReason = null;
+      this.lockedBpm = null; this.expectedRR = null; this.harmonicSince = 0;
       this.stats = newIdleStats(this.channel);
       if (this.onUpdate) this.onUpdate(this.stats);
     };
@@ -828,11 +843,13 @@
       this.sessionStart = performance.now();
       this.sessionStartedAt = Date.now();
       this.rrRecords = [];
-      this.seenPeaks = {};
       this.series = [];
       this.lastSeriesTime = 0;
       this.sessionDone = false;
       this.stopReason = null;
+      this.lockedBpm = null;
+      this.expectedRR = null;
+      this.harmonicSince = 0;
       this.lastAnalysis = 0;
       this.stats.elapsedMs = 0; this.stats.nnCount = 0; this.stats.done = false; this.stats.hrv = null;
       this.setState('measuring');
@@ -965,34 +982,55 @@
         if (sum > 0) bpmPeaks = 60 / (sum / validRR.length);
       }
       var auto = estimateBpmAutocorr(filteredSignal, fs);
-      var bpm = bpmPeaks && auto
+      var candidate = bpmPeaks && auto
         ? (Math.abs(bpmPeaks - auto) / auto < 0.15 ? (bpmPeaks + auto) / 2 : auto)
         : (bpmPeaks || auto);
+      // Un doigt qui bouge peut faire détecter un pic intermédiaire (dicrotie)
+      // et doubler le BPM. Une bascule x2 / ÷2 par rapport à l'historique est
+      // donc traitée comme un artefact, pas comme un vrai changement cardiaque.
+      var historyMedian = null;
+      if (this.bpmHistory.length >= 3) {
+        var hs = this.bpmHistory.slice().sort(function(a, b) { return a - b; });
+        historyMedian = hs[Math.floor(hs.length / 2)];
+      }
+      var harmonicBlocked = false;
+      if (candidate && historyMedian) {
+        var ratio = candidate / historyMedian;
+        if ((ratio > 1.6 && ratio < 2.4) || (ratio > 0.42 && ratio < 0.625)) {
+          harmonicBlocked = true;
+          candidate = historyMedian;
+        }
+      }
+      var bpm = candidate;
       if (bpm) {
         this.bpmHistory.push(bpm);
         if (this.bpmHistory.length > 5) this.bpmHistory.shift();
         var sortedBpm = this.bpmHistory.slice().sort(function(a, b) { return a - b; });
         bpm = sortedBpm[Math.floor(sortedBpm.length / 2)];
+        this.lockedBpm = bpm;
+        this.expectedRR = bpm > 0 ? 60000 / bpm : null;
       }
+      this.harmonicBlocked = harmonicBlocked;
 
       var sqi = computeSQI(filteredSignal, meanDc, clipFraction, artifacts, coverage, uniformity);
       var reason = this.forceReason || sqi.reason;
       if (peaks.length === 0 && reason === 'ok' && !auto) reason = 'noisy';
 
-      // On accumule les intervalles NN des pics déjà analysés, sans doublons :
-      // la fenêtre glissante de 30 s revoit toujours les mêmes battements.
+      // On accumule les intervalles NN des pics déjà analysés. La fenêtre
+      // glissante revoit plusieurs fois le même battement : on déduplique avec
+      // une tolérance de 150 ms et on garde l'ordre chronologique.
       var canCount = sqi.score >= 0.3 && reason !== 'motion' && reason !== 'clip' &&
                      reason !== 'position' && reason !== 'dark' && reason !== 'bright';
       if (canCount && this.sessionStart) {
         for (i = 1; i < peaks.length; i++) {
           var absMs = probe.t0 + peaks[i].time * 1000;
           if (absMs < this.sessionStart) continue;
-          var key = Math.round(absMs / 10);
-          if (this.seenPeaks[key]) continue;
           var rrMs = (peaks[i].time - peaks[i - 1].time) * 1000;
           if (rrMs < CONFIG.PEAKS.minRR * 1000 || rrMs > CONFIG.PEAKS.maxRR * 1000) continue;
-          this.seenPeaks[key] = true;
-          this.rrRecords.push({ t: absMs, rr: rrMs });
+          // On écarte les intervalles harmoniques (T/2, 2T) qui ne correspondent
+          // pas à la fréquence déjà verrouillée.
+          if (this.expectedRR && (rrMs < this.expectedRR * 0.7 || rrMs > this.expectedRR * 1.5)) continue;
+          insertRR(this.rrRecords, { t: absMs, rr: rrMs }, 150);
         }
       }
 
@@ -1012,8 +1050,10 @@
         this.series.push({
           tMs: Math.round(elapsedMs),
           bpm: bpm ? Math.round(bpm) : null,
+          autoBpm: auto ? Math.round(auto) : null,
           quality: sqi.score,
-          nnCount: nnCount
+          nnCount: nnCount,
+          harmonicBlocked: harmonicBlocked
         });
         this.lastSeriesTime = elapsedMs;
       }
@@ -1032,7 +1072,8 @@
         channel: chosen.name, coverage: coverage, uniformity: uniformity,
         autoBpm: auto ? Math.round(auto) : null, hint: this.hint,
         elapsedMs: Math.round(elapsedMs), nnCount: nnCount, targetNN: session.minNN,
-        done: done, hrv: hrv, stopReason: this.stopReason
+        done: done, hrv: hrv, stopReason: this.stopReason,
+        harmonicBlocked: harmonicBlocked
       };
       this.forceReason = null; // le forçage de timeout ne s'applique qu'à la première analyse
       this.onUpdate(this.stats);
@@ -1314,6 +1355,8 @@
           nnCount: r.nnCount || 0,
           targetNN: CONFIG.SESSION.minNN,
           quality: round(r.quality, 3),
+          autoBpm: r.autoBpm != null ? Math.round(r.autoBpm) : null,
+          harmonicBlocked: !!r.harmonicBlocked,
           reason: r.reason || null,
           reasonText: REASON_TEXT[r.reason] || null,
           channel: r.channel || null,
@@ -1342,8 +1385,10 @@
           return {
             tMs: x.tMs,
             bpm: x.bpm,
+            autoBpm: x.autoBpm,
             quality: round(x.quality, 3),
-            nnCount: x.nnCount
+            nnCount: x.nnCount,
+            harmonicBlocked: !!x.harmonicBlocked
           };
         }),
         note: 'Valeurs indicatives issues d’un signal PPG ; ne remplacent pas un ECG.'
