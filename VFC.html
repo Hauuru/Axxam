@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VFC v3.6.1 — Observation cardiaque</title>
+<title>VFC v3.7.0 — Observation cardiaque</title>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -64,7 +64,8 @@
   .reason { color: var(--muted); font-size: 0.85rem; min-height: 1.2em; margin-top: 4px; }
   .reason[data-code="clip"], .reason[data-code="motion"] { color: var(--warn); }
   .reason[data-code="weak"], .reason[data-code="noisy"]  { color: var(--bad); }
-  .reason[data-code="position"], .reason[data-code="dark"], .reason[data-code="bright"] { color: var(--warn); }
+  .reason[data-code="position"], .reason[data-code="dark"], .reason[data-code="bright"],
+  .reason[data-code="unstable"] { color: var(--warn); }
   #signal-canvas { width: 100%; height: 80px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
   .controls { display: flex; gap: 8px; flex-wrap: wrap; }
   #start-btn { flex: 1 1 100%; }
@@ -112,7 +113,7 @@
 <body>
 <div class="app">
   <div>
-    <h1>Observation cardiaque <span style="font-size:0.7rem;font-weight:500;color:var(--accent)">v3.6.1</span></h1>
+    <h1>Observation cardiaque <span style="font-size:0.7rem;font-weight:500;color:var(--accent)">v3.7.0</span></h1>
     <div class="subtitle">Placez votre doigt sur l'objectif arrière, sans appuyer trop fort. La mesure s'arrête automatiquement après environ 1 minute de signal exploitable (60 battements).</div>
   </div>
 
@@ -177,7 +178,7 @@
 <!-- Filet de sécurité -->
 <script>
   window.__VFC_LOADED__ = false;
-  window.__VFC_VERSION__ = '3.6.1';
+  window.__VFC_VERSION__ = '3.7.0';
   
   setTimeout(function() {
     if (!window.__VFC_LOADED__) {
@@ -226,7 +227,7 @@
       SQI: { clipMax: 0.05, motionMax: 0.15, acDcMin: 0.003, acDcRef: 0.015, coverageMin: 0.4, uniformityMax: 0.4 },
       SETTLING: { minMs: 1200, windowMs: 1200, minMean: 20, maxMean: 245, cvMax: 0.06, timeoutMs: 10000 },
       RR: { window: 10, madFactor: 3 },
-      SESSION: { minMs: 60000, minNN: 60, maxMs: 120000 },
+      SESSION: { minMs: 60000, minNN: 60, maxMs: 120000, minQuality: 0.6, unstableMs: 8000 },
       HRV: { pnn50ThresholdMs: 50 },
       BUFFER_SEC: 30,
       ANALYSIS_INTERVAL_MS: 250,
@@ -788,8 +789,8 @@
         peakCount: 0, sourceFps: 0, samples: 0, channel: channel, coverage: 0, uniformity: 0,
         autoBpm: null, hint: '', elapsedMs: 0, nnCount: 0,
         targetNN: CONFIG.SESSION.minNN, done: false, hrv: null, stopReason: null,
-        harmonicBlocked: false
-      };
+        harmonicBlocked: false, reliable: false
+      }
     }
 
     function VitalsController(onUpdate, onFinish) {
@@ -819,6 +820,7 @@
       this.lockedBpm = null;
       this.expectedRR = null;
       this.harmonicSince = 0;
+      this.lowQualitySince = 0;
       this.stats = newIdleStats(this.channel);
       // On NE déclenche PAS onUpdate ici. On le fera manuellement à la fin de l'initialisation de l'app.
     }
@@ -832,6 +834,7 @@
       this.rrRecords = []; this.series = []; this.lastSeriesTime = 0;
       this.sessionStart = 0; this.sessionStartedAt = 0; this.sessionDone = false; this.stopReason = null;
       this.lockedBpm = null; this.expectedRR = null; this.harmonicSince = 0;
+      this.lowQualitySince = 0;
       this.stats = newIdleStats(this.channel);
       if (this.onUpdate) this.onUpdate(this.stats);
     };
@@ -853,6 +856,7 @@
       this.lockedBpm = null;
       this.expectedRR = null;
       this.harmonicSince = 0;
+      this.lowQualitySince = 0;
       this.lastAnalysis = 0;
       this.stats.elapsedMs = 0; this.stats.nnCount = 0; this.stats.done = false; this.stats.hrv = null;
       this.setState('measuring');
@@ -973,6 +977,10 @@
       var uniformity = uniSum / this.rawBuffer.length;
       var artifacts = detectArtifacts(rawGrid, CONFIG.ARTIFACT.sigmaThreshold);
 
+      var session = CONFIG.SESSION;
+      var sqi = computeSQI(filteredSignal, meanDc, clipFraction, artifacts, coverage, uniformity);
+      var sqReason = this.forceReason || sqi.reason;
+
       var peaks = detectPeaks(filteredSignal, fs, CONFIG.PEAKS);
       peaks = recoverMissedPeaks(filteredSignal, fs, peaks, CONFIG.PEAKS);
       peaks = validateTemplate(filteredSignal, fs, peaks, CONFIG.PEAKS);
@@ -985,6 +993,11 @@
         if (sum > 0) bpmPeaks = 60 / (sum / validRR.length);
       }
       var auto = estimateBpmAutocorr(filteredSignal, fs);
+
+      // Une mesure n'est fiable que si le score est bon ET si les deux
+      // estimateurs (pics et autocorrélation) donnent une valeur. Sinon on
+      // gèle la dernière valeur stable au lieu d'afficher n'importe quoi.
+      var reliable = sqi.score >= session.minQuality && sqReason === 'ok' && auto != null;
       var candidate = bpmPeaks && auto
         ? (Math.abs(bpmPeaks - auto) / auto < 0.15 ? (bpmPeaks + auto) / 2 : auto)
         : (bpmPeaks || auto);
@@ -1005,34 +1018,39 @@
         }
       }
       var bpm = candidate;
-      if (bpm) {
+      if (reliable && candidate) {
         this.bpmHistory.push(bpm);
         if (this.bpmHistory.length > 5) this.bpmHistory.shift();
         var sortedBpm = this.bpmHistory.slice().sort(function(a, b) { return a - b; });
         bpm = sortedBpm[Math.floor(sortedBpm.length / 2)];
         this.lockedBpm = bpm;
         this.expectedRR = bpm > 0 ? 60000 / bpm : null;
+      } else if (this.lockedBpm) {
+        bpm = this.lockedBpm;
+      } else {
+        bpm = null;
       }
       this.harmonicBlocked = harmonicBlocked;
 
-      var sqi = computeSQI(filteredSignal, meanDc, clipFraction, artifacts, coverage, uniformity);
-      var reason = this.forceReason || sqi.reason;
+      var reason = sqReason;
+      if (!reliable && this.lockedBpm) reason = 'unstable';
       if (peaks.length === 0 && reason === 'ok' && !auto) reason = 'noisy';
 
-      // On accumule les intervalles NN des pics déjà analysés. La fenêtre
-      // glissante revoit plusieurs fois le même battement : on déduplique avec
-      // une tolérance de 150 ms et on garde l'ordre chronologique.
-      var canCount = sqi.score >= 0.3 && reason !== 'motion' && reason !== 'clip' &&
-                     reason !== 'position' && reason !== 'dark' && reason !== 'bright';
+      if (!reliable) { if (!this.lowQualitySince) this.lowQualitySince = performance.now(); }
+      else this.lowQualitySince = 0;
+
+      // On n'accumule que des intervalles mesurés sur un signal fiable.
+      // La fenêtre glissante revoit plusieurs fois le même battement : on
+      // déduplique à 150 ms et on garde l'ordre chronologique.
+      var canCount = reliable;
       if (canCount && this.sessionStart) {
         for (i = 1; i < peaks.length; i++) {
           var absMs = probe.t0 + peaks[i].time * 1000;
           if (absMs < this.sessionStart) continue;
           var rrMs = (peaks[i].time - peaks[i - 1].time) * 1000;
           if (rrMs < CONFIG.PEAKS.minRR * 1000 || rrMs > CONFIG.PEAKS.maxRR * 1000) continue;
-          // On écarte les intervalles harmoniques (T/2, 2T) qui ne correspondent
-          // pas à la fréquence déjà verrouillée.
-          if (this.expectedRR && (rrMs < this.expectedRR * 0.7 || rrMs > this.expectedRR * 1.5)) continue;
+          // On écarte les intervalles qui ne collent pas à la période verrouillée.
+          if (this.expectedRR && (rrMs < this.expectedRR * 0.75 || rrMs > this.expectedRR * 1.3)) continue;
           insertRR(this.rrRecords, { t: absMs, rr: rrMs }, 150);
         }
       }
@@ -1040,14 +1058,16 @@
       var elapsedMs = this.sessionStart ? (performance.now() - this.sessionStart) : 0;
       var nnCount = this.rrRecords.length;
       var hrv = nnCount >= 2 ? computeHRV(this.rrRecords) : null;
-      var session = CONFIG.SESSION;
+      var enough = nnCount >= session.minNN && elapsedMs >= session.minMs;
+      var unstableStop = this.lowQualitySince > 0 &&
+        (performance.now() - this.lowQualitySince) >= session.unstableMs && nnCount >= 8;
       var done = this.state === 'measuring' && !this.sessionDone && (
-        (nnCount >= session.minNN && elapsedMs >= session.minMs) ||
-        elapsedMs >= session.maxMs
+        enough || unstableStop || elapsedMs >= session.maxMs
       );
       if (done) {
         this.sessionDone = true;
-        this.stopReason = elapsedMs >= session.maxMs && nnCount < session.minNN ? 'timeout' : 'auto';
+        this.stopReason = unstableStop && !enough ? 'unstable'
+          : (elapsedMs >= session.maxMs && nnCount < session.minNN ? 'timeout' : 'auto');
       }
       if (this.state === 'measuring' && (!this.lastSeriesTime || elapsedMs - this.lastSeriesTime >= 1000)) {
         this.series.push({
@@ -1056,6 +1076,7 @@
           autoBpm: auto ? Math.round(auto) : null,
           quality: sqi.score,
           nnCount: nnCount,
+          reliable: reliable,
           harmonicBlocked: harmonicBlocked
         });
         this.lastSeriesTime = elapsedMs;
@@ -1076,7 +1097,7 @@
         autoBpm: auto ? Math.round(auto) : null, hint: this.hint,
         elapsedMs: Math.round(elapsedMs), nnCount: nnCount, targetNN: session.minNN,
         done: done, hrv: hrv, stopReason: this.stopReason,
-        harmonicBlocked: harmonicBlocked
+        reliable: reliable, harmonicBlocked: harmonicBlocked
       };
       this.forceReason = null; // le forçage de timeout ne s'applique qu'à la première analyse
       this.onUpdate(this.stats);
@@ -1092,6 +1113,7 @@
       motion: 'Mouvement détecté — restez immobile',
       weak: 'Signal trop faible — couvrez mieux l’objectif',
       noisy: 'Signal bruité — pression plus douce',
+      unstable: 'Signal devenu instable — restez immobile',
       dark: 'Trop sombre — activez la lampe torche',
       bright: 'Trop lumineux — désactivez la lampe torche',
       position: 'Mauvais positionnement — couvrez le carré central'
@@ -1360,6 +1382,7 @@
           quality: round(r.quality, 3),
           autoBpm: r.autoBpm != null ? Math.round(r.autoBpm) : null,
           harmonicBlocked: !!r.harmonicBlocked,
+          reliable: r.reliable === true,
           reason: r.reason || null,
           reasonText: REASON_TEXT[r.reason] || null,
           channel: r.channel || null,
@@ -1391,6 +1414,7 @@
             autoBpm: x.autoBpm,
             quality: round(x.quality, 3),
             nnCount: x.nnCount,
+            reliable: x.reliable === true,
             harmonicBlocked: !!x.harmonicBlocked
           };
         }),
