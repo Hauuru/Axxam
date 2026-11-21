@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VFC v3.6.0 — Observation cardiaque</title>
+<title>VFC v3.6.1 — Observation cardiaque</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <style>
   :root {
     --bg: #0f1115; --panel: #181b22; --border: #2a2f3a;
@@ -109,7 +112,7 @@
 <body>
 <div class="app">
   <div>
-    <h1>Observation cardiaque</h1>
+    <h1>Observation cardiaque <span style="font-size:0.7rem;font-weight:500;color:var(--accent)">v3.6.1</span></h1>
     <div class="subtitle">Placez votre doigt sur l'objectif arrière, sans appuyer trop fort. La mesure s'arrête automatiquement après environ 1 minute de signal exploitable (60 battements).</div>
   </div>
 
@@ -174,7 +177,7 @@
 <!-- Filet de sécurité -->
 <script>
   window.__VFC_LOADED__ = false;
-  window.__VFC_VERSION__ = '3.6.0';
+  window.__VFC_VERSION__ = '3.6.1';
   
   setTimeout(function() {
     if (!window.__VFC_LOADED__) {
