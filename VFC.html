@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VFC v3.4.0 — Observation cardiaque</title>
+<title>VFC v3.5.0 — Observation cardiaque</title>
 <style>
   :root {
     --bg: #0f1115; --panel: #181b22; --border: #2a2f3a;
@@ -140,12 +140,13 @@
   <div id="results" class="results" style="display:none">
     <h2 id="results-title">Résultats de la mesure</h2>
     <div id="results-body"></div>
-    <div class="note">La VFC est estimée depuis la lumière captée à travers le doigt (PPG). Elle reste indicative : un ECG est nécessaire pour un suivi médical.</div>
+    <div class="note">La VFC est estimée depuis la lumière captée à travers le doigt (PPG). Elle reste indicative : un ECG est nécessaire pour un suivi médical. Le bouton « Télécharger JSON » exporte ces résultats et les intervalles NN.</div>
   </div>
 
   <div class="controls">
     <button id="start-btn">Démarrer</button>
     <button id="torch-btn" class="secondary" disabled>Lampe torche : off</button>
+    <button id="json-btn" class="secondary" disabled>Télécharger JSON</button>
   </div>
 
   <details class="diag">
@@ -173,7 +174,7 @@
 <!-- Filet de sécurité -->
 <script>
   window.__VFC_LOADED__ = false;
-  window.__VFC_VERSION__ = '3.4.0';
+  window.__VFC_VERSION__ = '3.5.0';
   
   setTimeout(function() {
     if (!window.__VFC_LOADED__) {
@@ -772,7 +773,7 @@
         state: 'idle', bpm: null, rr: [], quality: null, reason: 'ok', acDc: null, artifacts: null,
         peakCount: 0, sourceFps: 0, samples: 0, channel: channel, coverage: 0, uniformity: 0,
         autoBpm: null, hint: '', elapsedMs: 0, nnCount: 0,
-        targetNN: CONFIG.SESSION.minNN, done: false, hrv: null
+        targetNN: CONFIG.SESSION.minNN, done: false, hrv: null, stopReason: null
       };
     }
 
@@ -795,8 +796,12 @@
       this.forceReason = null;
       this.rrRecords = [];
       this.seenPeaks = {};
+      this.series = [];
+      this.lastSeriesTime = 0;
       this.sessionStart = 0;
+      this.sessionStartedAt = 0;
       this.sessionDone = false;
+      this.stopReason = null;
       this.stats = newIdleStats(this.channel);
       // On NE déclenche PAS onUpdate ici. On le fera manuellement à la fin de l'initialisation de l'app.
     }
@@ -807,7 +812,8 @@
       this.channel = CONFIG.CHANNEL; this.bpmHistory = []; this.autoBpm = null;
       this.lastRoiStats = null; this.hint = ''; this.lastHintUpdate = 0;
       this.forceReason = null;
-      this.rrRecords = []; this.seenPeaks = {}; this.sessionStart = 0; this.sessionDone = false;
+      this.rrRecords = []; this.seenPeaks = {}; this.series = []; this.lastSeriesTime = 0;
+      this.sessionStart = 0; this.sessionStartedAt = 0; this.sessionDone = false; this.stopReason = null;
       this.stats = newIdleStats(this.channel);
       if (this.onUpdate) this.onUpdate(this.stats);
     };
@@ -820,9 +826,13 @@
     };
     VitalsController.prototype.beginMeasuring = function() {
       this.sessionStart = performance.now();
+      this.sessionStartedAt = Date.now();
       this.rrRecords = [];
       this.seenPeaks = {};
+      this.series = [];
+      this.lastSeriesTime = 0;
       this.sessionDone = false;
+      this.stopReason = null;
       this.lastAnalysis = 0;
       this.stats.elapsedMs = 0; this.stats.nnCount = 0; this.stats.done = false; this.stats.hrv = null;
       this.setState('measuring');
@@ -994,7 +1004,19 @@
         (nnCount >= session.minNN && elapsedMs >= session.minMs) ||
         elapsedMs >= session.maxMs
       );
-      if (done) this.sessionDone = true;
+      if (done) {
+        this.sessionDone = true;
+        this.stopReason = elapsedMs >= session.maxMs && nnCount < session.minNN ? 'timeout' : 'auto';
+      }
+      if (this.state === 'measuring' && (!this.lastSeriesTime || elapsedMs - this.lastSeriesTime >= 1000)) {
+        this.series.push({
+          tMs: Math.round(elapsedMs),
+          bpm: bpm ? Math.round(bpm) : null,
+          quality: sqi.score,
+          nnCount: nnCount
+        });
+        this.lastSeriesTime = elapsedMs;
+      }
 
       var sourceFps = 0;
       if (this.rawBuffer.length > 1) {
@@ -1010,7 +1032,7 @@
         channel: chosen.name, coverage: coverage, uniformity: uniformity,
         autoBpm: auto ? Math.round(auto) : null, hint: this.hint,
         elapsedMs: Math.round(elapsedMs), nnCount: nnCount, targetNN: session.minNN,
-        done: done, hrv: hrv
+        done: done, hrv: hrv, stopReason: this.stopReason
       };
       this.forceReason = null; // le forçage de timeout ne s'applique qu'à la première analyse
       this.onUpdate(this.stats);
@@ -1044,6 +1066,8 @@
       this.running = false;
       this.timerId = null;
       this.finishing = false;
+      this.lastResults = null;
+      this.lastExportData = null;
       this.boundLoop = function(t) { self.loop(t); };
       
       // Initialiser vitals en dernier
@@ -1070,6 +1094,9 @@
       this.els.video.classList.remove('hidden');
       this.els.placeholder.style.display = 'none';
       this.hideResults();
+      this.lastResults = null;
+      this.lastExportData = null;
+      this.els.jsonBtn.disabled = true;
       this.els.timer.textContent = 'Stabilisation…';
       this.els.timer.dataset.state = 'mid';
       this.setStatus('info', 'Démarrage de la caméra…');
@@ -1189,6 +1216,14 @@
       this.els.startBtn.disabled = false;
       this.els.torchBtn.disabled = true;
       this.els.torchBtn.textContent = 'Lampe torche : off';
+      this.lastResults = stats;
+      this.lastExportData = {
+        rrRecords: this.vitals.rrRecords.slice(),
+        series: this.vitals.series.slice(),
+        sessionStart: this.vitals.sessionStart,
+        startedAt: this.vitals.sessionStartedAt
+      };
+      this.els.jsonBtn.disabled = false;
       var few = stats.nnCount < CONFIG.SESSION.minNN;
       this.setStatus(few ? 'warn' : 'success',
         (few ? 'Mesure terminée avec peu de battements (' : 'Mesure terminée — ') +
@@ -1204,7 +1239,15 @@
     VitalsApp.prototype.stop = function() {
       console.log('[app] stop()');
       if (!this.running) { this.camera.stop(); return; }
-      var summary = this.vitals.rrRecords.length >= 2 ? this.vitals.stats : null;
+      var hasData = this.vitals.rrRecords.length >= 2;
+      var summary = hasData ? this.vitals.stats : null;
+      if (summary) summary.stopReason = 'manual';
+      var exportData = hasData ? {
+        rrRecords: this.vitals.rrRecords.slice(),
+        series: this.vitals.series.slice(),
+        sessionStart: this.vitals.sessionStart,
+        startedAt: this.vitals.sessionStartedAt
+      } : null;
       this.running = false;
       if (this.timerId) clearInterval(this.timerId);
       this.timerId = null;
@@ -1231,10 +1274,103 @@
       if (summary) {
         this.renderResults(summary, 'Arrêt manuel — résultats partiels');
         this.setStatus('info', 'Mesure arrêtée avant la fin.');
+        this.lastResults = summary;
+        this.lastExportData = exportData;
+        this.els.jsonBtn.disabled = false;
       } else {
         this.hideResults();
+        this.lastResults = null;
+        this.lastExportData = null;
+        this.els.jsonBtn.disabled = true;
       }
       this.refreshDiagnostics();
+    };
+
+    VitalsApp.prototype.buildJsonPayload = function() {
+      var r = this.lastResults, data = this.lastExportData;
+      if (!r || !r.hrv || !data) return null;
+      var h = r.hrv;
+      var nowIso = new Date().toISOString();
+      function round(v, digits) {
+        if (v == null || !isFinite(v)) return null;
+        var p = Math.pow(10, digits);
+        return Math.round(v * p) / p;
+      }
+      return {
+        schema: 'axxam-vfc/1.0',
+        version: window.__VFC_VERSION__,
+        exportedAt: nowIso,
+        source: {
+          app: 'VFC',
+          method: 'PPG — caméra, doigt sur objectif arrière',
+          page: location.href,
+          userAgent: navigator.userAgent || null
+        },
+        session: {
+          startedAt: data.startedAt ? new Date(data.startedAt).toISOString() : null,
+          endedAt: nowIso,
+          durationMs: r.elapsedMs || 0,
+          stopReason: r.stopReason || 'manual',
+          nnCount: r.nnCount || 0,
+          targetNN: CONFIG.SESSION.minNN,
+          quality: round(r.quality, 3),
+          reason: r.reason || null,
+          reasonText: REASON_TEXT[r.reason] || null,
+          channel: r.channel || null,
+          coverage: round(r.coverage, 3),
+          uniformity: round(r.uniformity, 3),
+          sourceFps: r.sourceFps || null
+        },
+        results: {
+          bpm: round(h.bpm, 1),
+          meanRRms: round(h.meanRR, 1),
+          medianRRms: round(h.medianRR, 1),
+          minRRms: round(h.minRR, 1),
+          maxRRms: round(h.maxRR, 1),
+          sdnnMs: round(h.sdnn, 1),
+          rmssdMs: round(h.rmssd, 1),
+          pnn50Pct: round(h.pnn50, 1)
+        },
+        rrIntervals: data.rrRecords.map(function(x, i) {
+          return {
+            index: i + 1,
+            tMs: Math.round(x.t - data.sessionStart),
+            rrMs: Math.round(x.rr)
+          };
+        }),
+        series: data.series.map(function(x) {
+          return {
+            tMs: x.tMs,
+            bpm: x.bpm,
+            quality: round(x.quality, 3),
+            nnCount: x.nnCount
+          };
+        }),
+        note: 'Valeurs indicatives issues d’un signal PPG ; ne remplacent pas un ECG.'
+      };
+    };
+
+    VitalsApp.prototype.exportJson = function() {
+      var payload = this.buildJsonPayload();
+      if (!payload) return;
+      var text = JSON.stringify(payload, null, 2);
+      var nowIso = payload.exportedAt;
+      var filename = 'VFC_' + nowIso.replace(/[:.]/g, '-') + '.json';
+      try {
+        var blob = new Blob([text], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        if (document.body) document.body.appendChild(a);
+        a.click();
+        if (document.body && a.parentNode) document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+        this.setStatus('success', 'Fichier JSON téléchargé : ' + filename);
+      } catch (e) {
+        console.error('[VFC] export JSON :', e);
+        this.setStatus('error', 'Export impossible : ' + (e && e.message ? e.message : String(e)));
+      }
     };
 
     VitalsApp.prototype.processFrame = function(ts) {
@@ -1438,6 +1574,7 @@
       reason: document.getElementById('reason'),
       startBtn: document.getElementById('start-btn'),
       torchBtn: document.getElementById('torch-btn'),
+      jsonBtn: document.getElementById('json-btn'),
       testPermBtn: document.getElementById('test-perm-btn'),
       diagContent: document.getElementById('diag-content'),
       dbgState: document.getElementById('dbg-state'),
@@ -1461,6 +1598,10 @@
       console.log('[VFC] clic bouton, running =', app.running);
       if (app.running) app.stop();
       else app.start();
+    });
+
+    els.jsonBtn.addEventListener('click', function() {
+      app.exportJson();
     });
 
     els.torchBtn.addEventListener('click', function() {
